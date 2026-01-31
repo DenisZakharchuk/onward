@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InventorySystem.DTOs\InventorySystem.DTOs.csproj" />
+    <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

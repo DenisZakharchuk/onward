@@ -57,4 +57,9 @@ public class InMemoryCategoryRepository : ICategoryRepository
         var category = _categories.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         return Task.FromResult(category);
     }
+
+    public IQueryable<Category> GetQueryable()
+    {
+        return _categories.AsQueryable();
+    }
 }

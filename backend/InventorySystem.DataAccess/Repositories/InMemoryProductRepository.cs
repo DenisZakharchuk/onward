@@ -82,4 +82,9 @@ public class InMemoryProductRepository : IProductRepository
         }
         return Task.FromResult(false);
     }
+
+    public IQueryable<Product> GetQueryable()
+    {
+        return _products.AsQueryable();
+    }
 }

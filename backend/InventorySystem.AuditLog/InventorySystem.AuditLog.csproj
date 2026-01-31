@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InventorySystem.Business\InventorySystem.Business.csproj" />
+    <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />
   </ItemGroup>
 
   <ItemGroup>

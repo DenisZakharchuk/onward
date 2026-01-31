@@ -62,4 +62,9 @@ public class InMemoryStockMovementRepository : IStockMovementRepository
         var movements = _movements.Where(m => m.CreatedAt >= startDate && m.CreatedAt <= endDate).ToList();
         return Task.FromResult<IEnumerable<StockMovement>>(movements);
     }
+
+    public IQueryable<StockMovement> GetQueryable()
+    {
+        return _movements.AsQueryable();
+    }
 }

@@ -4,8 +4,8 @@
     {
       "label": "Start MongoDB",
       "type": "shell",
-      "command": "docker-compose",
-      "args": ["up", "-d"],
+      "command": "docker",
+      "args": ["compose", "-f", "docker-compose.yml", "up", "-d", "--build"],
       "options": {
         "cwd": "${workspaceFolder}"
       },

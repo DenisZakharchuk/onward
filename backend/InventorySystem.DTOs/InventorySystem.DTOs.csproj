@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />
+  </ItemGroup>
+
 </Project>

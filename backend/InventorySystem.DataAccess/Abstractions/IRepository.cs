@@ -14,4 +14,10 @@ public interface IRepository<T> where T : class
     Task<T> CreateAsync(T entity, CancellationToken cancellationToken = default);
     Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Returns an IQueryable for LINQ filtering and projection
+    /// </summary>
+    IQueryable<T> GetQueryable();
 }
+

@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\InventorySystem.DataAccess\InventorySystem.DataAccess.csproj" />
     <ProjectReference Include="..\InventorySystem.DTOs\InventorySystem.DTOs.csproj" />
+    <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

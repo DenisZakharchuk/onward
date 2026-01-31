@@ -1,31 +1,70 @@
 # Inventory System Project - Copilot Instructions
 
+**📋 IMPORTANT: This project follows a comprehensive architecture defined in [Architecture.md](../Architecture.md). Please refer to it for complete backend rules, patterns, and guidelines.**
+
 ## Project Overview
-Simple inventorisation system for small businesses with .NET 8 backend, Vue.js frontend, and MongoDB audit logging.
+Inventorization dashboard with microservices architecture:
+- **Frontend**: Vue.js 3 + Vite with TypeScript
+- **Backend**: Microservices using .NET 8 ASP.NET with Entity Framework & PostgreSQL
+- **Data Storage**: PostgreSQL (primary), MongoDB (audit logs)
+- **Message Broker**: Containerized message broker
+- **Authorization**: JWT-based authentication via AuthService microservice
 
-## Architecture
-- Backend: .NET 8 with clean architecture (API, Business Logic, DTOs, Data Access, Audit Log)
-- Frontend: Vue.js 3 + Vite with TypeScript
-- Data Layer: Abstraction-based design supporting multiple storage types
-- Audit Log: MongoDB with GraphQL query layer
+## Architecture Overview
+See [Architecture.md](../Architecture.md) for complete architectural specifications including:
+- Microservice structure and naming conventions
+- Dependency injection and abstraction rules
+- DTO typing and mapping strategies
+- Testing requirements and patterns
+- Domain service abstractions and entity modeling
+- Base abstractions and shared project organization
 
-## Project Structure
-- `backend/` - .NET 8 solution with 5 projects
-  - `InventorySystem.API` - REST API + GraphQL endpoint at /graphql
-  - `InventorySystem.Business` - Business services with audit logging
-  - `InventorySystem.DTOs` - Data transfer objects
-  - `InventorySystem.DataAccess` - Repository abstractions and implementations
-  - `InventorySystem.AuditLog` - MongoDB audit logger with TTL (90 days)
-- `frontend/` - Vue.js + Vite application
-- `docker-compose.yml` - MongoDB and Mongo Express containers
+## Backend Project Naming & Structure
+Follow the conventions from Architecture.md strictly:
+- **DTO Projects**: `Inventorization.[BoundedContextName].DTO` (class library)
+- **Domain Projects**: `Inventorization.[BoundedContextName].Domain` (class library with Entities, Services, DbContexts, UOWs)
+- **API Projects**: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
+- **Test Projects**: `Inventorization.[BoundedContextName].API.Tests` (unit tests required for every API project)
+
+## Backend Key Requirements
+1. **Shared Base Abstractions**: All base types (`CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, etc.) must be in `Inventorization.Base`
+2. **Dependency Injection**: All dependencies injected as interfaces, never concrete types
+3. **Data Services**: Must be generic, use `IMapper` abstraction for mapping/projection
+4. **DTOs**: Structured with DTO/ subfolder (e.g., DTO/Customer), inherit from base DTOs
+5. **Entity Mappers**: Use `IMapper<TEntity, TDetailsDTO>` for object mapping and LINQ projection
+6. **Testing**: Every concrete abstraction must have unit test coverage
+7. **Database**: PostgreSQL with Entity Framework; separate dedicated DB per microservice
+8. **Authorization**: JWT bearer token auth; services may be anonymous where appropriate
+9. **Documentation**: Swagger enabled in Development mode for all API projects
+
+## 📝 Documentation Policy
+
+### ✅ DO Create These Files
+- **IMPLEMENTATION_PROGRESS.md** - Track ongoing work across sessions. Use this to continue development context when resuming work.
+- **Architecture.md** - Core architectural specifications and rules
+- **README.md** - Project setup and getting started
+- **.md files for critical infrastructure** - Database schemas, deployment guides, security policies
+
+### ❌ DO NOT Create These Files
+- Summary or accomplishment markdown files (git commit messages + history provide this)
+- Work session summaries (unnecessary, git log is the source of truth)
+- Duplicate documentation (keep information in one authoritative location)
+- Temporary progress notes (use IMPLEMENTATION_PROGRESS.md instead)
+
+### Why This Approach
+- **Git provides version history** - All changes are tracked in commits
+- **IMPLEMENTATION_PROGRESS.md is unique** - It's living documentation for in-progress work, not a summary
+- **Reduces git clutter** - Keeps only essential, reusable documentation
+- **Single source of truth** - Architecture.md, not scattered summaries
 
 ## Key Features
-- CRUD operations for Products, Categories, and Stock Movements
+- CRUD operations with structured DTOs and mappers
+- Microservices architecture with dedicated data stores
 - Async fire-and-forget audit logging (never blocks operations)
 - GraphQL queries for audit logs with filtering
 - MongoDB TTL index for automatic 90-day retention
 - Large payload truncation (15MB limit)
-- SOLID principles with IAuditLogger abstraction
+- SOLID principles with abstraction-based design
 
 ## Checklist
 - [x] Create copilot-instructions.md file
@@ -58,7 +97,7 @@ Run Task: "Start All"
 
 #### MongoDB
 ```bash
-docker-compose up -d
+docker compose -f 'docker-compose.yml' up -d --build
 ```
 MongoDB: mongodb://localhost:27017
 Mongo Express: http://localhost:8081

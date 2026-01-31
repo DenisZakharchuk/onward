@@ -1,0 +1,443 @@
+# Controller Architecture Patterns
+
+This document extends Architecture.md with comprehensive guidelines for building generic, reusable controllers using abstract base classes.
+
+## Abstract Generic Controllers Overview
+
+Controllers must be built using a multi-level abstract base class hierarchy to minimize code duplication and enforce consistency:
+
+1. **ServiceController** - Non-generic abstract base (extends `ControllerBase`)
+2. **Generic Controllers** - Abstract generic classes (extend `ServiceController`)
+   - `DataController<...>` - CRUD operations
+   - `SearchController<...>` - Complex search/filtering
+3. **Concrete Controllers** - Specific entity controllers (extend generic classes)
+
+All abstract controllers are defined in `Inventorization.[BoundedContextName].API.Base` project. Concrete controllers are in `Inventorization.[BoundedContextName].API` project.
+
+**Benefits:**
+- **DRY Principle** - CRUD logic defined once, reused by all controllers
+- **Consistency** - All endpoints follow identical request/response patterns
+- **Type Safety** - Generic constraints ensure correct DTO types are used
+- **Maintainability** - Bug fixes in base classes benefit all derived controllers
+- **Scalability** - New controllers added with minimal code
+- **Separation of Concerns** - Abstract controllers isolated from entity-specific implementations
+
+---
+
+## ServiceController: Abstract Non-Generic Base Class
+
+**Purpose:** Provide common controller functionality used by all service controllers.
+
+**Location:** `Inventorization.[BoundedContextName].API.Base/Controllers/ServiceController.cs`
+
+**Class Signature:**
+```csharp
+public abstract class ServiceController : ControllerBase
+{
+    protected readonly ILogger<ServiceController> Logger;
+    
+    protected ServiceController(ILogger<ServiceController> logger)
+    {
+        Logger = logger;
+    }
+    
+    // Common methods:
+    // - Response wrapping helpers
+    // - Error handling utilities
+    // - Validation helpers
+    // - Logging utilities
+}
+```
+
+**Responsibilities:**
+- Common response formatting and HTTP status codes
+- Centralized error handling and logging
+- Request validation patterns
+- Cross-cutting concerns
+
+---
+
+## DataController: Abstract Generic CRUD Base Class
+
+**Purpose:** Provide standard Create, Read, Update, Delete operations for all entities.
+
+**Location:** `Inventorization.Base/Controllers/DataController.cs`
+
+**Class Signature:**
+```csharp
+public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO, TService>
+    : ServiceController
+    where TEntity : class
+    where TCreateDTO : class
+    where TUpdateDTO : class
+    where TDeleteDTO : class
+    where TDetailsDTO : class
+    where TSearchDTO : class
+    where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>
+{
+    // Inherits logging from ServiceController
+}
+```
+
+**Generic Type Parameters:**
+- `TEntity` - Domain model entity class
+- `TCreateDTO` - Data transfer object for create operations
+- `TUpdateDTO` - Data transfer object for update operations
+- `TDeleteDTO` - Data transfer object for delete operations
+- `TDetailsDTO` - Data transfer object for responses (returned to client)
+- `TSearchDTO` - Data transfer object for search/filtering operations
+- `TService` - Service implementation (must implement full IDataService contract)
+
+**Protected Members:**
+```csharp
+protected readonly TService _dataService;  // Injected service
+
+protected DataController(TService dataService, ILogger<ServiceController> logger) : base(logger)
+{
+    _dataService = dataService;
+}
+```
+
+**Public Virtual Methods to Implement:**
+
+1. **GetByIdAsync(Guid id)** - Retrieve single entity
+   - HTTP Method: GET
+   - Route: `/{controller}/{id}`
+   - Returns: `ActionResult<ServiceResult<TDetailsDTO>>`
+   - Success Status: 200 OK
+   - Error Statuses: 404 Not Found, 500 Internal Server Error
+
+2. **CreateAsync(TCreateDTO dto)** - Create new entity
+   - HTTP Method: POST
+   - Route: `/{controller}`
+   - Returns: `ActionResult<ServiceResult<TDetailsDTO>>`
+   - Success Status: 201 Created
+   - Error Statuses: 400 Bad Request, 500 Internal Server Error
+
+3. **UpdateAsync(Guid id, TUpdateDTO dto)** - Update existing entity
+   - HTTP Method: PUT
+   - Route: `/{controller}/{id}`
+   - Validates: URL ID matches DTO.Id
+   - Returns: `ActionResult<ServiceResult<TDetailsDTO>>`
+   - Success Status: 200 OK
+   - Error Statuses: 400 Bad Request, 404 Not Found, 500 Internal Server Error
+
+4. **DeleteAsync(Guid id)** - Delete entity
+   - HTTP Method: DELETE
+   - Route: `/{controller}/{id}`
+   - Returns: `ActionResult<ServiceResult<bool>>`
+   - Success Status: 200 OK
+   - Error Statuses: 404 Not Found, 500 Internal Server Error
+
+**Base Class Responsibilities:**
+- HTTP verb and route mapping
+- Service method delegation
+- Response wrapping in ServiceResult<T>
+- HTTP status code determination
+- Error handling and logging
+- Request validation
+
+## SearchController: Abstract Generic Search Base Class
+
+**Purpose:** Provide advanced searching, filtering, pagination, and complex query capabilities.
+
+**Location:** `Inventorization.[BoundedContextName].API.Base/Controllers/SearchController.cs`
+
+**Class Signature:**
+```csharp
+public abstract class SearchController<TEntity, TDetailsDTO, TSearchDTO, TService>
+    : ServiceController
+    where TEntity : class
+    where TDetailsDTO : class
+    where TSearchDTO : class
+    where TService : IDataService<TEntity, ..., TSearchDTO>
+```
+
+**Class Signature:**
+```csharp
+public abstract class SearchController<TEntity, TDetailsDTO, TSearchDTO, TService>
+    : ControllerBase
+    where TEntity : class
+    where TDetailsDTO : class
+    where TSearchDTO : class
+    where TService : IDataService<TEntity, ?, ?, ?, TDetailsDTO, TSearchDTO>
+```
+
+**Public Virtual Methods to Implement:**
+
+1. **SearchAsync(TSearchDTO searchDto)** - Complex search with filtering and pagination
+   - HTTP Method: POST
+   - Route: `/{controller}/search`
+   - Body: TSearchDTO containing filters, sorting, and pagination parameters
+   - Returns: `ActionResult<ServiceResult<PagedResult<TDetailsDTO>>>`
+   - Success Status: 200 OK
+   - Error Statuses: 400 Bad Request, 500 Internal Server Error
+
+**Future Extensions:**
+- Export endpoints (CSV, Excel, PDF)
+- Advanced filtering with multiple criteria and operators
+- Custom multi-field sorting
+- Saved search queries and templates
+- Full-text search capabilities
+- Faceted search results
+- Aggregation queries
+
+## Future Controller Base Classes (Roadmap)
+
+**To be implemented in future phases:**
+- `ReportController<T>` - Complex reporting and analytics queries
+- `AuthorizedController<T>` - Authorization and permission checks
+- `CachedController<T>` - Caching strategies and cache invalidation
+- `EventSourcedController<T>` - Event sourcing pattern support
+- `GraphQLController<T>` - GraphQL endpoint support
+
+## Concrete Controller Implementation
+
+**Concrete controllers should only contain:**
+1. Class declaration with inheritance from abstract controller(s)
+2. Route and API controller attributes
+3. Constructor injecting specific service implementation
+4. Entity-specific customizations (optional, rare)
+
+### Folder Structure & Location
+
+All concrete controllers are located in `Inventorization.[BoundedContextName].API` project, organized by base controller type:
+
+```
+Inventorization.[BoundedContextName].API/
+├── Controllers/
+│   ├── Data/
+│   │   ├── ProductsController.cs          (extends DataController<...>)
+│   │   ├── CategoriesController.cs        (extends DataController<...>)
+│   │   └── ...
+│   ├── Search/
+│   │   ├── ProductsSearchController.cs    (extends SearchController<...>)
+│   │   ├── CategoriesSearchController.cs  (extends SearchController<...>)
+│   │   └── ...
+│   └── [OtherType]/
+│       └── ...
+```
+
+**Naming Convention:**
+- **Data folder:** `[Entity]Controller.cs` for CRUD operations
+- **Search folder:** `[Entity]SearchController.cs` for complex search/filtering
+- **Other folders:** `[Entity][ControllerType]Controller.cs` for specialized controllers
+
+**Minimal DataController Implementation:**
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : DataController<
+    Product,                    // TEntity
+    CreateProductDTO,           // TCreateDTO
+    UpdateProductDTO,           // TUpdateDTO
+    DeleteProductDTO,           // TDeleteDTO
+    ProductDetailsDTO,          // TDetailsDTO
+    ProductSearchDTO,           // TSearchDTO
+    IProductService>            // TService
+{
+    public ProductsController(
+        IProductService dataService,
+        ILogger<ProductsController> logger)
+        : base(dataService, logger)
+    {
+    }
+    
+    // All CRUD methods automatically inherited!
+    // No additional implementation needed.
+}
+```
+
+**With Search Capabilities:**
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : 
+    DataController<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, ProductDetailsDTO, ProductSearchDTO, IProductService>,
+    SearchController<Product, ProductDetailsDTO, ProductSearchDTO, IProductService>
+{
+    public ProductsController(
+        IProductService dataService,
+        ILogger<ProductsController> logger)
+        : base(dataService, logger)
+    {
+    }
+    
+    // Both CRUD and Search methods automatically inherited!
+}
+```
+
+## Standard Endpoint Routes
+
+**DataController Endpoints:**
+```
+GET    /api/{entity}/{id}              - Get by ID
+POST   /api/{entity}                   - Create new entity
+PUT    /api/{entity}/{id}              - Update entity
+DELETE /api/{entity}/{id}              - Delete entity
+```
+
+**SearchController Endpoints:**
+```
+POST   /api/{entity}/search            - Search with filters and pagination
+```
+
+## Response Format
+
+**All responses wrapped in consistent ServiceResult<T> format:**
+
+**Success Response (Status 200, 201):**
+```json
+{
+  "isSuccess": true,
+  "data": {
+    "id": "guid-value",
+    "name": "Entity Name",
+    "createdAt": "2026-01-31T10:00:00Z"
+  },
+  "message": "Operation completed successfully",
+  "errors": []
+}
+```
+
+**Validation Error Response (Status 400):**
+```json
+{
+  "isSuccess": false,
+  "data": null,
+  "message": "Validation failed",
+  "errors": [
+    "Field 'Name' is required",
+    "Field 'Price' must be greater than 0"
+  ]
+}
+```
+
+**Not Found Response (Status 404):**
+```json
+{
+  "isSuccess": false,
+  "data": null,
+  "message": "Product not found",
+  "errors": []
+}
+```
+
+**Server Error Response (Status 500):**
+```json
+{
+  "isSuccess": false,
+  "data": null,
+  "message": "An error occurred while processing your request",
+  "errors": ["Internal error details"]
+}
+```
+
+## HTTP Status Code Mapping
+
+| Operation | Success | Validation Error | Not Found | Server Error |
+|-----------|---------|------------------|-----------|-----------------|
+| GetById   | 200     | -                | 404       | 500             |
+| Create    | 201     | 400              | -         | 500             |
+| Update    | 200     | 400              | 404       | 500             |
+| Delete    | 200     | -                | 404       | 500             |
+| Search    | 200     | 400              | -         | 500             |
+
+## Adding New Entity Controllers
+
+**Complete checklist to add a new entity's controller:**
+
+1. **Create DTOs** in `InventorySystem.DTOs/DTO/{EntityName}/`:
+   - `Create{Entity}DTO` (extends CreateDTO)
+   - `Update{Entity}DTO` (extends UpdateDTO)
+   - `Delete{Entity}DTO` (extends DeleteDTO)
+   - `{Entity}DetailsDTO` (extends DetailsDTO)
+   - `{Entity}SearchDTO` (extends SearchDTO)
+
+2. **Create Service Interface** `I{Entity}Service.cs`:
+   ```csharp
+   public interface I{Entity}Service : IDataService<
+       {Entity},
+       Create{Entity}DTO,
+       Update{Entity}DTO,
+       Delete{Entity}DTO,
+       {Entity}DetailsDTO,
+       {Entity}SearchDTO>
+   {
+   }
+   ```
+
+3. **Implement Required Abstractions** in Business layer:
+   - Mapper: `IMapper<{Entity}, {Entity}DetailsDTO>`
+   - Creator: `IEntityCreator<{Entity}, Create{Entity}DTO>`
+   - Modifier: `IEntityModifier<{Entity}, Update{Entity}DTO>`
+   - Search Provider: `ISearchQueryProvider<{Entity}, {Entity}SearchDTO>`
+
+4. **Implement Data Service** `{Entity}DataService.cs` implementing `I{Entity}Service`
+
+5. **Register in DI Container** in `Program.cs`:
+   ```csharp
+   builder.Services.AddScoped<I{Entity}Service, {Entity}DataService>();
+   ```
+
+6. **Create Concrete Controller** `{Entity}sController.cs`:
+   ```csharp
+   [ApiController]
+   [Route("api/[controller]")]
+   public class {Entity}sController : DataController<
+       {Entity}, Create{Entity}DTO, Update{Entity}DTO,
+       Delete{Entity}DTO, {Entity}DetailsDTO,
+       {Entity}SearchDTO, I{Entity}Service>
+   {
+       public {Entity}sController(
+           I{Entity}Service dataService,
+           ILogger<{Entity}sController> logger)
+           : base(dataService, logger)
+       {
+       }
+   }
+   ```
+
+7. **Result:** Full CRUD API with no additional controller code needed!
+
+## Controller Inheritance Chain
+
+```
+Microsoft.AspNetCore.Mvc.ControllerBase
+    ↓
+Inventorization.Base.Controllers.DataController<...>
+    ↓
+ProductsController (IProductService injected)
+CategoriesController (ICategoryService injected)
+StockController (IStockMovementService injected)
+[All future entity controllers]
+```
+
+## Design Principles Applied
+
+1. **DRY (Don't Repeat Yourself)** - CRUD logic defined once in base class
+2. **SOLID - Single Responsibility** - Each class has one reason to change
+3. **SOLID - Open/Closed** - Open for extension (new controllers), closed for modification
+4. **SOLID - Liskov Substitution** - All concrete controllers satisfy DataController contract
+5. **Generic Type Parameters** - Enable compile-time type safety and reusability
+6. **Template Method Pattern** - Base class defines algorithm structure, concrete classes inherit
+7. **Dependency Injection** - All dependencies injected via constructor
+
+## Testing Abstract Controllers
+
+- **Unit Tests for DataController<T>** - Test generic CRUD behavior once (HTTP mapping, response wrapping, error handling)
+- **Integration Tests for Concrete Controllers** - Test specific entity service integration
+- **Mock TService** in DataController unit tests to verify request/response handling
+- **Use Real Services** in integration tests for end-to-end validation
+- **Test Base Class Once** - All derived controllers inherit tested behavior
+
+## Integration with Existing Architecture
+
+This controller pattern integrates seamlessly with the existing architecture:
+
+1. **Services Layer** - Controllers delegate to `IDataService<T>` implementations (ProductDataService, CategoryDataService, StockMovementDataService)
+2. **DTOs Layer** - Concrete generic parameters specify exact DTO types for each entity
+3. **Dependency Injection** - Services registered in DI container are injected into controller constructor
+4. **Response Wrapping** - All results wrapped in `ServiceResult<T>` for consistency
+5. **Audit Logging** - Services automatically log via `IAuditLogger` (no controller changes needed)
+6. **Error Handling** - Unified approach across all controllers via base class implementation
