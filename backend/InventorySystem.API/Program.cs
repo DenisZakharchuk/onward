@@ -55,25 +55,22 @@ builder.Services.AddScoped<IMapper<Product, ProductDetailsDTO>, ProductMapper>()
 builder.Services.AddScoped<IEntityCreator<Product, CreateProductDTO>, ProductCreator>();
 builder.Services.AddScoped<IEntityModifier<Product, UpdateProductDTO>, ProductModifier>();
 builder.Services.AddScoped<ISearchQueryProvider<Product, ProductSearchDTO>, ProductSearchProvider>();
-// Validators - optional, commented for now
-// builder.Services.AddScoped<IValidator<CreateProductDTO>, CreateProductValidator>();
-// builder.Services.AddScoped<IValidator<UpdateProductDTO>, UpdateProductValidator>();
+builder.Services.AddScoped<IValidator<CreateProductDTO>, CreateProductValidator>();
+builder.Services.AddScoped<IValidator<UpdateProductDTO>, UpdateProductValidator>();
 
 // Register Category abstractions
 builder.Services.AddScoped<IMapper<Category, CategoryDetailsDTO>, CategoryMapper>();
 builder.Services.AddScoped<IEntityCreator<Category, CreateCategoryDTO>, CategoryCreator>();
 builder.Services.AddScoped<IEntityModifier<Category, UpdateCategoryDTO>, CategoryModifier>();
 builder.Services.AddScoped<ISearchQueryProvider<Category, CategorySearchDTO>, CategorySearchProvider>();
-// Validators - optional, commented for now
-// builder.Services.AddScoped<IValidator<CreateCategoryDTO>, CreateCategoryValidator>();
-// builder.Services.AddScoped<IValidator<UpdateCategoryDTO>, UpdateCategoryValidator>();
+builder.Services.AddScoped<IValidator<CreateCategoryDTO>, CreateCategoryValidator>();
+builder.Services.AddScoped<IValidator<UpdateCategoryDTO>, UpdateCategoryValidator>();
 
 // Register StockMovement abstractions
 builder.Services.AddScoped<IMapper<StockMovement, StockMovementDetailsDTO>, StockMovementMapper>();
 builder.Services.AddScoped<IEntityCreator<StockMovement, CreateStockMovementDTO>, StockMovementCreator>();
 builder.Services.AddScoped<ISearchQueryProvider<StockMovement, StockMovementSearchDTO>, StockMovementSearchProvider>();
-// Validators - optional, commented for now
-// builder.Services.AddScoped<IValidator<CreateStockMovementDTO>, CreateStockMovementValidator>();
+builder.Services.AddScoped<IValidator<CreateStockMovementDTO>, CreateStockMovementValidator>();
 
 // Register legacy business services (for backward compatibility)
 builder.Services.AddScoped<ProductService>();
