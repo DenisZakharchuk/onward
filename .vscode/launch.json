@@ -5,7 +5,7 @@
       "name": ".NET Core Launch (web)",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "Start MongoDB",
+      "preLaunchTask": "Start Infra",
       "program": "${workspaceFolder}/backend/InventorySystem.API/bin/Debug/net8.0/InventorySystem.API.dll",
       "args": [],
       "cwd": "${workspaceFolder}/backend/InventorySystem.API",
@@ -17,6 +17,27 @@
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5002"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": "Auth Service Launch (web)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Start Infra",
+      "program": "${workspaceFolder}/backend/Inventorization.Auth.API/bin/Debug/net8.0/Inventorization.Auth.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/backend/Inventorization.Auth.API",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5012"
       },
       "sourceFileMap": {
         "/Views": "${workspaceFolder}/Views"

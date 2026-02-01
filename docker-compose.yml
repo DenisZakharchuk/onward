@@ -1,6 +1,44 @@
 version: '3.8'
 
 services:
+  # PostgreSQL for Auth microservice
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: inventory-postgres-auth
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - inventory-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: inventory-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - inventory-network
+    depends_on:
+      - postgres-auth
+
   mongodb:
     image: mongo:7.0
     container_name: inventory-mongodb
@@ -38,6 +76,10 @@ services:
       - inventory-network
 
 volumes:
+  postgres_auth_data:
+    driver: local
+  pgadmin_data:
+    driver: local
   mongodb_data:
     driver: local
 

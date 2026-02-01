@@ -1,23 +1,13 @@
-using InventorySystem.DataAccess.Models;
+using Inventorization.Base.DataAccess;
 
 namespace InventorySystem.DataAccess.Abstractions;
 
 /// <summary>
-/// Generic repository interface for common CRUD operations.
-/// This abstraction allows for multiple storage implementations (SQL, NoSQL, file-based, etc.)
+/// IRepository is now defined in Inventorization.Base.DataAccess.IRepository
+/// This using alias allows existing code to work without changes
 /// </summary>
-/// <typeparam name="T">The entity type</typeparam>
-public interface IRepository<T> where T : class
+public interface IRepository<T> : Inventorization.Base.DataAccess.IRepository<T>
+    where T : class
 {
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<T> CreateAsync(T entity, CancellationToken cancellationToken = default);
-    Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default);
-    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
-    
-    /// <summary>
-    /// Returns an IQueryable for LINQ filtering and projection
-    /// </summary>
-    IQueryable<T> GetQueryable();
 }
 

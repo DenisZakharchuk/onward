@@ -1,0 +1,228 @@
+@baseUrl = http://localhost:5012
+@contentType = application/json
+
+### Variables (will be set from responses)
+@accessToken = 
+@refreshToken = 
+
+###############################################################################
+# Authentication Endpoints
+###############################################################################
+
+### Login with admin credentials
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@inventorization.local",
+  "password": "Admin123!"
+}
+
+### Refresh access token
+# @name refresh
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout (requires valid JWT token)
+POST {{baseUrl}}/api/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# User Management (CRUD)
+###############################################################################
+
+### Get all users (search)
+POST {{baseUrl}}/api/users/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "page": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Get user by ID
+GET {{baseUrl}}/api/users/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{accessToken}}
+
+### Create new user
+# @name createUser
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "email": "testuser@inventorization.local",
+  "password": "TestUser123!",
+  "fullName": "Test User",
+  "isActive": true
+}
+
+### Update user
+PUT {{baseUrl}}/api/users/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "email": "updated@inventorization.local",
+  "fullName": "Updated User Name",
+  "isActive": true
+}
+
+### Delete user
+DELETE {{baseUrl}}/api/users/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+}
+
+###############################################################################
+# Role Management (CRUD)
+###############################################################################
+
+### Get all roles (search)
+POST {{baseUrl}}/api/roles/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "page": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Get role by ID
+GET {{baseUrl}}/api/roles/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{accessToken}}
+
+### Create new role
+# @name createRole
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Developer",
+  "description": "Software developer role"
+}
+
+### Update role
+PUT {{baseUrl}}/api/roles/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "name": "Senior Developer",
+  "description": "Senior software developer role"
+}
+
+### Delete role
+DELETE {{baseUrl}}/api/roles/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+}
+
+###############################################################################
+# Permission Management (CRUD)
+###############################################################################
+
+### Get all permissions (search)
+POST {{baseUrl}}/api/permissions/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "page": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Get permission by ID
+GET {{baseUrl}}/api/permissions/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{accessToken}}
+
+### Create new permission
+# @name createPermission
+POST {{baseUrl}}/api/permissions
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "product.create",
+  "description": "Create products",
+  "resource": "product",
+  "action": "create"
+}
+
+### Update permission
+PUT {{baseUrl}}/api/permissions/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "name": "product.manage",
+  "description": "Manage products",
+  "resource": "product",
+  "action": "manage"
+}
+
+### Delete permission
+DELETE {{baseUrl}}/api/permissions/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+}
+
+###############################################################################
+# Quick Test Workflow
+###############################################################################
+
+### 1. Login and get tokens
+# After running this, copy accessToken and refreshToken to variables above
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@inventorization.local",
+  "password": "Admin123!"
+}
+
+### 2. Test search users with token
+POST {{baseUrl}}/api/users/search
+Content-Type: {{contentType}}
+Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
+
+{
+  "page": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### 3. Refresh token when expired
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN_HERE"
+}

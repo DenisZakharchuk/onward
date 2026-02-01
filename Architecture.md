@@ -7,7 +7,7 @@
 
 # Frontend
  It's regular dashboard application. 
- It has authorization user story. For now it has local authorization (using AuthoService microservice).
+ It has authorization user story. For now it has local authorization (using AuthService microservice).
  It has set of list views and form views for entities of the DataModel;
  Business loic layer is implemented in separate abstractions in "services" folder. They are injected where they needed with provide-use pattern
  
@@ -27,9 +27,119 @@
  maintein docker-compose file in workspace root directory for all microservices
 
 # Backend Architecture Rules & Patterns
+## Entity Immutability Pattern
+All entity classes must follow strict immutability principles to ensure data consistency and prevent accidental state modifications:
+
+### Entity Implementation Rules
+1. **Property Setters**: All properties must have **private setters** to prevent direct assignment from outside the entity
+   ```csharp
+   public string Email { get; private set; } = null!;
+   ```
+
+2. **Parameterless Constructor**: Required for EF Core but must be **private** to prevent instantiation without proper initialization
+   ```csharp
+   private User() { }  // EF Core only
+   ```
+
+3. **Parameterized Constructor**: Robust constructor accepting all required properties, validating inputs
+   ```csharp
+   public User(string email, string passwordHash, string fullName)
+   {
+       if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required");
+       Email = email;
+       PasswordHash = passwordHash;
+       FullName = fullName;
+   }
+   ```
+
+4. **State Mutations**: All entity state changes must go through dedicated methods, never direct property assignment
+   ```csharp
+   public void UpdateProfile(string fullName)
+   {
+       if (string.IsNullOrWhiteSpace(fullName)) throw new ArgumentException("Full name required");
+       FullName = fullName;
+       UpdatedAt = DateTime.UtcNow;
+   }
+   
+   public void Deactivate()
+   {
+       IsActive = false;
+       UpdatedAt = DateTime.UtcNow;
+   }
+   ```
+
+5. **Navigation Properties**: Keep public getters for EF Core lazy loading, but collections use `[JsonIgnore]` if returned in APIs
+   ```csharp
+   public ICollection<UserRole> UserRoles { get; } = new List<UserRole>();
+   ```
+
+6. **Computed/Read-Only Properties**: Allowed for derived values
+   ```csharp
+   public bool IsValid => DateTime.UtcNow < ExpiryDate && RevokedAt == null;
+   ```
+
+### Example Entity
+```csharp
+public class User
+{
+    private User() { }  // EF Core only, private to prevent misuse
+    
+    public User(string email, string passwordHash, string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required");
+        if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Password hash required");
+        if (string.IsNullOrWhiteSpace(fullName)) throw new ArgumentException("Full name required");
+        
+        Id = Guid.NewGuid();
+        Email = email;
+        PasswordHash = passwordHash;
+        FullName = fullName;
+        IsActive = true;
+        CreatedAt = DateTime.UtcNow;
+    }
+    
+    public Guid Id { get; private set; }
+    public string Email { get; private set; } = null!;
+    public string PasswordHash { get; private set; } = null!;
+    public string FullName { get; private set; } = null!;
+    public bool IsActive { get; private set; } = true;
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? UpdatedAt { get; private set; }
+    
+    public ICollection<UserRole> UserRoles { get; } = new List<UserRole>();
+    
+    public void UpdateProfile(string email, string fullName)
+    {
+        Email = email;
+        FullName = fullName;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    public void SetPassword(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Password hash required");
+        PasswordHash = passwordHash;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    public void Activate()
+    {
+        IsActive = true;
+        UpdatedAt = DateTime.UtcNow;
+    }
+}
+```
+
 ## Dependency Injection Rules
 - All DataService implementations (e.g., CustomerService) must be injected as their corresponding IDataService<T...> or specific interface (e.g., ICustomerService), not as concrete types.
 - All service, repository, and abstraction dependencies should be injected as interfaces, not concrete types, to maximize testability and flexibility.
+
 ## Testing Rules
 - Every API project must have a corresponding unittest project (e.g., Inventorization.[BoundedContextName].API.Tests).
 - Every concrete abstraction (service, repository, creator, modifier, query provider, etc.) must be covered with unit tests in the unittest project.
@@ -46,24 +156,112 @@
 - All mapping logic (entity-to-DTO and DTO-to-entity) must use the `IMapper<TEntity, TDetailsDTO>` abstraction, supporting both object mapping and LINQ projection via `Expression<Func<TEntity, TDetailsDTO>>`.
 
 ## Domain Service Abstractions
-Each entity has a corresponding set of DTOs:
-  - `DetailsDTO`: returned by `GetByIdAsync`
-  - `CreateDTO`: input for `AddAsync`
-  - `UpdateDTO`: input for `UpdateAsync`
-  - `DeleteDTO`: input for `DeleteAsync`
-  - `SearchDTO`: input for `SearchAsync`
-All base DTOs should be defined in `Inventorization.Base` and inherited/extended in each bounded context as needed. All usages must reference the DTOs from the DTO project, not from Domain.
-Each concrete `DataService` is generic over all relevant DTOs and must use the `IMapper` abstraction for mapping and projection.
-All DataService implementations must be injected as their interface (e.g., `ICustomerService` or `IDataService<T...>`), never as a concrete type.
+
+All bounded contexts should use the **generic `DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>`** class located in `Inventorization.Base.Services` for implementing data services. This eliminates boilerplate CRUD code while enforcing consistent patterns across all contexts.
+
+### Creating Data Services in a Bounded Context
+
+Each entity requires:
+
+#### 1. DTOs (in BoundedContext.DTO project)
+- `DetailsDTO`: returned by `GetByIdAsync`
+- `CreateDTO`: input for `AddAsync`
+- `UpdateDTO`: input for `UpdateAsync`
+- `DeleteDTO`: input for `DeleteAsync`
+- `SearchDTO`: input for `SearchAsync`
+
+All base DTOs should be defined in `Inventorization.Base` and inherited/extended in each bounded context as needed.
+
+#### 2. Concrete Data Service (in BoundedContext.Domain project)
+
+**Step-by-step example** for a `Customer` entity:
+
+```csharp
+// ICustomerDataService.cs
+public interface ICustomerDataService : IDataService<Customer, CreateCustomerDTO, UpdateCustomerDTO, DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>
+{
+}
+
+// CustomerDataService.cs
+using Inventorization.Base.Services;
+using Inventorization.Base.DataAccess;
+using Inventorization.Base.Abstractions;
+using Microsoft.Extensions.Logging;
+
+public class CustomerDataService : DataServiceBase<Customer, CreateCustomerDTO, UpdateCustomerDTO, DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>, ICustomerDataService
+{
+    public CustomerDataService(
+        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        IRepository<Customer> repository,
+        IServiceProvider serviceProvider,
+        ILogger<DataServiceBase<Customer, CreateCustomerDTO, UpdateCustomerDTO, DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>> logger)
+        : base(unitOfWork, repository, serviceProvider, logger)
+    {
+    }
+}
+```
+
+**That's it!** No need to implement GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, or SearchAsync—all logic is inherited from `DataServiceBase`.
+
+### DataServiceBase Features
+
+The `DataServiceBase` class provides:
+
+- ✅ **All 5 CRUD/Search methods** with complete error handling and logging
+- ✅ **Lazy dependency resolution** via `IServiceProvider` for minimal memory footprint
+- ✅ **Direct repository injection** (`IRepository<TEntity>`) for efficient data access
+- ✅ **Automatic validation** using injected validators at runtime
+- ✅ **Dynamic entity naming** via reflection for consistent log messages
+- ✅ **Pagination support** via reflection on `SearchDTO.Page` property
+
+### Dependency Resolution Pattern
+
+`DataServiceBase` uses lazy dependency resolution to minimize overhead:
+
+**Constructor (always injected):**
+```csharp
+IUnitOfWorkInterface unitOfWork,     // For SaveChangesAsync
+IRepository<TEntity> repository,     // For CRUD operations
+IServiceProvider serviceProvider,    // For lazy resolution
+ILogger<...> logger                  // For logging
+```
+
+**Runtime resolution (resolved only when needed):**
+- `IMapper<TEntity, TDetailsDTO>` - Resolved in GetByIdAsync, AddAsync, UpdateAsync, SearchAsync
+- `IValidator<TCreateDTO>` - Resolved in AddAsync
+- `IValidator<TUpdateDTO>` - Resolved in UpdateAsync
+- `IEntityCreator<TEntity, TCreateDTO>` - Resolved in AddAsync
+- `IEntityModifier<TEntity, TUpdateDTO>` - Resolved in UpdateAsync
+- `ISearchQueryProvider<TEntity, TSearchDTO>` - Resolved in SearchAsync
+
+This approach:
+- Reduces constructor complexity
+- Minimizes DI container pressure
+- Only instantiates dependencies when actually used
+- Allows each bounded context to register only what it needs
+
+### Required Component Implementations
+
+For each bounded context, you must implement:
+
+#### Entity Mapping Abstractions
+- `IMapper<TEntity, TDetailsDTO>`: provides both object mapping and LINQ projection for entity-to-DTO mapping
+- `IEntityCreator<TEntity, TCreateDTO>`: creates entity from `CreateDTO`
+- `IEntityModifier<TEntity, TUpdateDTO>`: updates entity from `UpdateDTO`
+- `ISearchQueryProvider<TEntity, TSearchDTO>`: creates LINQ expression for search
+
+#### Validation
+- `IValidator<TCreateDTO>`: validates CreateDTO before entity creation
+- `IValidator<TUpdateDTO>`: validates UpdateDTO before entity modification
 
 ### DTO Typing Rules
 - Each entity has a corresponding set of DTOs, all located in the DTO project:
   - `DetailsDTO`: returned by `GetByIdAsync`
   - `CreateDTO`: input for `AddAsync`
-  - `UpdateDTO`: input for `UpdateAsync`
-  - `DeleteDTO`: input for `DeleteAsync`
+  - `UpdateDTO`: input for `UpdateAsync` (must inherit from `UpdateDTO` base)
+  - `DeleteDTO`: input for `DeleteAsync` (must inherit from `DeleteDTO` base)
   - `SearchDTO`: input for `SearchAsync`
-- Each concrete `DataService` is generic over all relevant DTOs and must use the `IMapper` abstraction for mapping and projection.
+- Each concrete `DataService` is generic over all relevant DTOs and inherits from `DataServiceBase`.
 
 ### Search Abstraction
 - `SearchDTO` base class includes:
@@ -71,37 +269,36 @@ All DataService implementations must be injected as their interface (e.g., `ICus
   - Abstract generic properties: `FilterDTO`, `ProjectionDTO` (implemented in each concrete `SearchDTO`)
   - Optionally, add `SortDTO` for sorting
 
-### Entity Mapping Abstractions
-- Use the following abstractions:
-  - `IMapper<TEntity, TDetailsDTO>`: provides both object mapping and LINQ projection for entity-to-DTO mapping; injected and used in all DataService methods.
-  - `IEntityCreator<TEntity, TCreateDTO>`: creates entity from `CreateDTO`, injected and used in `AddAsync`.
-  - `IEntityModifier<TEntity, TUpdateDTO>`: updates entity from `UpdateDTO`, injected and used in `UpdateAsync`.
-  - `ISearchQueryProvider<TEntity, TSearchDTO>`: creates LINQ expression for search, injected and used in `SearchAsync`.
-  - Optionally, `IDetailsMapper<TEntity, TDetailsDTO>` and `IProjectionMapper<TEntity, TProjectionDTO>` for advanced mapping scenarios.
+### Dependency Injection Registration
 
-### Validation
-- Inject validators (e.g., `IValidator<TCreateDTO>`, `IValidator<TUpdateDTO>`) for input validation before entity creation/modification.
+In your bounded context's DI setup (typically Program.cs or an extension method):
 
-### Authorization
-- Optionally inject `IAuthorizationService` to check permissions in service methods.
+```csharp
+// DTOs
+builder.Services.AddScoped<IMapper<Customer, CustomerDetailsDTO>, CustomerMapper>();
+builder.Services.AddScoped<IEntityCreator<Customer, CreateCustomerDTO>, CustomerCreator>();
+builder.Services.AddScoped<IEntityModifier<Customer, UpdateCustomerDTO>, CustomerModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Customer, CustomerSearchDTO>, CustomerSearchProvider>();
 
-### Domain Events
-- Allow `DataService` to publish domain events (e.g., via `IDomainEventPublisher`) after significant changes.
+// Validators
+builder.Services.AddScoped<IValidator<CreateCustomerDTO>, CreateCustomerValidator>();
+builder.Services.AddScoped<IValidator<UpdateCustomerDTO>, UpdateCustomerValidator>();
 
-### Caching
-- Optionally, add a caching decorator for read-heavy services.
+// Data Service
+builder.Services.AddScoped<ICustomerDataService, CustomerDataService>();
+builder.Services.AddScoped(typeof(IUnitOfWork), sp => sp.GetRequiredService<IBoundedContextUnitOfWork>());
+builder.Services.AddScoped(typeof(IRepository<>), typeof(EntityFrameworkRepository<>));
+```
 
-### Soft Delete
-- If soft delete is supported, ensure repository/service methods respect this.
+### All DataService Implementations Must Use This Pattern
 
-### Unit of Work
-- All changes are committed atomically via injected `IUnitOfWork`.
+All DataService implementations must:
+- Inherit from `DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>`
+- Be injected as their interface (e.g., `ICustomerDataService` or `IDataService<T...>`), never as concrete type
+- Have minimal concrete code (typically just a constructor)
+- Rely on inherited CRUD/Search logic from base class
 
-### Error Handling & Results
-- Use a base `ServiceResult<T>` type for consistent result/wrap error handling.
 
-### Observability
-- Add logging, metrics, and tracing as needed in all service methods.
 
 ### CQRS (Advanced)
 - For complex domains, consider separating read/write services (CQRS).

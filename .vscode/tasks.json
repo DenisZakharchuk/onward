@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start MongoDB",
+      "label": "Start Infra",
       "type": "shell",
       "command": "docker",
       "args": ["compose", "-f", "docker-compose.yml", "up", "-d", "--build"],
@@ -46,7 +46,7 @@
         "panel": "dedicated",
         "group": "dev"
       },
-      "dependsOn": ["Start MongoDB"]
+      "dependsOn": ["Start Infra"]
     },
     {
       "label": "Debug Backend",
@@ -79,7 +79,72 @@
         "panel": "dedicated",
         "group": "dev"
       },
-      "dependsOn": ["Start MongoDB"]
+      "dependsOn": ["Start Infra"]
+    },
+    {
+      "label": "Start Auth Service",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["run"],
+      "options": {
+        "cwd": "${workspaceFolder}/backend/Inventorization.Auth.API",
+        "env": {
+          "ASPNETCORE_URLS": "http://localhost:5012"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Building.*$",
+          "endsPattern": "^.*Now listening on.*$"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "dependsOn": ["Start Infra"]
+    },
+    {
+      "label": "Debug Auth Service",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["run", "--configuration", "Debug"],
+      "options": {
+        "cwd": "${workspaceFolder}/backend/Inventorization.Auth.API",
+        "env": {
+          "ASPNETCORE_URLS": "http://localhost:5012",
+          "ASPNETCORE_ENVIRONMENT": "Development"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Building.*$",
+          "endsPattern": "^.*Now listening on.*$"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "dependsOn": ["Start Infra"]
     },
     {
       "label": "Start Frontend",
@@ -113,7 +178,7 @@
       }
     },
     {
-      "label": "Stop MongoDB",
+      "label": "Stop Infra",
       "type": "shell",
       "command": "docker-compose",
       "args": ["down"],
@@ -128,7 +193,7 @@
     },
     {
       "label": "Start All",
-      "dependsOn": ["Start Backend", "Start Frontend"],
+      "dependsOn": ["Start Backend", "Start Auth Service", "Start Frontend"],
       "problemMatcher": []
     }
   ]
