@@ -2,8 +2,8 @@
 @contentType = application/json
 
 ### Variables (will be set from responses)
-@accessToken = 
-@refreshToken = 
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImRjZjk2N2YxLTIwMWUtNDdmNS1hNjZmLWZiNGRkMjNlY2EwYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGludmVudG9yaXphdGlvbi5sb2NhbCIsIm5hbWUiOiJTeXN0ZW0gQWRtaW5pc3RyYXRvciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwicGVybWlzc2lvbnMiOiJ1c2VyLmNyZWF0ZSx1c2VyLmRlbGV0ZSxyb2xlLmNyZWF0ZSxwZXJtaXNzaW9uLmRlbGV0ZSx1c2VyLnVwZGF0ZSxyb2xlLnVwZGF0ZSxwZXJtaXNzaW9uLnJlYWQscm9sZS5kZWxldGUscGVybWlzc2lvbi51cGRhdGUscGVybWlzc2lvbi5jcmVhdGUscm9sZS5yZWFkLHVzZXIucmVhZCIsImV4cCI6MTc2OTk5MTUwNSwiaXNzIjoiSW52ZW50b3JpemF0aW9uLkF1dGguRGV2IiwiYXVkIjoiSW52ZW50b3JpemF0aW9uLkNsaWVudC5EZXYifQ.S-1B_e0xq7rUGPa5YJsqccYZ8-GQCRcIR4vy33WXGJw
+@refreshToken = I3hoHk+HWvSPjShoVELu7BVf9oVU8EE+JVjaYKb5qUs=
 
 ###############################################################################
 # Authentication Endpoints

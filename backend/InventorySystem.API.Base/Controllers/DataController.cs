@@ -22,7 +22,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
     where TCreateDTO : class
     where TUpdateDTO : class
     where TDeleteDTO : class
-    where TDetailsDTO : class
+    where TDetailsDTO : BaseDTO
     where TSearchDTO : class
     where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>
 {
@@ -90,7 +90,8 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
             }
 
             LogOperationSuccess(nameof(CreateAsync));
-            return CreatedAtAction(nameof(GetByIdAsync), new { id = result.Data?.GetType().GetProperty("Id")?.GetValue(result.Data) }, result);
+            // Return 201 Created with the result data
+            return StatusCode(201, result);
         }
         catch (Exception ex)
         {
