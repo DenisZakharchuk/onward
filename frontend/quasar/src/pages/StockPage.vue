@@ -101,15 +101,15 @@ const columns = [
 ];
 
 onMounted(() => {
-  loadMovements();
-  loadProducts();
+  void loadMovements();
+  void loadProducts();
 });
 
 const loadMovements = async () => {
   loading.value = true;
   try {
     movements.value = await stockService.getAll();
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to load stock movements',
@@ -127,7 +127,7 @@ const loadProducts = async () => {
       value: product.id,
       stock: product.currentStock,
     }));
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to load products',
@@ -149,7 +149,7 @@ const handleSubmit = async (data: CreateStockMovementDTO) => {
     });
     await loadMovements();
     await loadProducts(); // Refresh product stock levels
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to create stock movement',

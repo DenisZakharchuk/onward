@@ -132,15 +132,15 @@ const columns = [
 ];
 
 onMounted(() => {
-  loadProducts();
-  loadCategories();
+  void loadProducts();
+  void loadCategories();
 });
 
 const loadProducts = async () => {
   loading.value = true;
   try {
     products.value = await productService.getAll();
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to load products',
@@ -157,7 +157,7 @@ const loadCategories = async () => {
       label: cat.name,
       value: cat.id,
     }));
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to load categories',
@@ -194,7 +194,7 @@ const handleSubmit = async (
       });
     }
     await loadProducts();
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to save product',
@@ -210,23 +210,25 @@ const confirmDelete = (product: Product) => {
     message: `Are you sure you want to delete "${product.name}"?`,
     cancel: true,
     persistent: true,
-  }).onOk(async () => {
-    $q.loading.show();
-    try {
-      await productService.delete(product.id);
-      $q.notify({
-        type: 'positive',
-        message: 'Product deleted successfully',
-      });
-      await loadProducts();
-    } catch (error) {
-      $q.notify({
-        type: 'negative',
-        message: 'Failed to delete product',
-      });
-    } finally {
-      $q.loading.hide();
-    }
+  }).onOk(() => {
+    void (async () => {
+      $q.loading.show();
+      try {
+        await productService.delete(product.id);
+        $q.notify({
+          type: 'positive',
+          message: 'Product deleted successfully',
+        });
+        await loadProducts();
+      } catch {
+        $q.notify({
+          type: 'negative',
+          message: 'Failed to delete product',
+        });
+      } finally {
+        $q.loading.hide();
+      }
+    })();
   });
 };
 </script>

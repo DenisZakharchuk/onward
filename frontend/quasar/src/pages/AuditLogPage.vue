@@ -270,7 +270,7 @@ onMounted(() => {
   filters.value.fromDate = thirtyDaysAgo.toISOString().split('T')[0] ?? '';
   filters.value.toDate = today.toISOString().split('T')[0] ?? '';
 
-  loadAuditLogs();
+  void loadAuditLogs();
 });
 
 const loadAuditLogs = async () => {
@@ -301,7 +301,7 @@ const loadAuditLogs = async () => {
     }
 
     auditLogs.value = await auditService.getAuditLogs(filterParams);
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to load audit logs',

@@ -181,6 +181,32 @@ export default defineConfig((ctx) => {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-capacitor-apps/configuring-capacitor
     capacitor: {
       hideSplashscreen: true,
+      
+      // Use separate env file for Capacitor builds
+      // This allows mobile devices to connect to the backend via network IP
+      extendViteConf(viteConf: any) {
+        if (ctx.modeName === 'capacitor') {
+          viteConf.envDir = '.';
+          viteConf.envPrefix = 'VITE_';
+          
+          // Load .env.capacitor for capacitor builds
+          const path = require('path');
+          const fs = require('fs');
+          const envPath = path.resolve(__dirname, '.env.capacitor');
+          
+          if (fs.existsSync(envPath)) {
+            const dotenv = require('dotenv');
+            const envConfig = dotenv.parse(fs.readFileSync(envPath));
+            
+            viteConf.define = viteConf.define || {};
+            Object.keys(envConfig).forEach((key) => {
+              if (key.startsWith('VITE_')) {
+                viteConf.define[`import.meta.env.${key}`] = JSON.stringify(envConfig[key]);
+              }
+            });
+          }
+        }
+      },
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/configuring-electron

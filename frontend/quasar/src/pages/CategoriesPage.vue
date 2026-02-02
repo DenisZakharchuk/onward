@@ -96,14 +96,14 @@ const columns = [
 ];
 
 onMounted(() => {
-  loadCategories();
+  void loadCategories();
 });
 
 const loadCategories = async () => {
   loading.value = true;
   try {
     categories.value = await categoryService.getAll();
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to load categories',
@@ -142,7 +142,7 @@ const handleSubmit = async (
       });
     }
     await loadCategories();
-  } catch (error) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to save category',
@@ -158,23 +158,25 @@ const confirmDelete = (category: Category) => {
     message: `Are you sure you want to delete "${category.name}"?`,
     cancel: true,
     persistent: true,
-  }).onOk(async () => {
-    $q.loading.show();
-    try {
-      await categoryService.delete(category.id);
-      $q.notify({
-        type: 'positive',
-        message: 'Category deleted successfully',
-      });
-      await loadCategories();
-    } catch (error) {
-      $q.notify({
-        type: 'negative',
-        message: 'Failed to delete category',
-      });
-    } finally {
-      $q.loading.hide();
-    }
+  }).onOk(() => {
+    void (async () => {
+      $q.loading.show();
+      try {
+        await categoryService.delete(category.id);
+        $q.notify({
+          type: 'positive',
+          message: 'Category deleted successfully',
+        });
+        await loadCategories();
+      } catch {
+        $q.notify({
+          type: 'negative',
+          message: 'Failed to delete category',
+        });
+      } finally {
+        $q.loading.hide();
+      }
+    })();
   });
 };
 </script>

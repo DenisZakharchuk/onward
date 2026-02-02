@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+src-capacitor/node_modules/
+
+# Build outputs
+dist/
+www/
+.quasar/
+src-capacitor/android/app/build/
+src-capacitor/android/.gradle/
+dist-android/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
