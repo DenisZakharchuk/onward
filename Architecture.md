@@ -150,10 +150,114 @@ public class User
   - API projects: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
 
 ## Base Abstractions and Data Structures
-- All base abstractions and common data structures (such as `CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, and all generic interfaces like `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, etc.) must be located in a separate shared project named `Inventorization.Base`.
+- All base abstractions and common data structures (such as `CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, `UnitOfWorkBase<TDbContext>`, and all generic interfaces like `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, `IUnitOfWork`, etc.) must be located in a separate shared project named `Inventorization.Base`.
 - All bounded context/domain projects must reference `Inventorization.Base` for these shared types.
 - All DTOs for each bounded context must be placed in the corresponding DTO project under a `DTO/` subfolder (e.g., `DTO/Customer`).
 - All mapping logic (entity-to-DTO and DTO-to-entity) must use the `IMapper<TEntity, TDetailsDTO>` abstraction, supporting both object mapping and LINQ projection via `Expression<Func<TEntity, TDetailsDTO>>`.
+
+## Unit of Work Pattern
+
+All bounded contexts must use the **generic `UnitOfWorkBase<TDbContext>`** class located in `Inventorization.Base.DataAccess` for implementing the Unit of Work pattern. This eliminates boilerplate transaction management code and ensures consistent behavior across all bounded contexts.
+
+### UnitOfWork Implementation in Bounded Context
+
+Each bounded context requires minimal concrete code for its Unit of Work:
+
+**Step 1: Define bounded context interface** (inherits from `IUnitOfWork`):
+
+```csharp
+// In BoundedContext.Domain/DataAccess/
+public interface IGoodsUnitOfWork : Inventorization.Base.DataAccess.IUnitOfWork
+{
+    // Add bounded context-specific methods if needed (usually empty)
+}
+```
+
+**Step 2: Implement concrete UnitOfWork** (inherits from `UnitOfWorkBase<TDbContext>`):
+
+```csharp
+// In BoundedContext.Domain/DataAccess/
+using Inventorization.Base.DataAccess;
+using Microsoft.Extensions.Logging;
+
+public class GoodsUnitOfWork : UnitOfWorkBase<GoodsDbContext>, IGoodsUnitOfWork
+{
+    public GoodsUnitOfWork(GoodsDbContext context, ILogger<GoodsUnitOfWork> logger)
+        : base(context, logger)
+    {
+    }
+    
+    // Override virtual methods only if custom behavior needed
+}
+```
+
+**That's it!** All transaction management, change tracking, and disposal logic is inherited from `UnitOfWorkBase`.
+
+### UnitOfWorkBase Features
+
+The `UnitOfWorkBase<TDbContext>` class provides:
+
+- ✅ **Complete IUnitOfWork implementation** with all 6 methods
+- ✅ **Transaction management**: Begin, Commit, Rollback with state validation
+- ✅ **Comprehensive logging**: Transaction start/commit/rollback, change counts, disposal warnings
+- ✅ **Error handling**: Try-catch blocks with detailed error logging
+- ✅ **Safe disposal**: Automatic rollback of active transactions on dispose
+- ✅ **Virtual methods**: All methods can be overridden for specialized behavior
+- ✅ **Type safety**: Generic constraint ensures only `DbContext` types accepted
+
+### UnitOfWork Methods
+
+All methods inherited from `UnitOfWorkBase`:
+
+```csharp
+// Save all tracked changes
+Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+
+// Begin a new transaction
+Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+
+// Commit current transaction
+Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+
+// Rollback current transaction
+Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+
+// Async disposal with transaction cleanup
+ValueTask DisposeAsync()
+
+// Sync disposal with transaction cleanup
+void Dispose()
+```
+
+### Dependency Injection Registration
+
+Register both the specific and base interfaces in `Program.cs`:
+
+```csharp
+// UnitOfWork
+builder.Services.AddScoped<IGoodsUnitOfWork, GoodsUnitOfWork>();
+builder.Services.AddScoped<Inventorization.Base.DataAccess.IUnitOfWork>(sp => 
+    sp.GetRequiredService<IGoodsUnitOfWork>());
+```
+
+**Note**: The `ILogger<T>` is automatically injected by the DI container—no special configuration needed.
+
+### Design Principles
+
+1. **DRY (Don't Repeat Yourself)**: Eliminates ~70-100 lines of duplicate code per bounded context
+2. **Consistency**: All bounded contexts have identical transaction behavior and logging
+3. **Testability**: Base class can be unit tested once; concrete implementations inherit reliability
+4. **Extensibility**: Override `virtual` methods for custom behavior when needed
+5. **Minimal Code**: Each bounded context UnitOfWork is typically 7-10 lines (interface + constructor)
+
+### All UnitOfWork Implementations Must Use This Pattern
+
+All UnitOfWork implementations must:
+- Inherit from `UnitOfWorkBase<TDbContext>` where `TDbContext` is the bounded context's `DbContext`
+- Implement the bounded context-specific interface (e.g., `IGoodsUnitOfWork`)
+- Inject both `TDbContext` and `ILogger<T>` in the constructor
+- Have minimal concrete code unless specialized behavior is required
+- Be registered in DI as both specific and base `IUnitOfWork` interfaces
 
 ## Domain Service Abstractions
 
