@@ -1,6 +1,15 @@
 @InventorySystem.API_HostAddress = http://localhost:5002
 
-GET {{InventorySystem.API_HostAddress}}/weatherforecast/
+GET {{InventorySystem.API_HostAddress}}/api/Categories
 Accept: application/json
 
+###
+POST {{InventorySystem.API_HostAddress}}/api/Categories
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "New Category",
+  "description": "Description for new category"
+}
 ###
