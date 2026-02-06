@@ -131,6 +131,16 @@ builder.Services.AddScoped<IPermissionDataService, PermissionDataService>();
 // ===== Password Hasher Registration =====
 builder.Services.AddScoped<Inventorization.Base.Abstractions.IPasswordHasher, BcryptPasswordHasher>();
 
+// ===== Relationship Management =====
+// UserRole relationships (User ↔ Role)
+builder.Services.AddScoped<IRepository<UserRole>>(sp =>
+{
+    var dbContext = sp.GetRequiredService<AuthDbContext>();
+    return new BaseRepository<UserRole>(dbContext);
+});
+builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
+builder.Services.AddScoped<IValidator<Inventorization.Base.DTOs.EntityReferencesDTO>, EntityReferencesValidator>();
+
 // ===== Authentication & Authorization Services =====
 builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
 builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.ITokenRotationService, TokenRotationService>();

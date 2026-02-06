@@ -441,3 +441,380 @@ This controller pattern integrates seamlessly with the existing architecture:
 4. **Response Wrapping** - All results wrapped in `ServiceResult<T>` for consistency
 5. **Audit Logging** - Services automatically log via `IAuditLogger` (no controller changes needed)
 6. **Error Handling** - Unified approach across all controllers via base class implementation
+
+---
+
+## Relationship Management Controllers
+
+Controllers managing entity relationships implement `IRelationController<TRelatedEntity>` for each relationship type. This pattern provides RESTful endpoints for adding/removing entity associations.
+
+### IRelationController<TRelatedEntity> Interface
+
+Located in `InventorySystem.API.Base/Controllers/IRelationController.cs`:
+
+```csharp
+public interface IRelationController<TRelatedEntity>
+    where TRelatedEntity : class
+{
+    Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> UpdateRelationshipsAsync(
+        Guid id,
+        EntityReferencesDTO changes,
+        CancellationToken cancellationToken = default);
+    
+    Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> UpdateMultipleRelationshipsAsync(
+        Dictionary<Guid, EntityReferencesDTO> changes,
+        CancellationToken cancellationToken = default);
+}
+```
+
+### DataRelationHandler<TEntity, TRelatedEntity> Abstract Base Class
+
+Located in `InventorySystem.API.Base/Controllers/DataRelationHandler.cs`:
+
+Provides boilerplate implementation for relationship update operations:
+
+```csharp
+public abstract class DataRelationHandler<TEntity, TRelatedEntity>
+    where TEntity : class
+    where TRelatedEntity : class
+{
+    protected readonly IRelationshipManager<TEntity, TRelatedEntity> RelationshipManager;
+    protected readonly ILogger Logger;
+    
+    protected async Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> HandleUpdateRelationshipsAsync(
+        Guid id,
+        EntityReferencesDTO changes,
+        string relationshipName,
+        CancellationToken cancellationToken);
+    
+    protected async Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> HandleUpdateMultipleRelationshipsAsync(
+        Dictionary<Guid, EntityReferencesDTO> changes,
+        string relationshipName,
+        CancellationToken cancellationToken);
+}
+```
+
+**Features:**
+- Consistent logging and error handling
+- Validation of input parameters
+- HTTP status code mapping (200 OK, 400 Bad Request, 500 Internal Server Error)
+- Integration with `IRelationshipManager<TEntity, TRelatedEntity>`
+
+### Route Conventions
+
+**Single Entity Relationship Update:**
+```
+PATCH /api/{entity}/{id}/relationships/{relationName}
+```
+
+**Bulk Relationship Update:**
+```
+PATCH /api/{entity}/relationships/{relationName}/bulk
+```
+
+### Complete Controller Example
+
+Controller managing multiple relationships (User ↔ Role, User ↔ Team):
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : 
+    DataController<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, UserDetailsDTO, UserSearchDTO, IUserDataService>,
+    IRelationController<Role>,  // User-Role relationships
+    IRelationController<Team>   // User-Team relationships
+{
+    // Relationship handlers (nested private classes)
+    private readonly UserRoleRelationHandler _roleHandler;
+    private readonly UserTeamRelationHandler _teamHandler;
+
+    public UsersController(
+        IUserDataService dataService,
+        IRelationshipManager<User, Role> roleRelationshipManager,
+        IRelationshipManager<User, Team> teamRelationshipManager,
+        ILogger<UsersController> logger)
+        : base(dataService, logger)
+    {
+        _roleHandler = new UserRoleRelationHandler(roleRelationshipManager, logger);
+        _teamHandler = new UserTeamRelationHandler(teamRelationshipManager, logger);
+    }
+
+    // IRelationController<Role> implementation
+    /// <summary>
+    /// Updates role assignments for this user
+    /// </summary>
+    /// <param name="id">User ID</param>
+    /// <param name="changes">Roles to add/remove</param>
+    [HttpPatch("{id}/relationships/roles")]
+    [ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 200)]
+    [ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 400)]
+    [ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 500)]
+    Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> IRelationController<Role>.UpdateRelationshipsAsync(
+        Guid id,
+        [FromBody] EntityReferencesDTO changes,
+        CancellationToken cancellationToken)
+    {
+        return _roleHandler.HandleUpdateRelationshipsAsync(id, changes, "Roles", cancellationToken);
+    }
+
+    /// <summary>
+    /// Bulk update role assignments for multiple users
+    /// </summary>
+    [HttpPatch("relationships/roles/bulk")]
+    [ProducesResponseType(typeof(ServiceResult<BulkRelationshipUpdateResult>), 200)]
+    [ProducesResponseType(typeof(ServiceResult<BulkRelationshipUpdateResult>), 400)]
+    Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> IRelationController<Role>.UpdateMultipleRelationshipsAsync(
+        [FromBody] Dictionary<Guid, EntityReferencesDTO> changes,
+        CancellationToken cancellationToken)
+    {
+        return _roleHandler.HandleUpdateMultipleRelationshipsAsync(changes, "Roles", cancellationToken);
+    }
+
+    // IRelationController<Team> implementation
+    /// <summary>
+    /// Updates team memberships for this user
+    /// </summary>
+    [HttpPatch("{id}/relationships/teams")]
+    [ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 200)]
+    [ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 400)]
+    Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> IRelationController<Team>.UpdateRelationshipsAsync(
+        Guid id,
+        [FromBody] EntityReferencesDTO changes,
+        CancellationToken cancellationToken)
+    {
+        return _teamHandler.HandleUpdateRelationshipsAsync(id, changes, "Teams", cancellationToken);
+    }
+
+    /// <summary>
+    /// Bulk update team memberships for multiple users
+    /// </summary>
+    [HttpPatch("relationships/teams/bulk")]
+    [ProducesResponseType(typeof(ServiceResult<BulkRelationshipUpdateResult>), 200)]
+    Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> IRelationController<Team>.UpdateMultipleRelationshipsAsync(
+        [FromBody] Dictionary<Guid, EntityReferencesDTO> changes,
+        CancellationToken cancellationToken)
+    {
+        return _teamHandler.HandleUpdateMultipleRelationshipsAsync(changes, "Teams", cancellationToken);
+    }
+
+    // Nested handler classes (private to controller)
+    private class UserRoleRelationHandler : DataRelationHandler<User, Role>
+    {
+        public UserRoleRelationHandler(IRelationshipManager<User, Role> manager, ILogger logger)
+            : base(manager, logger) { }
+    }
+
+    private class UserTeamRelationHandler : DataRelationHandler<User, Team>
+    {
+        public UserTeamRelationHandler(IRelationshipManager<User, Team> manager, ILogger logger)
+            : base(manager, logger) { }
+    }
+}
+```
+
+### Request/Response Formats
+
+**Single Update Request:**
+```http
+PATCH /api/users/{{userId}}/relationships/roles
+Content-Type: application/json
+
+{
+  "idsToAdd": [
+    "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+  ],
+  "idsToRemove": [
+    "9b2def3c-3b13-4a3d-a21e-af5c0f0b4c8a"
+  ]
+}
+```
+
+**Single Update Response (200 OK):**
+```json
+{
+  "isSuccess": true,
+  "data": {
+    "isSuccess": true,
+    "addedCount": 2,
+    "removedCount": 1,
+    "message": "Added 2, removed 1 relationships",
+    "errors": []
+  },
+  "message": "Updated Roles relationships: added 2, removed 1",
+  "errors": []
+}
+```
+
+**Bulk Update Request:**
+```http
+PATCH /api/users/relationships/roles/bulk
+Content-Type: application/json
+
+{
+  "3fa85f64-5717-4562-b3fc-2c963f66afa6": {
+    "idsToAdd": ["role-id-1", "role-id-2"],
+    "idsToRemove": []
+  },
+  "7c9e6679-7425-40de-944b-e07fc1f90ae7": {
+    "idsToAdd": [],
+    "idsToRemove": ["role-id-3"]
+  }
+}
+```
+
+**Bulk Update Response (200 OK):**
+```json
+{
+  "isSuccess": true,
+  "data": {
+    "isSuccess": true,
+    "totalAdded": 2,
+    "totalRemoved": 1,
+    "successfulOperations": 2,
+    "failedOperations": 0,
+    "message": "Bulk operation completed: 2 successful, added 2, removed 1",
+    "errors": [],
+    "operationResults": {
+      "3fa85f64-5717-4562-b3fc-2c963f66afa6": {
+        "isSuccess": true,
+        "addedCount": 2,
+        "removedCount": 0
+      },
+      "7c9e6679-7425-40de-944b-e07fc1f90ae7": {
+        "isSuccess": true,
+        "addedCount": 0,
+        "removedCount": 1
+      }
+    }
+  },
+  "message": "Bulk update completed: 2 successful, added 2, removed 1",
+  "errors": []
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "isSuccess": false,
+  "data": null,
+  "message": "Validation failed",
+  "errors": [
+    "Role 9b2def3c-3b13-4a3d-a21e-af5c0f0b4c8a not found",
+    "Cannot assign more than 10 roles at once"
+  ]
+}
+```
+
+### OpenAPI/Swagger Attributes
+
+Use `ProducesResponseType` for proper Swagger documentation:
+
+```csharp
+[HttpPatch("{id}/relationships/roles")]
+[ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 200)]
+[ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 400)]
+[ProducesResponseType(typeof(ServiceResult<RelationshipUpdateResult>), 500)]
+[SwaggerOperation(
+    Summary = "Update role assignments",
+    Description = "Adds and/or removes role assignments for the specified user",
+    OperationId = "UpdateUserRoles",
+    Tags = new[] { "Users", "Relationships" }
+)]
+```
+
+### Explicit Interface Implementation
+
+When a controller implements multiple `IRelationController<T>` interfaces, use explicit implementation to avoid ambiguity:
+
+```csharp
+// CORRECT: Explicit interface implementation
+Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> IRelationController<Role>.UpdateRelationshipsAsync(...)
+{
+    return _roleHandler.HandleUpdateRelationshipsAsync(...);
+}
+
+Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> IRelationController<Team>.UpdateRelationshipsAsync(...)
+{
+    return _teamHandler.HandleUpdateRelationshipsAsync(...);
+}
+
+// INCORRECT: Would cause compilation error
+public Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> UpdateRelationshipsAsync(...)
+{
+    // Ambiguous - which relationship?
+}
+```
+
+### Nested Handler Pattern
+
+Organizing relationship handlers as nested private classes keeps related code together:
+
+```csharp
+public class UsersController : DataController<...>, IRelationController<Role>
+{
+    private readonly UserRoleRelationHandler _roleHandler;
+    
+    public UsersController(...)
+    {
+        _roleHandler = new UserRoleRelationHandler(roleRelationshipManager, logger);
+    }
+    
+    // Nested class has access to controller context if needed
+    private class UserRoleRelationHandler : DataRelationHandler<User, Role>
+    {
+        public UserRoleRelationHandler(IRelationshipManager<User, Role> manager, ILogger logger)
+            : base(manager, logger) { }
+    }
+}
+```
+
+### Dependency Injection Registration
+
+Register relationship managers in `Program.cs`:
+
+```csharp
+// Relationship managers
+builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
+builder.Services.AddScoped<IRelationshipManager<User, Team>, UserTeamRelationshipManager>();
+
+// Validators
+builder.Services.AddScoped<IValidator<EntityReferencesDTO>, EntityReferencesValidator>();
+```
+
+### Design Principles
+
+1. **Single Responsibility**: Each handler manages one relationship type
+2. **Open/Closed**: New relationships added by implementing additional `IRelationController<T>`
+3. **Explicit over Implicit**: Relationship names in routes prevent ambiguity
+4. **Type Safety**: Generic constraints ensure correct entity types
+5. **Consistency**: All relationship operations follow identical patterns
+
+### Testing Relationship Controllers
+
+**Unit Tests:**
+- Mock `IRelationshipManager<TEntity, TRelatedEntity>`
+- Verify HTTP status codes for success/failure scenarios
+- Test request validation (empty changes, invalid IDs)
+- Verify response wrapping in `ServiceResult<T>`
+
+**Integration Tests:**
+- Test actual relationship creation/deletion in database
+- Verify transaction rollback on errors
+- Test bulk operations with mixed success/failure
+- Validate cascade delete prevention
+
+### Adding New Relationship Controllers
+
+**Checklist:**
+1. ✅ Implement `IRelationshipManager<TParent, TRelated>` in Domain layer
+2. ✅ Implement `IValidator<EntityReferencesDTO>` for relationship validation
+3. ✅ Register both in DI container
+4. ✅ Add `IRelationController<TRelated>` to parent controller
+5. ✅ Create nested handler class extending `DataRelationHandler<TParent, TRelated>`
+6. ✅ Implement interface methods with `[HttpPatch]` attributes and proper routes
+7. ✅ Add OpenAPI documentation attributes
+8. ✅ Test relationship endpoints
+
+See [Architecture.md](Architecture.md) "Entity Relationship Management Patterns" section for complete guidance on when to use relationship controllers vs full CRUD junction entities.
+

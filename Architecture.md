@@ -136,6 +136,73 @@ public class User
 }
 ```
 
+### Relationship Mutation Methods
+
+Entities can have domain methods for managing relationships in addition to API-level endpoints. This hybrid approach allows:
+- **Domain Methods**: Used within the application for in-process relationship management
+- **API Endpoints**: Used by external clients via HTTP
+
+**Rules for Entity Relationship Methods:**
+1. Methods validate business rules before modifying relationships
+2. Methods modify navigation collections directly
+3. Methods **DO NOT** call `SaveChangesAsync()` - caller's responsibility
+4. Methods throw exceptions for invalid operations
+
+**Example: User entity with role management**
+```csharp
+public class User
+{
+    private User() { }  // EF Core only
+    
+    public User(string email, string passwordHash, string fullName)
+    {
+        // ... constructor logic
+    }
+    
+    public Guid Id { get; private set; }
+    public string Email { get; private set; } = null!;
+    public ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
+    
+    // Relationship mutation methods
+    public void AssignRole(Role role)
+    {
+        if (role == null)
+            throw new ArgumentNullException(nameof(role));
+        
+        if (HasRole(role.Id))
+            throw new InvalidOperationException($"User already has role {role.Name}");
+        
+        UserRoles.Add(new UserRole(Id, role.Id));
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    public void RevokeRole(Guid roleId)
+    {
+        var userRole = UserRoles.FirstOrDefault(ur => ur.RoleId == roleId);
+        if (userRole == null)
+            throw new InvalidOperationException($"User does not have role {roleId}");
+        
+        UserRoles.Remove(userRole);
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    public bool HasRole(Guid roleId) => UserRoles.Any(ur => ur.RoleId == roleId);
+    
+    // Other entity methods...
+}
+```
+
+**When to add relationship methods to entities:**
+- Simple associations (one-to-many, many-to-many via junction)
+- Business logic requires validation before relationship changes
+- Domain services need to manage relationships in-process
+- Relationships are part of the entity's core domain behavior
+
+**When to skip entity methods:**
+- Relationships have no business validation rules
+- Relationships managed purely through CRUD operations
+- Junction entity has additional metadata requiring full service layer
+
 ## Dependency Injection Rules
 - All DataService implementations (e.g., CustomerService) must be injected as their corresponding IDataService<T...> or specific interface (e.g., ICustomerService), not as concrete types.
 - All service, repository, and abstraction dependencies should be injected as interfaces, not concrete types, to maximize testability and flexibility.
@@ -402,7 +469,545 @@ All DataService implementations must:
 - Have minimal concrete code (typically just a constructor)
 - Rely on inherited CRUD/Search logic from base class
 
+---
 
+## Entity Relationship Management Patterns
+
+This section defines patterns for managing entity relationships (one-to-many, many-to-many) with explicit guidance on when to use entity methods, dedicated services, or API endpoints.
+
+### Three-Tier Relationship Strategy
+
+**Tier 1: Simple Associations (Parent-Managed)**
+- Junction table with no additional metadata
+- Managed via parent entity methods (`AssignRole()`, `RevokeRole()`) AND API endpoints
+- No dedicated DataService for junction entity
+- No dedicated Controller for junction entity
+- Uses `IRelationshipManager<TEntity, TRelatedEntity>` for API persistence layer
+
+**When to use:**
+- Pure many-to-many relationships (UserRole, RolePermission)
+- No additional columns beyond foreign keys
+- Simple business rules (no duplicates, entity exists)
+
+**Example:** UserRole junction (User ↔ Role)
+
+---
+
+**Tier 2: Query-Only Services**
+- Relationships require complex queries/filtering
+- Custom service interface (NOT `IDataService`)
+- Read-only operations via specialized methods
+- Optional HTTP endpoints (GET only) for queries
+- No CRUD controllers
+
+**When to use:**
+- Complex relationship queries (graph traversal, aggregations)
+- Permission checking (user has permission through role chain)
+- Reporting (count relationships, find indirect associations)
+
+**Example:** RolePermissionService (queries permissions through role hierarchy)
+
+---
+
+**Tier 3: Full CRUD Junction Entities**
+- Relationships have additional metadata (timestamps, notes, status, quantity)
+- Full DTO set (Create, Update, Delete, Details, Search)
+- Extends `DataServiceBase<...>`
+- Dedicated `DataController<...>` with CRUD endpoints
+- Junction entity gets its own API surface
+
+**When to use:**
+- Junction entity has business-meaningful metadata
+- Audit trail required (who added relationship and when)
+- Soft delete needed (reversible relationships)
+- Relationships are first-class domain entities
+
+**Example:** ProjectMembership (User ↔ Project with JoinDate, Role, Status)
+
+---
+
+### Decision Matrix
+
+| Criteria | Tier 1 (Simple) | Tier 2 (Query-Only) | Tier 3 (Full CRUD) |
+|----------|----------------|---------------------|-------------------|
+| **Metadata** | FK only | FK only | FK + additional columns |
+| **Business Logic** | Basic validation | Complex queries | Full CRUD + validation |
+| **Audit Requirements** | MongoDB audit log | MongoDB audit log | Entity audit columns + MongoDB |
+| **API Endpoints** | PATCH relationships | GET queries only | Full CRUD endpoints |
+| **Entity Methods** | Yes | No | Optional |
+| **DataService** | `IRelationshipManager` | Custom interface | `DataServiceBase` |
+| **Controller** | Parent controller | Optional custom | Dedicated `DataController` |
+
+---
+
+### Junction Entity Implementation Rules
+
+All junction entities must follow these rules:
+
+**1. Naming Convention:** `{ParentEntity}x{ChildEntity}` or `{ParentEntity}{ChildEntity}`
+```csharp
+UserRole   // User ↔ Role
+BxC        // B ↔ C (abbreviated when names are short)
+```
+
+**2. Immutability Pattern:** Private setters, parameterized constructor
+```csharp
+public class UserRole
+{
+    private UserRole() { }  // EF Core only
+    
+    public UserRole(Guid userId, Guid roleId)
+    {
+        if (userId == Guid.Empty) throw new ArgumentException("User ID required");
+        if (roleId == Guid.Empty) throw new ArgumentException("Role ID required");
+        
+        UserId = userId;
+        RoleId = roleId;
+    }
+    
+    public Guid UserId { get; private set; }
+    public Guid RoleId { get; private set; }
+    
+    // Navigation properties
+    public User User { get; private set; } = null!;
+    public Role Role { get; private set; } = null!;
+}
+```
+
+**3. Composite Primary Key:** Configure in DbContext via Fluent API
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<UserRole>()
+        .HasKey(ur => new { ur.UserId, ur.RoleId });
+    
+    // Foreign key relationships with CASCADE DELETE PROHIBITED
+    modelBuilder.Entity<UserRole>()
+        .HasOne(ur => ur.User)
+        .WithMany(u => u.UserRoles)
+        .HasForeignKey(ur => ur.UserId)
+        .OnDelete(DeleteBehavior.Restrict);  // REQUIRED
+    
+    modelBuilder.Entity<UserRole>()
+        .HasOne(ur => ur.Role)
+        .WithMany(r => r.UserRoles)
+        .HasForeignKey(ur => ur.RoleId)
+        .OnDelete(DeleteBehavior.Restrict);  // REQUIRED
+}
+```
+
+---
+
+### Soft Delete Strategy
+
+For relationships requiring audit trails or reversible deletion, implement `ISoftDeletableEntity` on the junction entity:
+
+**When to use soft delete:**
+- Regulatory compliance requires relationship history
+- Relationships may be temporarily disabled and re-enabled
+- Audit trail must show who deleted relationship and when
+
+**Implementation:**
+```csharp
+public class ProjectMembership : ISoftDeletableEntity
+{
+    private ProjectMembership() { }
+    
+    public ProjectMembership(Guid projectId, Guid userId, string role)
+    {
+        ProjectId = projectId;
+        UserId = userId;
+        Role = role;
+        JoinedAt = DateTime.UtcNow;
+        IsDeleted = false;
+    }
+    
+    public Guid ProjectId { get; private set; }
+    public Guid UserId { get; private set; }
+    public string Role { get; private set; } = null!;
+    public DateTime JoinedAt { get; private set; }
+    
+    // ISoftDeletableEntity implementation
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    
+    public void MarkAsDeleted()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+    }
+    
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
+}
+```
+
+**DbContext configuration with query filter:**
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Global query filter to exclude soft-deleted entities
+    modelBuilder.Entity<ProjectMembership>()
+        .HasQueryFilter(pm => !pm.IsDeleted);
+    
+    // To include soft-deleted: context.ProjectMemberships.IgnoreQueryFilters()
+}
+```
+
+**When NOT to use soft delete:**
+- Simple associations with no audit requirements
+- High-volume relationships (performance concern with query filters)
+- MongoDB audit logging sufficient for compliance
+
+---
+
+### Transaction Responsibility
+
+Clear separation of transaction handling across layers:
+
+**Entity Mutation Methods:**
+- Modify navigation collections directly
+- **DO NOT** call `SaveChangesAsync()`
+- Caller responsible for persistence
+- Example:
+```csharp
+public void AssignRole(Role role)
+{
+    UserRoles.Add(new UserRole(Id, role.Id));
+    // No SaveChangesAsync() here
+}
+
+// Caller handles transaction
+var user = await userRepository.GetByIdAsync(userId);
+user.AssignRole(role);
+await unitOfWork.SaveChangesAsync();  // Caller's responsibility
+```
+
+**IRelationshipManager Implementations:**
+- Handle validation, repository operations, AND transactions
+- **MUST** call `unitOfWork.SaveChangesAsync()` after all changes
+- Example:
+```csharp
+public async Task<RelationshipUpdateResult> UpdateRelationshipsAsync(
+    Guid userId, 
+    EntityReferencesDTO changes,
+    CancellationToken cancellationToken)
+{
+    // Remove relationships
+    foreach (var roleId in changes.IdsToRemove)
+    {
+        var userRole = await _userRoleRepository.FindAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+        await _userRoleRepository.DeleteAsync(userRole, cancellationToken);
+    }
+    
+    // Add relationships
+    foreach (var roleId in changes.IdsToAdd)
+    {
+        await _userRoleRepository.CreateAsync(new UserRole(userId, roleId), cancellationToken);
+    }
+    
+    await _unitOfWork.SaveChangesAsync(cancellationToken);  // Manager's responsibility
+    
+    return RelationshipUpdateResult.Success(changes.IdsToAdd.Count, changes.IdsToRemove.Count);
+}
+```
+
+**API Controllers:**
+- Delegate to `IRelationshipManager`
+- **DO NOT** call `SaveChangesAsync()` directly
+- Rely on manager's transaction handling
+
+---
+
+### Cascade Delete Policy
+
+**REQUIRED: All foreign key relationships MUST be configured with `DeleteBehavior.Restrict`**
+
+**Rationale:** Automatic cascade deletion is EXTREMELY DANGEROUS and can lead to accidental data loss. All deletions must be explicit and validated.
+
+**EF Core Configuration (REQUIRED):**
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // CORRECT: Cascade deletion PROHIBITED
+    modelBuilder.Entity<UserRole>()
+        .HasOne(ur => ur.User)
+        .WithMany(u => u.UserRoles)
+        .HasForeignKey(ur => ur.UserId)
+        .OnDelete(DeleteBehavior.Restrict);  // ✅ REQUIRED
+    
+    // INCORRECT: Never use cascade deletion
+    // .OnDelete(DeleteBehavior.Cascade);  // ❌ PROHIBITED
+}
+```
+
+**Manual Deletion Pattern:**
+```csharp
+public async Task<ServiceResult<bool>> DeleteUserAsync(Guid userId)
+{
+    var user = await _repository.GetByIdAsync(userId);
+    if (user == null)
+        return ServiceResult<bool>.Failure("User not found");
+    
+    // Check for dependent relationships
+    var roleCount = user.UserRoles.Count;
+    if (roleCount > 0)
+    {
+        return ServiceResult<bool>.Failure(
+            $"Cannot delete user - assigned to {roleCount} roles. Remove roles first.");
+    }
+    
+    // Safe to delete
+    await _repository.DeleteAsync(user);
+    await _unitOfWork.SaveChangesAsync();
+    
+    return ServiceResult<bool>.Success(true);
+}
+```
+
+---
+
+### Validation Strategy
+
+Use `IValidator<EntityReferencesDTO>` for validating relationship changes before applying:
+
+```csharp
+public class EntityReferencesValidator : IValidator<EntityReferencesDTO>
+{
+    private readonly IRepository<Role> _roleRepository;
+    
+    public EntityReferencesValidator(IRepository<Role> roleRepository)
+    {
+        _roleRepository = roleRepository;
+    }
+    
+    public async Task<ValidationResult> ValidateAsync(
+        EntityReferencesDTO dto, 
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<string>();
+        
+        // Validate entities to add exist
+        if (dto.IdsToAdd.Any())
+        {
+            foreach (var roleId in dto.IdsToAdd)
+            {
+                var exists = await _roleRepository.ExistsAsync(roleId, cancellationToken);
+                if (!exists)
+                    errors.Add($"Role {roleId} not found");
+            }
+        }
+        
+        // Business rules
+        if (dto.IdsToAdd.Count > 10)
+            errors.Add("Cannot assign more than 10 roles at once");
+        
+        return errors.Any() 
+            ? ValidationResult.WithErrors(errors.ToArray()) 
+            : ValidationResult.Ok();
+    }
+}
+```
+
+**Integration in IRelationshipManager:**
+```csharp
+public async Task<RelationshipUpdateResult> UpdateRelationshipsAsync(...)
+{
+    // Validate first
+    var validator = _serviceProvider.GetRequiredService<IValidator<EntityReferencesDTO>>();
+    var validationResult = await validator.ValidateAsync(changes, cancellationToken);
+    
+    if (!validationResult.IsValid)
+        return RelationshipUpdateResult.Failure("Validation failed", validationResult.Errors);
+    
+    // Proceed with update
+    // ...
+}
+```
+
+---
+
+### Bulk Operations
+
+For performance-critical scenarios with many relationships (50+ entities), use bulk update methods:
+
+**IRelationshipManager Interface:**
+```csharp
+Task<BulkRelationshipUpdateResult> UpdateMultipleRelationshipsAsync(
+    Dictionary<Guid, EntityReferencesDTO> changes,
+    CancellationToken cancellationToken);
+```
+
+**Implementation Pattern:**
+```csharp
+public async Task<BulkRelationshipUpdateResult> UpdateMultipleRelationshipsAsync(
+    Dictionary<Guid, EntityReferencesDTO> changes,
+    CancellationToken cancellationToken)
+{
+    var results = new Dictionary<Guid, RelationshipUpdateResult>();
+    int totalAdded = 0;
+    int totalRemoved = 0;
+    int successful = 0;
+    int failed = 0;
+    var errors = new List<string>();
+    
+    foreach (var (entityId, entityChanges) in changes)
+    {
+        try
+        {
+            var result = await UpdateRelationshipsAsync(entityId, entityChanges, cancellationToken);
+            results[entityId] = result;
+            
+            if (result.IsSuccess)
+            {
+                totalAdded += result.AddedCount;
+                totalRemoved += result.RemovedCount;
+                successful++;
+            }
+            else
+            {
+                failed++;
+                errors.AddRange(result.Errors);
+            }
+        }
+        catch (Exception ex)
+        {
+            failed++;
+            errors.Add($"Entity {entityId}: {ex.Message}");
+            results[entityId] = RelationshipUpdateResult.Failure(ex.Message);
+        }
+    }
+    
+    if (failed == 0)
+        return BulkRelationshipUpdateResult.Success(totalAdded, totalRemoved, successful, results);
+    else
+        return BulkRelationshipUpdateResult.PartialSuccess(totalAdded, totalRemoved, successful, failed, results, errors);
+}
+```
+
+**Performance Recommendations:**
+- Batch operations in chunks of 100-500 entities per transaction
+- Use `EF.CompileAsyncQuery()` for hot paths
+- Consider background jobs (Hangfire) for operations > 1000 entities
+
+---
+
+### Complete Example: Tier 1 Implementation (User ↔ Role)
+
+**1. Junction Entity**
+```csharp
+public class UserRole
+{
+    private UserRole() { }
+    
+    public UserRole(Guid userId, Guid roleId)
+    {
+        UserId = userId;
+        RoleId = roleId;
+    }
+    
+    public Guid UserId { get; private set; }
+    public Guid RoleId { get; private set; }
+    public User User { get; private set; } = null!;
+    public Role Role { get; private set; } = null!;
+}
+```
+
+**2. Entity Mutation Methods**
+```csharp
+public class User
+{
+    public ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
+    
+    public void AssignRole(Role role)
+    {
+        if (HasRole(role.Id)) return;
+        UserRoles.Add(new UserRole(Id, role.Id));
+    }
+    
+    public void RevokeRole(Guid roleId)
+    {
+        var userRole = UserRoles.FirstOrDefault(ur => ur.RoleId == roleId);
+        if (userRole != null) UserRoles.Remove(userRole);
+    }
+    
+    public bool HasRole(Guid roleId) => UserRoles.Any(ur => ur.RoleId == roleId);
+}
+```
+
+**3. IRelationshipManager Implementation**
+```csharp
+public class UserRoleRelationshipManager : IRelationshipManager<User, Role>
+{
+    private readonly IRepository<User> _userRepository;
+    private readonly IRepository<Role> _roleRepository;
+    private readonly IRepository<UserRole> _userRoleRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    
+    public async Task<RelationshipUpdateResult> UpdateRelationshipsAsync(
+        Guid userId, 
+        EntityReferencesDTO changes,
+        CancellationToken cancellationToken)
+    {
+        // Implementation as shown above
+    }
+}
+```
+
+**4. Controller Implementation**
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : 
+    DataController<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, UserDetailsDTO, UserSearchDTO, IUserDataService>,
+    IRelationController<Role>
+{
+    private readonly UserRoleRelationHandler _roleHandler;
+    
+    public UsersController(
+        IUserDataService dataService,
+        IRelationshipManager<User, Role> roleRelationshipManager,
+        ILogger<UsersController> logger)
+        : base(dataService, logger)
+    {
+        _roleHandler = new UserRoleRelationHandler(roleRelationshipManager, logger);
+    }
+    
+    [HttpPatch("{id}/relationships/roles")]
+    Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> IRelationController<Role>.UpdateRelationshipsAsync(
+        Guid id,
+        EntityReferencesDTO changes,
+        CancellationToken cancellationToken)
+    {
+        return _roleHandler.HandleUpdateRelationshipsAsync(id, changes, "Roles", cancellationToken);
+    }
+    
+    [HttpPatch("relationships/roles/bulk")]
+    Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> IRelationController<Role>.UpdateMultipleRelationshipsAsync(
+        Dictionary<Guid, EntityReferencesDTO> changes,
+        CancellationToken cancellationToken)
+    {
+        return _roleHandler.HandleUpdateMultipleRelationshipsAsync(changes, "Roles", cancellationToken);
+    }
+    
+    private class UserRoleRelationHandler : DataRelationHandler<User, Role>
+    {
+        public UserRoleRelationHandler(IRelationshipManager<User, Role> manager, ILogger logger)
+            : base(manager, logger) { }
+    }
+}
+```
+
+**5. DI Registration**
+```csharp
+builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
+builder.Services.AddScoped<IValidator<EntityReferencesDTO>, EntityReferencesValidator>();
+```
+
+---
 
 ### CQRS (Advanced)
 - For complex domains, consider separating read/write services (CQRS).

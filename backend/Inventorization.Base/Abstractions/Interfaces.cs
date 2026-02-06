@@ -126,3 +126,43 @@ public interface IUnitOfWork
     Task CommitAsync(CancellationToken cancellationToken = default);
     Task RollbackAsync(CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Manages relationships between entities with add/remove semantics
+/// </summary>
+/// <typeparam name="TEntity">Parent entity type</typeparam>
+/// <typeparam name="TRelatedEntity">Related entity type</typeparam>
+public interface IRelationshipManager<TEntity, TRelatedEntity>
+    where TEntity : class
+    where TRelatedEntity : class
+{
+    /// <summary>
+    /// Updates relationships by adding and removing related entities for a single parent entity
+    /// </summary>
+    /// <param name="entityId">ID of the parent entity</param>
+    /// <param name="changes">Changes to apply (IDs to add and remove)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result with counts of added/removed relationships</returns>
+    Task<RelationshipUpdateResult> UpdateRelationshipsAsync(
+        Guid entityId, 
+        EntityReferencesDTO changes, 
+        CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Updates relationships for multiple parent entities in a single transaction
+    /// </summary>
+    /// <param name="changes">Dictionary mapping entity IDs to their relationship changes</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result with aggregated counts and per-entity results</returns>
+    Task<BulkRelationshipUpdateResult> UpdateMultipleRelationshipsAsync(
+        Dictionary<Guid, EntityReferencesDTO> changes,
+        CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets all related entity IDs for the parent entity
+    /// </summary>
+    /// <param name="entityId">ID of the parent entity</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of related entity IDs</returns>
+    Task<List<Guid>> GetRelatedIdsAsync(Guid entityId, CancellationToken cancellationToken = default);
+}

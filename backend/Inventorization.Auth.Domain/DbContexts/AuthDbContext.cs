@@ -36,11 +36,11 @@ public class AuthDbContext : DbContext
             entity.HasMany(e => e.UserRoles)
                 .WithOne(ur => ur.User)
                 .HasForeignKey(ur => ur.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);  // CASCADE DELETE PROHIBITED - prevent accidental data loss
             entity.HasMany(e => e.RefreshTokens)
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);  // CASCADE DELETE PROHIBITED - prevent accidental data loss
         });
 
         // Role configuration
@@ -55,11 +55,11 @@ public class AuthDbContext : DbContext
             entity.HasMany(e => e.UserRoles)
                 .WithOne(ur => ur.Role)
                 .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);  // CASCADE DELETE PROHIBITED - prevent accidental data loss
             entity.HasMany(e => e.RolePermissions)
                 .WithOne(rp => rp.Role)
                 .HasForeignKey(rp => rp.RoleId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);  // CASCADE DELETE PROHIBITED - prevent accidental data loss
         });
 
         // Permission configuration
@@ -76,7 +76,7 @@ public class AuthDbContext : DbContext
             entity.HasMany(e => e.RolePermissions)
                 .WithOne(rp => rp.Permission)
                 .HasForeignKey(rp => rp.PermissionId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);  // CASCADE DELETE PROHIBITED - prevent accidental data loss
         });
 
         // UserRole junction configuration

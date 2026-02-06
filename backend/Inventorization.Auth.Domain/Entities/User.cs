@@ -78,4 +78,44 @@ public class User : BaseEntity
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Assigns a role to the user
+    /// </summary>
+    /// <param name="role">The role to assign</param>
+    /// <exception cref="ArgumentNullException">Thrown when role is null</exception>
+    /// <exception cref="InvalidOperationException">Thrown when user already has the role</exception>
+    public void AssignRole(Role role)
+    {
+        if (role == null)
+            throw new ArgumentNullException(nameof(role));
+        
+        if (HasRole(role.Id))
+            throw new InvalidOperationException($"User already has role {role.Name}");
+        
+        UserRoles.Add(new UserRole(Id, role.Id));
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Revokes a role from the user
+    /// </summary>
+    /// <param name="roleId">The ID of the role to revoke</param>
+    /// <exception cref="InvalidOperationException">Thrown when user does not have the role</exception>
+    public void RevokeRole(Guid roleId)
+    {
+        var userRole = UserRoles.FirstOrDefault(ur => ur.RoleId == roleId);
+        if (userRole == null)
+            throw new InvalidOperationException($"User does not have role {roleId}");
+        
+        UserRoles.Remove(userRole);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Checks if the user has a specific role
+    /// </summary>
+    /// <param name="roleId">The ID of the role to check</param>
+    /// <returns>True if the user has the role, false otherwise</returns>
+    public bool HasRole(Guid roleId) => UserRoles.Any(ur => ur.RoleId == roleId);
 }

@@ -86,3 +86,116 @@ public class PagedResult<T>
     public int PageSize { get; set; }
     public int TotalPages => (TotalCount + PageSize - 1) / PageSize;
 }
+
+/// <summary>
+/// Represents changes to entity relationships with explicit add/remove semantics
+/// </summary>
+public class EntityReferencesDTO
+{
+    /// <summary>
+    /// IDs of entities to add to the relationship
+    /// </summary>
+    public List<Guid> IdsToAdd { get; set; } = new();
+    
+    /// <summary>
+    /// IDs of entities to remove from the relationship
+    /// </summary>
+    public List<Guid> IdsToRemove { get; set; } = new();
+    
+    public EntityReferencesDTO() { }
+    
+    public EntityReferencesDTO(IEnumerable<Guid> idsToAdd, IEnumerable<Guid>? idsToRemove = null)
+    {
+        IdsToAdd = idsToAdd.ToList();
+        IdsToRemove = idsToRemove?.ToList() ?? new();
+    }
+    
+    /// <summary>
+    /// Returns true if there are any changes to apply
+    /// </summary>
+    public bool HasChanges => IdsToAdd.Any() || IdsToRemove.Any();
+}
+
+/// <summary>
+/// Result of a relationship update operation
+/// </summary>
+public class RelationshipUpdateResult
+{
+    public bool IsSuccess { get; set; }
+    public int AddedCount { get; set; }
+    public int RemovedCount { get; set; }
+    public string? Message { get; set; }
+    public List<string> Errors { get; set; } = new();
+    
+    public static RelationshipUpdateResult Success(int added, int removed, string? message = null) =>
+        new() 
+        { 
+            IsSuccess = true, 
+            AddedCount = added, 
+            RemovedCount = removed, 
+            Message = message ?? $"Added {added}, removed {removed} relationships" 
+        };
+    
+    public static RelationshipUpdateResult Failure(string message, List<string>? errors = null) =>
+        new() { IsSuccess = false, Message = message, Errors = errors ?? new() };
+}
+
+/// <summary>
+/// Result of bulk relationship update operations
+/// </summary>
+public class BulkRelationshipUpdateResult
+{
+    public bool IsSuccess { get; set; }
+    public int TotalAdded { get; set; }
+    public int TotalRemoved { get; set; }
+    public int SuccessfulOperations { get; set; }
+    public int FailedOperations { get; set; }
+    public string? Message { get; set; }
+    public List<string> Errors { get; set; } = new();
+    public Dictionary<Guid, RelationshipUpdateResult> OperationResults { get; set; } = new();
+    
+    public static BulkRelationshipUpdateResult Success(
+        int totalAdded, 
+        int totalRemoved, 
+        int successful, 
+        Dictionary<Guid, RelationshipUpdateResult> results,
+        string? message = null) =>
+        new() 
+        { 
+            IsSuccess = true, 
+            TotalAdded = totalAdded, 
+            TotalRemoved = totalRemoved,
+            SuccessfulOperations = successful,
+            FailedOperations = 0,
+            OperationResults = results,
+            Message = message ?? $"Bulk operation completed: {successful} successful, added {totalAdded}, removed {totalRemoved}" 
+        };
+    
+    public static BulkRelationshipUpdateResult PartialSuccess(
+        int totalAdded,
+        int totalRemoved,
+        int successful,
+        int failed,
+        Dictionary<Guid, RelationshipUpdateResult> results,
+        List<string> errors) =>
+        new()
+        {
+            IsSuccess = false,
+            TotalAdded = totalAdded,
+            TotalRemoved = totalRemoved,
+            SuccessfulOperations = successful,
+            FailedOperations = failed,
+            OperationResults = results,
+            Errors = errors,
+            Message = $"Bulk operation partially completed: {successful} successful, {failed} failed"
+        };
+    
+    public static BulkRelationshipUpdateResult Failure(string message, List<string>? errors = null) =>
+        new() 
+        { 
+            IsSuccess = false, 
+            Message = message, 
+            Errors = errors ?? new(),
+            FailedOperations = 0
+        };
+}
