@@ -617,6 +617,305 @@ builder.Services.AddScoped<IValidator<EntityReferencesDTO>, EntityReferencesVali
 
 ---
 
+## Generic One-to-Many Relationship Manager (OneToManyRelationshipManagerBase)
+
+All bounded contexts should use the **generic `OneToManyRelationshipManagerBase<TParent, TChild>`** class for managing one-to-many relationships where children have a foreign key to the parent.
+
+### Creating One-to-Many Managers in a Bounded Context
+
+Each one-to-many relationship requires:
+
+#### 1. Child Entity with Foreign Key (in BoundedContext.Domain/Entities)
+
+```csharp
+using Inventorization.Base.Models;
+
+public class RefreshToken : BaseEntity
+{
+    private RefreshToken() { } // EF Core only
+    
+    public RefreshToken(Guid userId, string token, DateTime expiresAt)
+    {
+        if (userId == Guid.Empty) throw new ArgumentException("User ID is required");
+        if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("Token is required");
+        
+        UserId = userId;
+        Token = token;
+        ExpiresAt = expiresAt;
+    }
+
+    public Guid UserId { get; private set; }
+    public string Token { get; private set; }
+    public DateTime ExpiresAt { get; private set; }
+    
+    // Navigation property
+    public User User { get; } = null!;
+    
+    public void UpdateUserId(Guid userId)
+    {
+        UserId = userId;
+    }
+}
+```
+
+#### 2. Property Accessor (in BoundedContext.Domain/PropertyAccessors)
+
+```csharp
+using Inventorization.Base.Abstractions;
+
+public class RefreshTokenUserIdAccessor 
+    : PropertyAccessor<RefreshToken, Guid>
+{
+    public RefreshTokenUserIdAccessor() : base(rt => rt.UserId) { }
+}
+```
+
+#### 3. Concrete Relationship Manager (in BoundedContext.Domain/DataServices)
+
+```csharp
+using Inventorization.Base.Services;
+using Inventorization.Base.Models;
+
+public class UserRefreshTokenRelationshipManager 
+    : OneToManyRelationshipManagerBase<User, RefreshToken>
+{
+    public UserRefreshTokenRelationshipManager(
+        IRepository<User> userRepository,
+        IRepository<RefreshToken> refreshTokenRepository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider,
+        ILogger<UserRefreshTokenRelationshipManager> logger)
+        : base(
+            userRepository,
+            refreshTokenRepository,
+            unitOfWork,
+            serviceProvider,
+            logger,
+            new RelationshipMetadata(
+                type: RelationshipType.OneToMany,
+                cardinality: RelationshipCardinality.Required,
+                entityName: nameof(User),
+                relatedEntityName: nameof(RefreshToken),
+                displayName: "User Refresh Tokens",
+                description: "Manages the one-to-many relationship between users and their refresh tokens"),
+            typeof(RefreshTokenUserIdAccessor))
+    {
+    }
+
+    protected override void SetParentId(RefreshToken child, Guid? parentId)
+    {
+        if (parentId == null)
+            throw new InvalidOperationException("Cannot set UserId to null on RefreshToken");
+        
+        child.UpdateUserId(parentId.Value);
+    }
+}
+```
+
+**Only ~40 lines of code!** Parent-child relationship fully managed with add/remove/replace operations.
+
+### OneToManyRelationshipManagerBase Features
+
+- ✅ **GetChildIdsAsync** - Retrieve all children for a parent
+- ✅ **AddChildAsync** - Associate a child with a parent
+- ✅ **RemoveChildAsync** - Dissociate a child from a parent (if cardinality allows)
+- ✅ **ReplaceChildrenAsync** - Replace entire child collection
+- ✅ **Cardinality validation** - Prevents removing required relationships
+- ✅ **Comprehensive logging** - All operations logged with entity names
+- ✅ **Transaction management** - Automatic SaveChangesAsync calls
+
+### Dependency Injection Registration
+
+```csharp
+// 1. Register child entity repository
+builder.Services.AddScoped<IRepository<RefreshToken>>(sp =>
+{
+    var dbContext = sp.GetRequiredService<AuthDbContext>();
+    return new BaseRepository<RefreshToken>(dbContext);
+});
+
+// 2. Register property accessor
+builder.Services.AddScoped<RefreshTokenUserIdAccessor>();
+
+// 3. Register relationship manager
+builder.Services.AddScoped<IOneToManyRelationshipManager<User, RefreshToken>, UserRefreshTokenRelationshipManager>();
+```
+
+---
+
+## Generic One-to-One Relationship Manager (OneToOneRelationshipManagerBase)
+
+All bounded contexts should use the **generic `OneToOneRelationshipManagerBase<TEntity, TRelatedEntity>`** class for managing one-to-one relationships.
+
+### Creating One-to-One Managers in a Bounded Context
+
+Each one-to-one relationship requires:
+
+#### 1. Entity with Foreign Key (in BoundedContext.Domain/Entities)
+
+```csharp
+using Inventorization.Base.Models;
+
+public class User : BaseEntity
+{
+    public string Email { get; private set; }
+    public string FullName { get; private set; }
+    public Guid? UserProfileId { get; private set; } // Optional FK
+    
+    // Navigation property
+    public UserProfile? UserProfile { get; private set; }
+    
+    public void SetProfile(Guid? profileId)
+    {
+        UserProfileId = profileId;
+    }
+}
+```
+
+#### 2. Property Accessor (in BoundedContext.Domain/PropertyAccessors)
+
+```csharp
+using Inventorization.Base.Abstractions;
+
+public class UserProfileIdAccessor 
+    : PropertyAccessor<User, Guid?>
+{
+    public UserProfileIdAccessor() : base(u => u.UserProfileId) { }
+}
+```
+
+#### 3. Concrete Relationship Manager (in BoundedContext.Domain/DataServices)
+
+```csharp
+using Inventorization.Base.Services;
+using Inventorization.Base.Models;
+
+public class UserProfileRelationshipManager 
+    : OneToOneRelationshipManagerBase<User, UserProfile>
+{
+    public UserProfileRelationshipManager(
+        IRepository<User> userRepository,
+        IRepository<UserProfile> userProfileRepository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider,
+        ILogger<UserProfileRelationshipManager> logger)
+        : base(
+            userRepository,
+            userProfileRepository,
+            unitOfWork,
+            serviceProvider,
+            logger,
+            new RelationshipMetadata(
+                type: RelationshipType.OneToOne,
+                cardinality: RelationshipCardinality.Optional,
+                entityName: nameof(User),
+                relatedEntityName: nameof(UserProfile),
+                displayName: "User Profile",
+                description: "Manages the one-to-one relationship between users and their profiles"),
+            typeof(UserProfileIdAccessor))
+    {
+    }
+
+    protected override void SetRelatedId(User entity, Guid? relatedId)
+    {
+        entity.SetProfile(relatedId);
+    }
+}
+```
+
+**Only ~35 lines of code!** One-to-one relationship fully managed with get/set/remove operations.
+
+### OneToOneRelationshipManagerBase Features
+
+- ✅ **GetRelatedIdAsync** - Get the related entity ID
+- ✅ **SetRelatedEntityAsync** - Set or update the related entity
+- ✅ **RemoveRelationshipAsync** - Remove the relationship (if cardinality allows)
+- ✅ **Cardinality validation** - Prevents removing required relationships
+- ✅ **Existence validation** - Ensures both entities exist before creating relationship
+- ✅ **Comprehensive logging** - All operations logged with entity names
+- ✅ **Transaction management** - Automatic SaveChangesAsync calls
+
+### Dependency Injection Registration
+
+```csharp
+// 1. Register related entity repository
+builder.Services.AddScoped<IRepository<UserProfile>>(sp =>
+{
+    var dbContext = sp.GetRequiredService<AuthDbContext>();
+    return new BaseRepository<UserProfile>(dbContext);
+});
+
+// 2. Register property accessor
+builder.Services.AddScoped<UserProfileIdAccessor>();
+
+// 3. Register relationship manager
+builder.Services.AddScoped<IOneToOneRelationshipManager<User, UserProfile>, UserProfileRelationshipManager>();
+```
+
+---
+
+## Relationship Type Decision Matrix
+
+Use this matrix to choose the appropriate relationship manager:
+
+| Relationship Pattern | Manager Base Class | When to Use | Example |
+|---------------------|-------------------|-------------|---------|
+| **Many-to-Many** | `RelationshipManagerBase` | Multiple entities can relate to multiple entities | User ↔ Role, Role ↔ Permission, Student ↔ Course |
+| **One-to-Many** | `OneToManyRelationshipManagerBase` | One parent has multiple children | User → RefreshTokens, Category → Products, Order → OrderItems |
+| **One-to-One** | `OneToOneRelationshipManagerBase` | One entity relates to exactly one other entity | User ↔ UserProfile, Order ↔ ShippingAddress |
+
+### Cardinality Guidelines
+
+| Cardinality | Use Case | Can Remove? | Example |
+|-------------|----------|-------------|---------|
+| **Required** | Child cannot exist without parent | ❌ No | OrderItem → Order, RefreshToken → User |
+| **Optional** | Child can exist independently | ✅ Yes | User → UserProfile, Product → Category |
+
+### Property Accessor Patterns
+
+All relationship managers use property accessors for type-safe, reusable property access:
+
+```csharp
+// For junction entities (ManyToMany)
+IEntityIdPropertyAccessor<TJunctionEntity>        // Parent entity ID
+IRelatedEntityIdPropertyAccessor<TJunctionEntity> // Related entity ID
+
+// For child entities (OneToMany)
+IPropertyAccessor<TChild, Guid>                   // Parent foreign key
+
+// For entities with FK (OneToOne)
+IPropertyAccessor<TEntity, Guid?>                 // Related entity FK (nullable)
+```
+
+---
+
+## Bounded Context Relationship Boilerplate Checklist
+
+### For Many-to-Many Relationships
+
+✅ **Junction entity** inheriting from `JunctionEntityBase`  
+✅ **Two property accessors**: `IEntityIdPropertyAccessor<TJunction>`, `IRelatedEntityIdPropertyAccessor<TJunction>`  
+✅ **Relationship manager** inheriting from `RelationshipManagerBase`  
+✅ **DI registrations**: Junction repository, property accessors, relationship manager, validator  
+
+### For One-to-Many Relationships
+
+✅ **Child entity** with parent foreign key  
+✅ **One property accessor**: `IPropertyAccessor<TChild, Guid>` for parent ID  
+✅ **Relationship manager** inheriting from `OneToManyRelationshipManagerBase`  
+✅ **SetParentId method** implementation in manager  
+✅ **DI registrations**: Child repository, property accessor, relationship manager  
+
+### For One-to-One Relationships
+
+✅ **Entity** with related entity foreign key (nullable if optional)  
+✅ **One property accessor**: `IPropertyAccessor<TEntity, Guid?>` for related ID  
+✅ **Relationship manager** inheriting from `OneToOneRelationshipManagerBase`  
+✅ **SetRelatedId method** implementation in manager  
+✅ **DI registrations**: Related repository, property accessor, relationship manager  
+
+---
+
 ### Search Abstraction
 - `SearchDTO` base class includes:
   - `PageDTO` for pagination
