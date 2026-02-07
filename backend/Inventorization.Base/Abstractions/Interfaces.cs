@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Inventorization.Base.DTOs;
+using Inventorization.Base.Models;
 
 namespace Inventorization.Base.Abstractions;
 
@@ -125,6 +126,11 @@ public interface IRelationshipManager<TEntity, TRelatedEntity>
     where TEntity : class
     where TRelatedEntity : class
 {
+    /// <summary>
+    /// Metadata describing the relationship type, cardinality, and entities involved
+    /// </summary>
+    RelationshipMetadata Metadata { get; }
+
     /// <summary>
     /// Updates relationships by adding and removing related entities for a single parent entity
     /// </summary>

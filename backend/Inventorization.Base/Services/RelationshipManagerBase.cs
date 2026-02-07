@@ -43,13 +43,20 @@ public abstract class RelationshipManagerBase<TEntity, TRelatedEntity, TJunction
     /// </summary>
     protected readonly IPropertyAccessor<TJunctionEntity, Guid> RelatedEntityIdAccessor;
 
+    /// <summary>
+    /// Metadata describing the relationship.
+    /// Derived classes must provide metadata via constructor.
+    /// </summary>
+    public RelationshipMetadata Metadata { get; }
+
     protected RelationshipManagerBase(
         IRepository<TEntity> entityRepository,
         IRepository<TRelatedEntity> relatedEntityRepository,
         IRepository<TJunctionEntity> junctionRepository,
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
-        ILogger logger)
+        ILogger logger,
+        RelationshipMetadata metadata)
     {
         EntityRepository = entityRepository ?? throw new ArgumentNullException(nameof(entityRepository));
         RelatedEntityRepository = relatedEntityRepository ?? throw new ArgumentNullException(nameof(relatedEntityRepository));
@@ -57,6 +64,7 @@ public abstract class RelationshipManagerBase<TEntity, TRelatedEntity, TJunction
         UnitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
 
         EntityName = typeof(TEntity).Name;
         RelatedEntityName = typeof(TRelatedEntity).Name;
@@ -64,6 +72,14 @@ public abstract class RelationshipManagerBase<TEntity, TRelatedEntity, TJunction
         // Resolve property accessors from DI container
         EntityIdAccessor = serviceProvider.GetRequiredService<IEntityIdPropertyAccessor<TJunctionEntity>>();
         RelatedEntityIdAccessor = serviceProvider.GetRequiredService<IRelatedEntityIdPropertyAccessor<TJunctionEntity>>();
+        
+        // Validate metadata matches actual types
+        if (Metadata.Type != RelationshipType.ManyToMany)
+        {
+            throw new InvalidOperationException(
+                $"RelationshipManagerBase is designed for ManyToMany relationships only. " +
+                $"Metadata indicates {Metadata.Type}.");
+        }
     }
 
     /// <summary>

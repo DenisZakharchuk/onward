@@ -1,5 +1,6 @@
 using Inventorization.Base.DataAccess;
 using Inventorization.Base.Services;
+using Inventorization.Base.Models;
 using Inventorization.Auth.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +19,21 @@ public class UserRoleRelationshipManager : RelationshipManagerBase<User, Role, U
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
         ILogger<UserRoleRelationshipManager> logger)
-        : base(userRepository, roleRepository, userRoleRepository, unitOfWork, serviceProvider, logger)
+        : base(
+            userRepository, 
+            roleRepository, 
+            userRoleRepository, 
+            unitOfWork, 
+            serviceProvider, 
+            logger,
+            new RelationshipMetadata(
+                type: RelationshipType.ManyToMany,
+                cardinality: RelationshipCardinality.Optional,
+                entityName: nameof(User),
+                relatedEntityName: nameof(Role),
+                displayName: "User Roles",
+                junctionEntityName: nameof(UserRole),
+                description: "Manages the many-to-many relationship between users and their assigned roles"))
     {
     }
 }
