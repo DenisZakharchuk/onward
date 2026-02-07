@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Inventorization.Base.Abstractions;
 
 namespace Inventorization.Base.Models;
@@ -35,7 +36,9 @@ public class DataModelMetadata : IDataModelMetadata
         EntityName = entityType.Name;
         DisplayName = entityType.Name;
         TableName = tableName;
-        Properties = properties;
+        Properties = properties is FrozenDictionary<string, IDataPropertyMetadata> 
+            ? properties 
+            : properties.ToFrozenDictionary();
         PrimaryKey = Array.Empty<string>();
         Indexes = Array.Empty<string[]>();
         UniqueConstraints = Array.Empty<string[]>();
@@ -66,7 +69,9 @@ public class DataModelMetadata : IDataModelMetadata
         DisplayName = displayName ?? entityType.Name;
         TableName = tableName ?? entityType.Name + "s";
         Schema = schema;
-        Properties = properties ?? new Dictionary<string, IDataPropertyMetadata>();
+        Properties = properties is FrozenDictionary<string, IDataPropertyMetadata> 
+            ? properties 
+            : (properties?.ToFrozenDictionary() ?? FrozenDictionary<string, IDataPropertyMetadata>.Empty);
         PrimaryKey = primaryKey ?? Array.Empty<string>();
         Indexes = indexes ?? Array.Empty<string[]>();
         UniqueConstraints = uniqueConstraints ?? Array.Empty<string[]>();
@@ -233,7 +238,7 @@ public class DataModelMetadataBuilder<TEntity> where TEntity : class
             _displayName,
             _tableName,
             _schema,
-            _properties,
+            _properties.ToFrozenDictionary(),
             _primaryKey,
             _indexes,
             _uniqueConstraints,
@@ -241,6 +246,6 @@ public class DataModelMetadataBuilder<TEntity> where TEntity : class
             _usesSoftDelete,
             _isAuditable,
             _description,
-            _customMetadata);
+            _customMetadata?.ToFrozenDictionary());
     }
 }

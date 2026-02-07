@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Inventorization.Base.Abstractions;
 
 namespace Inventorization.Base.Models;
@@ -254,6 +255,6 @@ public class DataPropertyMetadataBuilder
             _regexPattern,
             _validationMessage,
             _description,
-            _customMetadata);
+            _customMetadata?.ToFrozenDictionary());
     }
 }
