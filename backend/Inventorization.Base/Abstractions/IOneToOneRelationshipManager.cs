@@ -14,7 +14,7 @@ public interface IOneToOneRelationshipManager<TEntity, TRelatedEntity>
     /// <summary>
     /// Metadata describing the relationship type, cardinality, and entities involved
     /// </summary>
-    RelationshipMetadata Metadata { get; }
+    IRelationshipMetadata<TEntity, TRelatedEntity> Metadata { get; }
 
     /// <summary>
     /// Gets the related entity ID for the specified entity

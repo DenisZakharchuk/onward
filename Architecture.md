@@ -327,6 +327,373 @@ All UnitOfWork implementations must:
 - Have minimal concrete code unless specialized behavior is required
 - Be registered in DI as both specific and base `IUnitOfWork` interfaces
 
+---
+
+## Entity Configuration Pattern
+
+All bounded contexts **must** use the `IEntityTypeConfiguration<T>` pattern with base configuration classes to eliminate DbContext boilerplate. This pattern reduces DbContext size by 70-95% and centralizes entity configuration logic.
+
+### The Problem
+
+Without this pattern, DbContext files become massive (300+ lines) with repetitive inline configuration:
+
+```csharp
+// ❌ ANTI-PATTERN: Inline configuration (don't do this)
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<User>(entity =>
+    {
+        entity.ToTable("Users");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+        entity.HasIndex(e => e.Email).IsUnique();
+        // ... 20+ more lines per entity
+    });
+    
+    modelBuilder.Entity<Role>(entity =>
+    {
+        // ... another 20+ lines
+    });
+    
+    // ... repeated for every entity
+}
+```
+
+### The Solution
+
+Use separated `IEntityTypeConfiguration<T>` implementations with base classes:
+
+**1. Base Configuration Classes** (in `Inventorization.Base.DataAccess`)
+
+```csharp
+/// <summary>
+/// Base configuration for all entities extending BaseEntity.
+/// Handles table naming and primary key configuration.
+/// </summary>
+public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
+    where TEntity : BaseEntity
+{
+    public virtual void Configure(EntityTypeBuilder<TEntity> builder)
+    {
+        // Table name (simple pluralization)
+        builder.ToTable(GetTableName());
+        
+        // Primary key
+        builder.HasKey(e => e.Id);
+        
+        // Call derived class configuration
+        // Note: Derived classes should explicitly configure their own indexes
+        // for properties like CreatedAt, IsActive, etc. for type safety
+        ConfigureEntity(builder);
+    }
+    
+    protected abstract void ConfigureEntity(EntityTypeBuilder<TEntity> builder);
+    
+    protected virtual string GetTableName() => typeof(TEntity).Name + "s";
+}
+
+/// <summary>
+/// Base configuration for junction entities in many-to-many relationships.
+/// Handles composite key, unique index, and relationship metadata.
+/// </summary>
+public abstract class JunctionEntityConfiguration<TJunction, TEntity, TRelated> 
+    : BaseEntityConfiguration<TJunction>
+    where TJunction : JunctionEntityBase
+    where TEntity : BaseEntity
+    where TRelated : BaseEntity
+{
+    protected readonly IRelationshipMetadata<TEntity, TRelated> Metadata;
+    
+    protected JunctionEntityConfiguration(IRelationshipMetadata<TEntity, TRelated> metadata)
+    {
+        Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+        
+        if (Metadata.Type != RelationshipType.ManyToMany)
+            throw new InvalidOperationException(
+                $"JunctionEntityConfiguration requires ManyToMany relationship type. " +
+                $"Provided: {Metadata.Type}");
+    }
+    
+    protected override void ConfigureEntity(EntityTypeBuilder<TJunction> builder)
+    {
+        // Composite unique index on EntityId + RelatedEntityId
+        builder.HasIndex(e => new { e.EntityId, e.RelatedEntityId }).IsUnique();
+        
+        // Call derived class for relationship and metadata configuration
+        ConfigureJunctionEntity(builder);
+    }
+    
+    protected abstract void ConfigureJunctionEntity(EntityTypeBuilder<TJunction> builder);
+}
+```
+
+**2. DataModelRelationships Static Class** (in each BoundedContext.Domain)
+
+Single source of truth for all relationship metadata, used by configurations, relationship managers, and DI:
+
+```csharp
+/// <summary>
+/// Centralized repository of all relationship metadata for the Auth bounded context.
+/// Single source of truth for entity relationships.
+/// </summary>
+public static class DataModelRelationships
+{
+    /// <summary>
+    /// User ↔ Role many-to-many relationship via UserRole junction
+    /// </summary>
+    public static readonly IRelationshipMetadata<User, Role> UserRoles =
+        new RelationshipMetadata<User, Role>(
+            type: RelationshipType.ManyToMany,
+            cardinality: RelationshipCardinality.Optional,
+            entityName: nameof(User),
+            relatedEntityName: nameof(Role),
+            displayName: "User Roles",
+            junctionEntityName: nameof(UserRole),
+            navigationPropertyName: nameof(User.UserRoles),
+            description: "Manages the many-to-many relationship between users and their assigned roles");
+
+    /// <summary>
+    /// User → RefreshToken one-to-many relationship
+    /// </summary>
+    public static readonly IRelationshipMetadata<User, RefreshToken> UserRefreshTokens =
+        new RelationshipMetadata<User, RefreshToken>(
+            type: RelationshipType.OneToMany,
+            cardinality: RelationshipCardinality.Required,
+            entityName: nameof(User),
+            relatedEntityName: nameof(RefreshToken),
+            displayName: "User Refresh Tokens",
+            navigationPropertyName: nameof(User.RefreshTokens),
+            description: "Manages the one-to-many relationship between users and their refresh tokens");
+}
+```
+
+**3. Concrete Entity Configurations** (in BoundedContext.Domain/EntityConfigurations/)
+
+Each entity gets its own configuration file inheriting from appropriate base:
+
+```csharp
+// Regular entity configuration
+public class UserConfiguration : BaseEntityConfiguration<User>
+{
+    protected override void ConfigureEntity(EntityTypeBuilder<User> builder)
+    {
+        builder.Property(e => e.Email)
+            .IsRequired()
+            .HasMaxLength(255);
+        
+        builder.HasIndex(e => e.Email)
+            .IsUnique();
+        
+        builder.Property(e => e.PasswordHash)
+            .IsRequired()
+            .HasMaxLength(500);
+        
+        builder.Property(e => e.FullName)
+            .IsRequired()
+            .HasMaxLength(200);
+        
+        builder.Property(e => e.IsActive)
+            .IsRequired();
+        
+        builder.Property(e => e.CreatedAt)
+            .IsRequired();
+        
+        // Explicitly add indexes for common query patterns (type-safe)
+        builder.HasIndex(e => e.IsActive);
+        builder.HasIndex(e => e.CreatedAt);
+    }
+}
+
+// Junction entity configuration
+public class UserRoleConfiguration : JunctionEntityConfiguration<UserRole, User, Role>
+{
+    public UserRoleConfiguration() : base(DataModelRelationships.UserRoles)
+    {
+    }
+    
+    protected override void ConfigureJunctionEntity(EntityTypeBuilder<UserRole> builder)
+    {
+        // Configure relationships - CASCADE DELETE PROHIBITED
+        builder.HasOne(e => e.User)
+            .WithMany(u => u.UserRoles)
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        builder.HasOne(e => e.Role)
+            .WithMany(r => r.UserRoles)
+            .HasForeignKey(e => e.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+```
+
+**4. Simplified DbContext** (in BoundedContext.Domain/DbContexts/)
+
+```csharp
+public class AuthDbContext : DbContext
+{
+    public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
+
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Role> Roles { get; set; } = null!;
+    public DbSet<Permission> Permissions { get; set; } = null!;
+    public DbSet<UserRole> UserRoles { get; set; } = null!;
+    public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Apply all entity configurations from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuthDbContext).Assembly);
+    }
+}
+```
+
+**That's it!** DbContext reduced from 120+ lines to ~27 lines (77% reduction).
+
+### Folder Structure
+
+Each bounded context must have:
+
+```
+BoundedContext.Domain/
+  ├── DbContexts/
+  │   └── BoundedContextDbContext.cs (simplified)
+  ├── EntityConfigurations/
+  │   ├── UserConfiguration.cs
+  │   ├── RoleConfiguration.cs
+  │   ├── UserRoleConfiguration.cs (junction)
+  │   └── ... (one file per entity)
+  ├── Entities/
+  │   ├── User.cs
+  │   ├── Role.cs
+  │   └── ...
+  └── DataModelRelationships.cs (static class)
+```
+
+### Benefits
+
+- ✅ **70-95% DbContext size reduction**: 300+ lines → 20-30 lines
+- ✅ **Separation of concerns**: Each entity configuration in its own file
+- ✅ **Reduced boilerplate**: Base classes handle table naming, primary keys, common indexes
+- ✅ **Type safety**: Compile-time validation of configurations
+- ✅ **Testability**: Unit test each configuration independently
+- ✅ **Consistency**: All entities follow identical patterns
+- ✅ **Maintainability**: Changes to entity configuration isolated to single file
+- ✅ **Automatic discovery**: `ApplyConfigurationsFromAssembly()` finds all configurations
+- ✅ **Centralized metadata**: `DataModelRelationships` is single source of truth
+
+### Rules for All Bounded Contexts
+
+All bounded context DbContext implementations **must**:
+
+1. **Use `ApplyConfigurationsFromAssembly()`** instead of inline configuration
+2. **Create EntityConfigurations folder** with one file per entity
+3. **Inherit from `BaseEntityConfiguration<TEntity>`** for regular entities
+4. **Inherit from `JunctionEntityConfiguration<TJunction, TEntity, TRelated>`** for junction entities
+5. **Create `DataModelRelationships` static class** with all relationship metadata
+6. **Pass metadata from `DataModelRelationships`** to junction configurations
+7. **Set `DeleteBehavior.Restrict`** on all foreign key relationships (CASCADE DELETE PROHIBITED)
+8. **Keep DbContext under 50 lines** (DbSets + `ApplyConfigurationsFromAssembly()`)
+
+### Example Impact
+
+**Before (inline configuration):**
+```csharp
+// GoodsDbContext.cs - 340 lines
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // 340 lines of inline entity configuration
+}
+```
+
+**After (configuration classes):**
+```csharp
+// GoodsDbContext.cs - 27 lines (93% reduction)
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(GoodsDbContext).Assembly);
+}
+
+// + 9 separate configuration files in EntityConfigurations/ folder
+// + 1 DataModelRelationships.cs static class
+```
+
+### Configuration Class Template
+
+**Regular Entity:**
+```csharp
+using Inventorization.Base.DataAccess;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Inventorization.[BoundedContext].Domain.EntityConfigurations;
+
+public class [Entity]Configuration : BaseEntityConfiguration<[Entity]>
+{
+    protected override void ConfigureEntity(EntityTypeBuilder<[Entity]> builder)
+    {
+        // Property configurations
+        builder.Property(e => e.Name)
+            .IsRequired()
+            .HasMaxLength(100);
+        
+        builder.HasIndex(e => e.Name)
+            .IsUnique();
+        
+        // Explicitly configure indexes for query patterns (type-safe)
+        // Only add indexes if you have queries that filter/sort by these fields
+        builder.HasIndex(e => e.IsActive);
+        builder.HasIndex(e => e.CreatedAt);
+        
+        // Relationships
+        builder.HasOne(e => e.Parent)
+            .WithMany(p => p.Children)
+            .HasForeignKey(e => e.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+```
+
+**Junction Entity:**
+```csharp
+using Inventorization.Base.DataAccess;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Inventorization.[BoundedContext].Domain.EntityConfigurations;
+
+public class [Junction]Configuration : JunctionEntityConfiguration<[Junction], [Entity], [Related]>
+{
+    public [Junction]Configuration() : base(DataModelRelationships.[RelationshipName])
+    {
+    }
+    
+    protected override void ConfigureJunctionEntity(EntityTypeBuilder<[Junction]> builder)
+    {
+        // Optional: metadata columns specific to this junction
+        builder.Property(e => e.AssignedAt)
+            .IsRequired();
+        
+        // Relationships - CASCADE DELETE PROHIBITED
+        builder.HasOne(e => e.[Entity])
+            .WithMany(x => x.[Junctions])
+            .HasForeignKey(e => e.[Entity]Id)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        builder.HasOne(e => e.[Related])
+            .WithMany(x => x.[Junctions])
+            .HasForeignKey(e => e.[Related]Id)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+```
+
+---
+
 ## Domain Service Abstractions
 
 All bounded contexts should use the **generic `DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>`** class located in `Inventorization.Base.Services` for implementing data services. This eliminates boilerplate CRUD code while enforcing consistent patterns across all contexts.
@@ -501,6 +868,7 @@ public class UserRoleRelatedEntityIdPropertyAccessor
 ```csharp
 using Inventorization.Base.DataAccess;
 using Inventorization.Base.Services;
+using Inventorization.Base.Abstractions;
 using Microsoft.Extensions.Logging;
 
 public class UserRoleRelationshipManager 
@@ -512,12 +880,14 @@ public class UserRoleRelationshipManager
         IRepository<UserRole> userRoleRepository,
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
-        ILogger<UserRoleRelationshipManager> logger)
-        : base(userRepository, roleRepository, userRoleRepository, unitOfWork, serviceProvider, logger)
+        ILogger<UserRoleRelationshipManager> logger,
+        IRelationshipMetadata<User, Role> metadata)  // Injected from DI
+        : base(userRepository, roleRepository, userRoleRepository, unitOfWork, serviceProvider, logger, metadata)
     {
     }
     
-    // That's it! Property accessors are resolved from DI automatically.
+    // That's it! Metadata injected via DI from DataModelRelationships.
+    // Property accessors resolved from DI automatically.
     // CreateJunctionEntity uses reflection by default.
 }
 ```
@@ -595,25 +965,44 @@ builder.Services.AddScoped<IRepository<UserRole>>(sp =>
 builder.Services.AddScoped<IEntityIdPropertyAccessor<UserRole>, UserRoleEntityIdPropertyAccessor>();
 builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<UserRole>, UserRoleRelatedEntityIdPropertyAccessor>();
 
-// 3. Register relationship manager
-builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
+// 3. Register relationship metadata with keyed service
+builder.Services.AddKeyedSingleton<IRelationshipMetadata<User, Role>>(
+    "UserRoles",
+    (sp, key) => DataModelRelationships.UserRoles);
 
-// 4. Register validator
+// 4. Register relationship manager with metadata injection
+builder.Services.AddScoped<IRelationshipManager<User, Role>>(sp =>
+    new UserRoleRelationshipManager(
+        sp.GetRequiredService<IRepository<User>>(),
+        sp.GetRequiredService<IRepository<Role>>(),
+        sp.GetRequiredService<IRepository<UserRole>>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        sp,
+        sp.GetRequiredService<ILogger<UserRoleRelationshipManager>>(),
+        sp.GetRequiredKeyedService<IRelationshipMetadata<User, Role>>("UserRoles")));
+
+// 5. Register validator
 builder.Services.AddScoped<IValidator<EntityReferencesDTO>, EntityReferencesValidator>();
 ```
 
-**Important:** Property accessors must be registered for every junction entity type. This is a **required** part of the bounded context boilerplate.
+**Important:** 
+- **Property accessors** must be registered for every junction entity type
+- **Relationship metadata** must be registered with keyed services from `DataModelRelationships`
+- **Keyed service pattern** (`.NET 8+`) allows multiple relationships to the same entity type
+- This is a **required** part of the bounded context boilerplate
 
 ### Benefits
 
 - **88%+ code reduction**: ~24 lines instead of ~200 lines
-- **Dependency injection**: Property accessors resolved via DI, following framework conventions
+- **Centralized metadata**: Single source of truth in `DataModelRelationships` static class
+- **Dependency injection**: Property accessors and metadata resolved via DI
 - **Consistency**: All relationship managers follow identical patterns
 - **Type safety**: Expression-based approach provides compile-time validation
 - **Performance**: Expressions compile to efficient EF Core SQL queries, getters are cached
 - **Maintainability**: Business logic changes only need to be made once in base class
 - **Testability**: Mock/stub property accessors and relationship managers independently
 - **Reusability**: Property accessors can be used by mappers, validators, and other components
+- **Multiple relationships**: Keyed services enable multiple relationships between same entity types
 
 ---
 
@@ -674,7 +1063,8 @@ public class RefreshTokenUserIdAccessor
 
 ```csharp
 using Inventorization.Base.Services;
-using Inventorization.Base.Models;
+using Inventorization.Base.Abstractions;
+using Microsoft.Extensions.Logging;
 
 public class UserRefreshTokenRelationshipManager 
     : OneToManyRelationshipManagerBase<User, RefreshToken>
@@ -684,21 +1074,17 @@ public class UserRefreshTokenRelationshipManager
         IRepository<RefreshToken> refreshTokenRepository,
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
-        ILogger<UserRefreshTokenRelationshipManager> logger)
+        ILogger<UserRefreshTokenRelationshipManager> logger,
+        IRelationshipMetadata<User, RefreshToken> metadata,  // Injected from DI
+        Type parentIdAccessorType)
         : base(
             userRepository,
             refreshTokenRepository,
             unitOfWork,
             serviceProvider,
             logger,
-            new RelationshipMetadata(
-                type: RelationshipType.OneToMany,
-                cardinality: RelationshipCardinality.Required,
-                entityName: nameof(User),
-                relatedEntityName: nameof(RefreshToken),
-                displayName: "User Refresh Tokens",
-                description: "Manages the one-to-many relationship between users and their refresh tokens"),
-            typeof(RefreshTokenUserIdAccessor))
+            metadata,
+            parentIdAccessorType)
     {
     }
 
@@ -737,8 +1123,21 @@ builder.Services.AddScoped<IRepository<RefreshToken>>(sp =>
 // 2. Register property accessor
 builder.Services.AddScoped<RefreshTokenUserIdAccessor>();
 
-// 3. Register relationship manager
-builder.Services.AddScoped<IOneToManyRelationshipManager<User, RefreshToken>, UserRefreshTokenRelationshipManager>();
+// 3. Register relationship metadata with keyed service
+builder.Services.AddKeyedSingleton<IRelationshipMetadata<User, RefreshToken>>(
+    "UserRefreshTokens",
+    (sp, key) => DataModelRelationships.UserRefreshTokens);
+
+// 4. Register relationship manager with metadata injection
+builder.Services.AddScoped<IOneToManyRelationshipManager<User, RefreshToken>>(sp =>
+    new UserRefreshTokenRelationshipManager(
+        sp.GetRequiredService<IRepository<User>>(),
+        sp.GetRequiredService<IRepository<RefreshToken>>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        sp,
+        sp.GetRequiredService<ILogger<UserRefreshTokenRelationshipManager>>(),
+        sp.GetRequiredKeyedService<IRelationshipMetadata<User, RefreshToken>>("UserRefreshTokens"),
+        typeof(RefreshTokenUserIdAccessor)));
 ```
 
 ---
@@ -788,7 +1187,8 @@ public class UserProfileIdAccessor
 
 ```csharp
 using Inventorization.Base.Services;
-using Inventorization.Base.Models;
+using Inventorization.Base.Abstractions;
+using Microsoft.Extensions.Logging;
 
 public class UserProfileRelationshipManager 
     : OneToOneRelationshipManagerBase<User, UserProfile>
@@ -798,21 +1198,17 @@ public class UserProfileRelationshipManager
         IRepository<UserProfile> userProfileRepository,
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
-        ILogger<UserProfileRelationshipManager> logger)
+        ILogger<UserProfileRelationshipManager> logger,
+        IRelationshipMetadata<User, UserProfile> metadata,  // Injected from DI
+        Type relatedIdAccessorType)
         : base(
             userRepository,
             userProfileRepository,
             unitOfWork,
             serviceProvider,
             logger,
-            new RelationshipMetadata(
-                type: RelationshipType.OneToOne,
-                cardinality: RelationshipCardinality.Optional,
-                entityName: nameof(User),
-                relatedEntityName: nameof(UserProfile),
-                displayName: "User Profile",
-                description: "Manages the one-to-one relationship between users and their profiles"),
-            typeof(UserProfileIdAccessor))
+            metadata,
+            relatedIdAccessorType)
     {
     }
 
@@ -848,8 +1244,21 @@ builder.Services.AddScoped<IRepository<UserProfile>>(sp =>
 // 2. Register property accessor
 builder.Services.AddScoped<UserProfileIdAccessor>();
 
-// 3. Register relationship manager
-builder.Services.AddScoped<IOneToOneRelationshipManager<User, UserProfile>, UserProfileRelationshipManager>();
+// 3. Register relationship metadata with keyed service (if UserProfile relationship defined)
+builder.Services.AddKeyedSingleton<IRelationshipMetadata<User, UserProfile>>(
+    "UserProfiles",
+    (sp, key) => DataModelRelationships.UserProfiles); // Add to DataModelRelationships if needed
+
+// 4. Register relationship manager with metadata injection
+builder.Services.AddScoped<IOneToOneRelationshipManager<User, UserProfile>>(sp =>
+    new UserProfileRelationshipManager(
+        sp.GetRequiredService<IRepository<User>>(),
+        sp.GetRequiredService<IRepository<UserProfile>>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        sp,
+        sp.GetRequiredService<ILogger<UserProfileRelationshipManager>>(),
+        sp.GetRequiredKeyedService<IRelationshipMetadata<User, UserProfile>>("UserProfiles"),
+        typeof(UserProfileIdAccessor)));
 ```
 
 ---
@@ -889,30 +1298,66 @@ IPropertyAccessor<TEntity, Guid?>                 // Related entity FK (nullable
 
 ---
 
-## Bounded Context Relationship Boilerplate Checklist
+## Bounded Context Boilerplate Checklist
+
+### Base Infrastructure (Required for All Bounded Contexts)
+
+✅ **DbContext** using `ApplyConfigurationsFromAssembly()` (keep under 50 lines)  
+✅ **EntityConfigurations folder** with one `IEntityTypeConfiguration<T>` per entity  
+✅ **DataModelRelationships.cs** static class with all relationship metadata  
+✅ **UnitOfWork** inheriting from `UnitOfWorkBase<TDbContext>`  
+✅ **DTOs** for each entity (Create, Update, Delete, Details, Search)  
 
 ### For Many-to-Many Relationships
 
 ✅ **Junction entity** inheriting from `JunctionEntityBase`  
+✅ **Junction configuration** inheriting from `JunctionEntityConfiguration<TJunction, TEntity, TRelated>`  
+✅ **Relationship metadata** in `DataModelRelationships` static class  
 ✅ **Two property accessors**: `IEntityIdPropertyAccessor<TJunction>`, `IRelatedEntityIdPropertyAccessor<TJunction>`  
 ✅ **Relationship manager** inheriting from `RelationshipManagerBase`  
-✅ **DI registrations**: Junction repository, property accessors, relationship manager, validator  
+✅ **DI registrations**: 
+   - Junction repository
+   - Property accessors
+   - Relationship metadata (keyed service)
+   - Relationship manager (with metadata injection)
+   - Validator
 
 ### For One-to-Many Relationships
 
 ✅ **Child entity** with parent foreign key  
+✅ **Child entity configuration** inheriting from `BaseEntityConfiguration<TChild>`  
+✅ **Relationship metadata** in `DataModelRelationships` static class  
 ✅ **One property accessor**: `IPropertyAccessor<TChild, Guid>` for parent ID  
 ✅ **Relationship manager** inheriting from `OneToManyRelationshipManagerBase`  
 ✅ **SetParentId method** implementation in manager  
-✅ **DI registrations**: Child repository, property accessor, relationship manager  
+✅ **DI registrations**: 
+   - Child repository
+   - Property accessor
+   - Relationship metadata (keyed service)
+   - Relationship manager (with metadata injection)
 
 ### For One-to-One Relationships
 
 ✅ **Entity** with related entity foreign key (nullable if optional)  
+✅ **Entity configuration** inheriting from `BaseEntityConfiguration<TEntity>`  
+✅ **Relationship metadata** in `DataModelRelationships` static class (if managed)  
 ✅ **One property accessor**: `IPropertyAccessor<TEntity, Guid?>` for related ID  
-✅ **Relationship manager** inheriting from `OneToOneRelationshipManagerBase`  
+✅ **Relationship manager** inheriting from `OneToOneRelationshipManagerBase` (if managed)  
 ✅ **SetRelatedId method** implementation in manager  
-✅ **DI registrations**: Related repository, property accessor, relationship manager  
+✅ **DI registrations**: 
+   - Related repository
+   - Property accessor
+   - Relationship metadata (keyed service)
+   - Relationship manager (with metadata injection)
+
+### For Regular Entities (No Relationships)
+
+✅ **Entity** inheriting from `BaseEntity`  
+✅ **Entity configuration** inheriting from `BaseEntityConfiguration<TEntity>`  
+✅ **Data service** inheriting from `DataServiceBase<...>`  
+✅ **Creator, Modifier, Mapper, SearchProvider** implementations  
+✅ **Validators** for Create and Update DTOs  
+✅ **DI registrations**: Repository, data service, abstractions, validators  
 
 ---
 

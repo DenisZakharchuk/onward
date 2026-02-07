@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Inventorization.Base.Abstractions;
 using Inventorization.Base.DataAccess;
@@ -33,7 +34,7 @@ public abstract class OneToOneRelationshipManagerBase<TEntity, TRelatedEntity>
     /// <summary>
     /// Metadata describing the relationship
     /// </summary>
-    public RelationshipMetadata Metadata { get; }
+    public IRelationshipMetadata<TEntity, TRelatedEntity> Metadata { get; }
 
     protected OneToOneRelationshipManagerBase(
         IRepository<TEntity> entityRepository,
@@ -41,7 +42,7 @@ public abstract class OneToOneRelationshipManagerBase<TEntity, TRelatedEntity>
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
         ILogger logger,
-        RelationshipMetadata metadata,
+        IRelationshipMetadata<TEntity, TRelatedEntity> metadata,
         Type relatedIdAccessorType)
     {
         EntityRepository = entityRepository ?? throw new ArgumentNullException(nameof(entityRepository));
@@ -54,8 +55,7 @@ public abstract class OneToOneRelationshipManagerBase<TEntity, TRelatedEntity>
         RelatedEntityName = typeof(TRelatedEntity).Name;
 
         // Resolve related ID accessor from DI
-        RelatedIdAccessor = (IPropertyAccessor<TEntity, Guid?>)serviceProvider.GetService(relatedIdAccessorType) 
-            ?? throw new InvalidOperationException($"Could not resolve {relatedIdAccessorType.Name} from DI container");
+        RelatedIdAccessor = (IPropertyAccessor<TEntity, Guid?>)serviceProvider.GetRequiredService(relatedIdAccessorType);
 
         // Validate metadata
         if (Metadata.Type != RelationshipType.OneToOne)

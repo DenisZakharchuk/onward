@@ -129,7 +129,7 @@ public interface IRelationshipManager<TEntity, TRelatedEntity>
     /// <summary>
     /// Metadata describing the relationship type, cardinality, and entities involved
     /// </summary>
-    RelationshipMetadata Metadata { get; }
+    IRelationshipMetadata<TEntity, TRelatedEntity> Metadata { get; }
 
     /// <summary>
     /// Updates relationships by adding and removing related entities for a single parent entity

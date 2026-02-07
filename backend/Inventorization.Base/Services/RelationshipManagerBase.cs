@@ -47,7 +47,7 @@ public abstract class RelationshipManagerBase<TEntity, TRelatedEntity, TJunction
     /// Metadata describing the relationship.
     /// Derived classes must provide metadata via constructor.
     /// </summary>
-    public RelationshipMetadata Metadata { get; }
+    public IRelationshipMetadata<TEntity, TRelatedEntity> Metadata { get; }
 
     protected RelationshipManagerBase(
         IRepository<TEntity> entityRepository,
@@ -56,7 +56,7 @@ public abstract class RelationshipManagerBase<TEntity, TRelatedEntity, TJunction
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
         ILogger logger,
-        RelationshipMetadata metadata)
+        IRelationshipMetadata<TEntity, TRelatedEntity> metadata)
     {
         EntityRepository = entityRepository ?? throw new ArgumentNullException(nameof(entityRepository));
         RelatedEntityRepository = relatedEntityRepository ?? throw new ArgumentNullException(nameof(relatedEntityRepository));

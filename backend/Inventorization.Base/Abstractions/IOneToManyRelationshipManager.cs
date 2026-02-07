@@ -14,7 +14,7 @@ public interface IOneToManyRelationshipManager<TParent, TChild>
     /// <summary>
     /// Metadata describing the relationship type, cardinality, and entities involved
     /// </summary>
-    RelationshipMetadata Metadata { get; }
+    IRelationshipMetadata<TParent, TChild> Metadata { get; }
 
     /// <summary>
     /// Gets all child entities for the specified parent

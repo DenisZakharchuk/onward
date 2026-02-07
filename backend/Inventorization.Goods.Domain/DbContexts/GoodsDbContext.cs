@@ -12,46 +12,20 @@ public class GoodsDbContext : DbContext
     }
     
     public DbSet<Good> Goods => Set<Good>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<GoodSupplier> GoodSuppliers => Set<GoodSupplier>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<StockLocation> StockLocations => Set<StockLocation>();
+    public DbSet<StockItem> StockItems => Set<StockItem>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         
-        // Configure Good entity
-        modelBuilder.Entity<Good>(entity =>
-        {
-            entity.ToTable("Goods");
-            
-            entity.HasKey(e => e.Id);
-            
-            entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(200);
-            
-            entity.Property(e => e.Description)
-                .HasMaxLength(1000);
-            
-            entity.Property(e => e.Sku)
-                .IsRequired()
-                .HasMaxLength(50);
-            
-            entity.HasIndex(e => e.Sku)
-                .IsUnique();
-            
-            entity.Property(e => e.UnitPrice)
-                .HasPrecision(18, 2);
-            
-            entity.Property(e => e.UnitOfMeasure)
-                .HasMaxLength(50);
-            
-            entity.Property(e => e.IsActive)
-                .IsRequired();
-            
-            entity.Property(e => e.CreatedAt)
-                .IsRequired();
-            
-            entity.HasIndex(e => e.IsActive);
-            entity.HasIndex(e => e.CreatedAt);
-        });
+        // Apply all entity configurations from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(GoodsDbContext).Assembly);
     }
 }

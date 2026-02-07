@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Inventorization.Base.Abstractions;
 using Inventorization.Base.DataAccess;
@@ -34,7 +35,7 @@ public abstract class OneToManyRelationshipManagerBase<TParent, TChild>
     /// <summary>
     /// Metadata describing the relationship
     /// </summary>
-    public RelationshipMetadata Metadata { get; }
+    public IRelationshipMetadata<TParent, TChild> Metadata { get; }
 
     protected OneToManyRelationshipManagerBase(
         IRepository<TParent> parentRepository,
@@ -42,7 +43,7 @@ public abstract class OneToManyRelationshipManagerBase<TParent, TChild>
         IUnitOfWork unitOfWork,
         IServiceProvider serviceProvider,
         ILogger logger,
-        RelationshipMetadata metadata,
+        IRelationshipMetadata<TParent, TChild> metadata,
         Type parentIdAccessorType)
     {
         ParentRepository = parentRepository ?? throw new ArgumentNullException(nameof(parentRepository));
@@ -55,8 +56,7 @@ public abstract class OneToManyRelationshipManagerBase<TParent, TChild>
         ChildName = typeof(TChild).Name;
 
         // Resolve parent ID accessor from DI
-        ParentIdAccessor = (IPropertyAccessor<TChild, Guid>)serviceProvider.GetService(parentIdAccessorType) 
-            ?? throw new InvalidOperationException($"Could not resolve {parentIdAccessorType.Name} from DI container");
+        ParentIdAccessor = (IPropertyAccessor<TChild, Guid>)serviceProvider.GetRequiredService(parentIdAccessorType);
 
         // Validate metadata
         if (Metadata.Type != RelationshipType.OneToMany)

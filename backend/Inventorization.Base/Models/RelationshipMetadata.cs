@@ -1,9 +1,14 @@
+using Inventorization.Base.Abstractions;
+
 namespace Inventorization.Base.Models;
 
 /// <summary>
-/// Metadata describing a relationship between entities
+/// Generic metadata describing a relationship between two entity types.
+/// Implements IRelationshipMetadata to support dependency inversion.
 /// </summary>
-public class RelationshipMetadata
+/// <typeparam name="TEntity">The primary entity type in the relationship</typeparam>
+/// <typeparam name="TRelatedEntity">The related entity type in the relationship</typeparam>
+public class RelationshipMetadata<TEntity, TRelatedEntity> : IRelationshipMetadata<TEntity, TRelatedEntity>
 {
     /// <summary>
     /// Type of relationship (OneToOne, OneToMany, ManyToMany)
@@ -40,6 +45,12 @@ public class RelationshipMetadata
     /// </summary>
     public string? Description { get; }
 
+    /// <summary>
+    /// Name of the navigation property on the entity.
+    /// Required for handling multiple relationships to the same entity type.
+    /// </summary>
+    public string? NavigationPropertyName { get; }
+
     public RelationshipMetadata(
         RelationshipType type,
         RelationshipCardinality cardinality,
@@ -47,6 +58,7 @@ public class RelationshipMetadata
         string relatedEntityName,
         string displayName,
         string? junctionEntityName = null,
+        string? navigationPropertyName = null,
         string? description = null)
     {
         if (string.IsNullOrWhiteSpace(entityName))
@@ -65,6 +77,7 @@ public class RelationshipMetadata
         RelatedEntityName = relatedEntityName;
         JunctionEntityName = junctionEntityName;
         DisplayName = displayName;
+        NavigationPropertyName = navigationPropertyName;
         Description = description;
     }
 
@@ -78,6 +91,7 @@ public class RelationshipMetadata
             _ => $"{EntityName} - {RelatedEntityName}"
         };
 
-        return $"{DisplayName}: {relationship} ({Cardinality})";
+        var nav = NavigationPropertyName != null ? $" [{NavigationPropertyName}]" : "";
+        return $"{DisplayName}: {relationship} ({Cardinality}){nav}";
     }
 }

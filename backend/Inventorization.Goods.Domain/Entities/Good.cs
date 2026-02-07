@@ -1,10 +1,12 @@
+using Inventorization.Base.Models;
+
 namespace Inventorization.Goods.Domain.Entities;
 
 /// <summary>
 /// Represents a Good (product/item) in the inventory system.
 /// Follows entity immutability pattern with private setters and state mutation methods.
 /// </summary>
-public class Good
+public class Good : BaseEntity
 {
     // Private parameterless constructor for EF Core
     private Good() { }
@@ -32,16 +34,22 @@ public class Good
         CreatedAt = DateTime.UtcNow;
     }
     
-    public Guid Id { get; private set; }
     public string Name { get; private set; } = null!;
     public string? Description { get; private set; }
     public string Sku { get; private set; } = null!;
     public decimal UnitPrice { get; private set; }
     public int QuantityInStock { get; private set; }
     public string? UnitOfMeasure { get; private set; }
+    public Guid? CategoryId { get; private set; }
     public bool IsActive { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
+    
+    // Navigation properties
+    public Category? Category { get; private set; }
+    public ICollection<GoodSupplier> GoodSuppliers { get; } = new List<GoodSupplier>();
+    public ICollection<StockItem> StockItems { get; } = new List<StockItem>();
+    public ICollection<PurchaseOrderItem> PurchaseOrderItems { get; } = new List<PurchaseOrderItem>();
     
     /// <summary>
     /// Updates the Good's basic information
@@ -64,6 +72,15 @@ public class Good
         UnitPrice = unitPrice;
         QuantityInStock = quantityInStock;
         UnitOfMeasure = unitOfMeasure;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    /// <summary>
+    /// Sets the category for this good
+    /// </summary>
+    public void SetCategory(Guid? categoryId)
+    {
+        CategoryId = categoryId;
         UpdatedAt = DateTime.UtcNow;
     }
     
