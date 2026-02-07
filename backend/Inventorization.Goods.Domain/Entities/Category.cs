@@ -7,8 +7,11 @@ namespace Inventorization.Goods.Domain.Entities;
 /// Follows entity immutability pattern with private setters and state mutation methods.
 /// </summary>
 public class Category : BaseEntity
-{
-    // Private parameterless constructor for EF Core
+{    /// <summary>
+    /// Metadata for this entity - single source of truth for structure and validation
+    /// </summary>
+    private static readonly IDataModelMetadata<Category> Metadata = DataModelMetadata.Category;
+        // Private parameterless constructor for EF Core
     private Category() { }
     
     /// <summary>

@@ -8,6 +8,11 @@ namespace Inventorization.Goods.Domain.Entities;
 /// </summary>
 public class Supplier : BaseEntity
 {
+    /// <summary>
+    /// Metadata for this entity - single source of truth for structure and validation
+    /// </summary>
+    private static readonly IDataModelMetadata<Supplier> Metadata = DataModelMetadata.Supplier;
+    
     // Private parameterless constructor for EF Core
     private Supplier() { }
     

@@ -14,7 +14,7 @@ namespace Inventorization.Goods.Domain;
 /// - API documentation
 /// - Code generation
 /// </summary>
-public static class DataModelMetadata
+internal static class DataModelMetadata
 {
     #region Good Entity Metadata
 

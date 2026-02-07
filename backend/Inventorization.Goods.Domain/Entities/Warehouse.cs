@@ -8,6 +8,11 @@ namespace Inventorization.Goods.Domain.Entities;
 /// </summary>
 public class Warehouse : BaseEntity
 {
+    /// <summary>
+    /// Metadata for this entity - single source of truth for structure and validation
+    /// </summary>
+    private static readonly IDataModelMetadata<Warehouse> Metadata = DataModelMetadata.Warehouse;
+    
     // Private parameterless constructor for EF Core
     private Warehouse() { }
     

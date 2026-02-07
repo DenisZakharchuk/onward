@@ -8,6 +8,11 @@ namespace Inventorization.Goods.Domain.Entities;
 /// </summary>
 public class Good : BaseEntity
 {
+    /// <summary>
+    /// Metadata for this entity - single source of truth for structure and validation
+    /// </summary>
+    private static readonly IDataModelMetadata<Good> Metadata = DataModelMetadata.Good;
+    
     // Private parameterless constructor for EF Core
     private Good() { }
     
