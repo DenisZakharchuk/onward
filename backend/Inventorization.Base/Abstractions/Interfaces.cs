@@ -117,17 +117,6 @@ public interface IPasswordHasher
 }
 
 /// <summary>
-/// Unit of Work interface for atomic commits
-/// </summary>
-public interface IUnitOfWork
-{
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
-    Task BeginTransactionAsync(CancellationToken cancellationToken = default);
-    Task CommitAsync(CancellationToken cancellationToken = default);
-    Task RollbackAsync(CancellationToken cancellationToken = default);
-}
-
-/// <summary>
 /// Manages relationships between entities with add/remove semantics
 /// </summary>
 /// <typeparam name="TEntity">Parent entity type</typeparam>

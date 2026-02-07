@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using InventorySystem.DataAccess.Abstractions;
 using InventorySystem.DataAccess.Models;
 
@@ -61,6 +62,18 @@ public class InMemoryStockMovementRepository : IStockMovementRepository
     {
         var movements = _movements.Where(m => m.CreatedAt >= startDate && m.CreatedAt <= endDate).ToList();
         return Task.FromResult<IEnumerable<StockMovement>>(movements);
+    }
+
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var exists = _movements.Any(m => m.Id == id);
+        return Task.FromResult(exists);
+    }
+
+    public Task<IEnumerable<StockMovement>> FindAsync(Expression<Func<StockMovement, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var results = _movements.AsQueryable().Where(predicate).ToList();
+        return Task.FromResult<IEnumerable<StockMovement>>(results);
     }
 
     public IQueryable<StockMovement> GetQueryable()

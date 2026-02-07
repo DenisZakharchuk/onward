@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace Inventorization.Base.DataAccess;
 
 /// <summary>
@@ -12,6 +14,16 @@ public interface IRepository<T> where T : class
     Task<T> CreateAsync(T entity, CancellationToken cancellationToken = default);
     Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Checks if an entity exists by ID
+    /// </summary>
+    Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Finds entities matching the given predicate
+    /// </summary>
+    Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Returns an IQueryable for LINQ filtering and projection

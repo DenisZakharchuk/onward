@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using InventorySystem.DataAccess.Abstractions;
 using InventorySystem.DataAccess.Models;
 
@@ -81,6 +82,18 @@ public class InMemoryProductRepository : IProductRepository
             return Task.FromResult(true);
         }
         return Task.FromResult(false);
+    }
+
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var exists = _products.Any(p => p.Id == id);
+        return Task.FromResult(exists);
+    }
+
+    public Task<IEnumerable<Product>> FindAsync(Expression<Func<Product, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var results = _products.AsQueryable().Where(predicate).ToList();
+        return Task.FromResult<IEnumerable<Product>>(results);
     }
 
     public IQueryable<Product> GetQueryable()

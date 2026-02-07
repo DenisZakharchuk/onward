@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using InventorySystem.DataAccess.Abstractions;
 using InventorySystem.DataAccess.Models;
 
@@ -56,6 +57,18 @@ public class InMemoryCategoryRepository : ICategoryRepository
     {
         var category = _categories.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         return Task.FromResult(category);
+    }
+
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var exists = _categories.Any(c => c.Id == id);
+        return Task.FromResult(exists);
+    }
+
+    public Task<IEnumerable<Category>> FindAsync(Expression<Func<Category, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var results = _categories.AsQueryable().Where(predicate).ToList();
+        return Task.FromResult<IEnumerable<Category>>(results);
     }
 
     public IQueryable<Category> GetQueryable()

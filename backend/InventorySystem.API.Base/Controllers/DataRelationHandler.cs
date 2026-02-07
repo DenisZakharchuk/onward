@@ -37,7 +37,7 @@ public abstract class DataRelationHandler<TEntity, TRelatedEntity>
     /// <param name="changes">Relationship changes to apply</param>
     /// <param name="relationshipName">Display name for the relationship (e.g., "Roles", "Permissions")</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    protected async Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> HandleUpdateRelationshipsAsync(
+    public async Task<ActionResult<ServiceResult<RelationshipUpdateResult>>> HandleUpdateRelationshipsAsync(
         Guid id,
         EntityReferencesDTO changes,
         string relationshipName,
@@ -116,7 +116,7 @@ public abstract class DataRelationHandler<TEntity, TRelatedEntity>
     /// <param name="changes">Dictionary mapping entity IDs to their relationship changes</param>
     /// <param name="relationshipName">Display name for the relationship (e.g., "Roles", "Permissions")</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    protected async Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> HandleUpdateMultipleRelationshipsAsync(
+    public async Task<ActionResult<ServiceResult<BulkRelationshipUpdateResult>>> HandleUpdateMultipleRelationshipsAsync(
         Dictionary<Guid, EntityReferencesDTO> changes,
         string relationshipName,
         CancellationToken cancellationToken = default)

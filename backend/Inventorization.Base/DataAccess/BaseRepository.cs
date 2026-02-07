@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventorization.Base.DataAccess;
@@ -63,6 +64,25 @@ public class BaseRepository<T> : IRepository<T> where T : class
         
         Context.Set<T>().Remove(entity);
         return true;
+    }
+
+    /// <summary>
+    /// Checks if an entity exists by ID
+    /// </summary>
+    public virtual async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await GetByIdAsync(id, cancellationToken);
+        return entity != null;
+    }
+
+    /// <summary>
+    /// Finds entities matching the given predicate
+    /// </summary>
+    public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+        
+        return await Context.Set<T>().Where(predicate).ToListAsync(cancellationToken);
     }
 
     /// <summary>

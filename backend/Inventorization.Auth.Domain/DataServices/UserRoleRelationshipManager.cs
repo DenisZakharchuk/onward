@@ -66,7 +66,7 @@ public class UserRoleRelationshipManager : IRelationshipManager<User, Role>
 
                 foreach (var relationship in existingRelationships)
                 {
-                    await _userRoleRepository.DeleteAsync(relationship, cancellationToken);
+                    await _userRoleRepository.DeleteAsync(relationship.Id, cancellationToken);
                     removedCount++;
                 }
 
