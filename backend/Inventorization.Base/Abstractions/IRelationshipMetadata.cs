@@ -3,12 +3,10 @@ using Inventorization.Base.Models;
 namespace Inventorization.Base.Abstractions;
 
 /// <summary>
-/// Generic interface for relationship metadata between two entities.
-/// Ensures dependency inversion - relationship managers depend on abstraction, not concrete implementation.
+/// Non-generic base interface for relationship metadata.
+/// Allows storage of different relationship types in collections.
 /// </summary>
-/// <typeparam name="TEntity">The primary entity type in the relationship</typeparam>
-/// <typeparam name="TRelatedEntity">The related entity type in the relationship</typeparam>
-public interface IRelationshipMetadata<TEntity, TRelatedEntity>
+public interface IRelationshipMetadata
 {
     /// <summary>
     /// Type of relationship (OneToOne, OneToMany, ManyToMany)
@@ -47,8 +45,19 @@ public interface IRelationshipMetadata<TEntity, TRelatedEntity>
 
     /// <summary>
     /// Name of the navigation property on the entity.
-    /// Required for handling multiple relationships to the same entity type.
-    /// Example: User might have both "BillingAddress" and "ShippingAddress" relationships to Address entity.
     /// </summary>
     string? NavigationPropertyName { get; }
+}
+
+/// <summary>
+/// Generic interface for relationship metadata between two entities.
+/// Ensures dependency inversion - relationship managers depend on abstraction, not concrete implementation.
+/// Inherits all properties from base IRelationshipMetadata.
+/// </summary>
+/// <typeparam name="TEntity">The primary entity type in the relationship</typeparam>
+/// <typeparam name="TRelatedEntity">The related entity type in the relationship</typeparam>
+public interface IRelationshipMetadata<TEntity, TRelatedEntity> : IRelationshipMetadata
+{
+    // All properties inherited from IRelationshipMetadata base interface
+    // This generic version provides type safety for relationship managers
 }
