@@ -5,24 +5,24 @@ namespace Inventorization.Auth.Domain.Entities;
 /// <summary>
 /// Junction table for Role-Permission relationships (many-to-many)
 /// </summary>
-public class RolePermission : BaseEntity
+public class RolePermission : JunctionEntityBase
 {
-    private RolePermission() { }  // EF Core only
-
     /// <summary>
     /// Creates a new role-permission assignment
     /// </summary>
-    public RolePermission(Guid roleId, Guid permissionId)
+    public RolePermission(Guid roleId, Guid permissionId) : base(roleId, permissionId)
     {
-        if (roleId == Guid.Empty) throw new ArgumentException("Role ID is required", nameof(roleId));
-        if (permissionId == Guid.Empty) throw new ArgumentException("Permission ID is required", nameof(permissionId));
-        
-        RoleId = roleId;
-        PermissionId = permissionId;
     }
 
-    public Guid RoleId { get; private set; }
-    public Guid PermissionId { get; private set; }
+    /// <summary>
+    /// Foreign key to Role. Aliases EntityId from base class.
+    /// </summary>
+    public Guid RoleId => EntityId;
+
+    /// <summary>
+    /// Foreign key to Permission. Aliases RelatedEntityId from base class.
+    /// </summary>
+    public Guid PermissionId => RelatedEntityId;
 
     // Navigation properties
     public Role Role { get; } = null!;

@@ -217,10 +217,11 @@ public class User
   - API projects: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
 
 ## Base Abstractions and Data Structures
-- All base abstractions and common data structures (such as `CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, `UnitOfWorkBase<TDbContext>`, and all generic interfaces like `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, `IUnitOfWork`, etc.) must be located in a separate shared project named `Inventorization.Base`.
+- All base abstractions and common data structures (such as `CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, `UnitOfWorkBase<TDbContext>`, and all generic interfaces like `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, `IPropertyAccessor`, `IValidator`, `IUnitOfWork`, etc.) must be located in a separate shared project named `Inventorization.Base`.
 - All bounded context/domain projects must reference `Inventorization.Base` for these shared types.
 - All DTOs for each bounded context must be placed in the corresponding DTO project under a `DTO/` subfolder (e.g., `DTO/Customer`).
 - All mapping logic (entity-to-DTO and DTO-to-entity) must use the `IMapper<TEntity, TDetailsDTO>` abstraction, supporting both object mapping and LINQ projection via `Expression<Func<TEntity, TDetailsDTO>>`.
+- All property access logic must use the `IPropertyAccessor<TEntity, TProperty>` abstraction, supporting both expression access and compiled getter caching for performance.
 
 ## Unit of Work Pattern
 
@@ -434,6 +435,188 @@ For each bounded context, you must implement:
   - `SearchDTO`: input for `SearchAsync`
 - Each concrete `DataService` is generic over all relevant DTOs and inherits from `DataServiceBase`.
 
+---
+
+## Generic Relationship Manager (RelationshipManagerBase)
+
+All bounded contexts should use the **generic `RelationshipManagerBase<TEntity, TRelatedEntity, TJunctionEntity>`** class located in `Inventorization.Base.Services` for implementing many-to-many relationship managers. This eliminates boilerplate relationship management code while enforcing consistent patterns.
+
+### Creating Relationship Managers in a Bounded Context
+
+Each many-to-many relationship requires:
+
+#### 1. Junction Entity (in BoundedContext.Domain/Entities)
+
+Junction entities should inherit from `JunctionEntityBase` which provides standard `EntityId` and `RelatedEntityId` properties:
+
+```csharp
+using Inventorization.Base.Models;
+
+public class UserRole : JunctionEntityBase
+{
+    public UserRole(Guid userId, Guid roleId) : base(userId, roleId)
+    {
+    }
+
+    // Property aliases for semantic clarity
+    public Guid UserId => EntityId;
+    public Guid RoleId => RelatedEntityId;
+    
+    // Navigation properties
+    public User User { get; } = null!;
+    public Role Role { get; } = null!;
+}
+```
+
+**Benefits of JunctionEntityBase:**
+- Eliminates parameterless constructor boilerplate
+- Automatic validation of Guid.Empty
+- Standardized EntityId/RelatedEntityId properties
+- Reduces junction entity code by ~50%
+
+#### 2. Property Accessors (in BoundedContext.Domain/PropertyAccessors)
+
+Property accessors encapsulate property access logic and are resolved via dependency injection:
+
+```csharp
+using Inventorization.Base.Abstractions;
+
+public class UserRoleEntityIdPropertyAccessor 
+    : PropertyAccessor<UserRole, Guid>, IEntityIdPropertyAccessor<UserRole>
+{
+    public UserRoleEntityIdPropertyAccessor() : base(ur => ur.UserId) { }
+}
+
+public class UserRoleRelatedEntityIdPropertyAccessor 
+    : PropertyAccessor<UserRole, Guid>, IRelatedEntityIdPropertyAccessor<UserRole>
+{
+    public UserRoleRelatedEntityIdPropertyAccessor() : base(ur => ur.RoleId) { }
+}
+```
+
+#### 3. Concrete Relationship Manager (in BoundedContext.Domain/DataServices)
+
+**Step-by-step example** for a `User ↔ Role` relationship:
+
+```csharp
+using Inventorization.Base.DataAccess;
+using Inventorization.Base.Services;
+using Microsoft.Extensions.Logging;
+
+public class UserRoleRelationshipManager 
+    : RelationshipManagerBase<User, Role, UserRole>
+{
+    public UserRoleRelationshipManager(
+        IRepository<User> userRepository,
+        IRepository<Role> roleRepository,
+        IRepository<UserRole> userRoleRepository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider,
+        ILogger<UserRoleRelationshipManager> logger)
+        : base(userRepository, roleRepository, userRoleRepository, unitOfWork, serviceProvider, logger)
+    {
+    }
+    
+    // That's it! Property accessors are resolved from DI automatically.
+    // CreateJunctionEntity uses reflection by default.
+}
+```
+
+**That's it!** Only ~24 lines of code vs ~200 lines without the base class. All relationship logic is inherited, and property accessors are resolved from DI.
+
+### RelationshipManagerBase Features
+
+The `RelationshipManagerBase` class provides:
+
+- ✅ **Complete implementation** of `IRelationshipManager<TEntity, TRelatedEntity>` interface
+- ✅ **Entity existence validation** before updating relationships
+- ✅ **DTO validation** using `IValidator<EntityReferencesDTO>` resolved at runtime
+- ✅ **Add/Remove operations** with automatic duplicate detection
+- ✅ **Transaction management** with automatic `SaveChangesAsync()` calls
+- ✅ **Comprehensive logging** with dynamic entity type names
+- ✅ **Bulk operations** with aggregated results and error tracking
+- ✅ **Expression-based queries** for optimal EF Core translation
+
+### Abstraction Points
+
+The base class resolves dependencies and provides extension points:
+
+1. **EntityIdAccessor**: Property accessor for parent entity ID (resolved from DI)
+   - Type: `IPropertyAccessor<TJunctionEntity, Guid>`
+   - Resolved via: `IEntityIdPropertyAccessor<TJunctionEntity>`
+   - Provides expression for LINQ queries and compiled getter for performance
+   - Automatically resolved in `RelationshipManagerBase` constructor
+
+2. **RelatedEntityIdAccessor**: Property accessor for related entity ID (resolved from DI)
+   - Type: `IPropertyAccessor<TJunctionEntity, Guid>`
+   - Resolved via: `IRelatedEntityIdPropertyAccessor<TJunctionEntity>`
+   - Provides expression for LINQ queries and compiled getter for performance
+   - Automatically resolved in `RelationshipManagerBase` constructor
+
+3. **CreateJunctionEntity**: Factory function for instantiating junction entities (optional override)
+   - Type: `Func<Guid, Guid, TJunctionEntity>`
+   - Default: Uses reflection to call two-parameter constructor
+   - Override only if custom instantiation logic is required
+
+### Dependency Resolution Pattern
+
+`RelationshipManagerBase` constructor (all injected via DI):
+
+```csharp
+IRepository<TEntity> entityRepository,                // Parent entity repository
+IRepository<TRelatedEntity> relatedEntityRepository,  // Related entity repository
+IRepository<TJunctionEntity> junctionRepository,      // Junction entity repository
+IUnitOfWork unitOfWork,                               // Transaction management
+IServiceProvider serviceProvider,                     // For runtime resolution
+ILogger logger                                        // Logging
+```
+
+**Constructor-time resolution:**
+- `IEntityIdPropertyAccessor<TJunctionEntity>` - Resolved in constructor
+- `IRelatedEntityIdPropertyAccessor<TJunctionEntity>` - Resolved in constructor
+
+**Runtime resolution:**
+- `IValidator<EntityReferencesDTO>` - Resolved when validation is needed
+- Should validate that related entity IDs exist and business rules are met
+
+### Dependency Injection Registration
+
+All relationship management components must be registered in DI (typically in `Program.cs`):
+
+```csharp
+// 1. Register junction entity repository
+builder.Services.AddScoped<IRepository<UserRole>>(sp =>
+{
+    var dbContext = sp.GetRequiredService<AuthDbContext>();
+    return new BaseRepository<UserRole>(dbContext);
+});
+
+// 2. Register property accessors for the junction entity
+builder.Services.AddScoped<IEntityIdPropertyAccessor<UserRole>, UserRoleEntityIdPropertyAccessor>();
+builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<UserRole>, UserRoleRelatedEntityIdPropertyAccessor>();
+
+// 3. Register relationship manager
+builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
+
+// 4. Register validator
+builder.Services.AddScoped<IValidator<EntityReferencesDTO>, EntityReferencesValidator>();
+```
+
+**Important:** Property accessors must be registered for every junction entity type. This is a **required** part of the bounded context boilerplate.
+
+### Benefits
+
+- **88%+ code reduction**: ~24 lines instead of ~200 lines
+- **Dependency injection**: Property accessors resolved via DI, following framework conventions
+- **Consistency**: All relationship managers follow identical patterns
+- **Type safety**: Expression-based approach provides compile-time validation
+- **Performance**: Expressions compile to efficient EF Core SQL queries, getters are cached
+- **Maintainability**: Business logic changes only need to be made once in base class
+- **Testability**: Mock/stub property accessors and relationship managers independently
+- **Reusability**: Property accessors can be used by mappers, validators, and other components
+
+---
+
 ### Search Abstraction
 - `SearchDTO` base class includes:
   - `PageDTO` for pagination
@@ -535,7 +718,7 @@ This section defines patterns for managing entity relationships (one-to-many, ma
 | **Audit Requirements** | MongoDB audit log | MongoDB audit log | Entity audit columns + MongoDB |
 | **API Endpoints** | PATCH relationships | GET queries only | Full CRUD endpoints |
 | **Entity Methods** | Yes | No | Optional |
-| **DataService** | `IRelationshipManager` | Custom interface | `DataServiceBase` |
+| **DataService** | `RelationshipManagerBase` | Custom interface | `DataServiceBase` |
 | **Controller** | Parent controller | Optional custom | Dedicated `DataController` |
 
 ---
@@ -687,33 +870,50 @@ await unitOfWork.SaveChangesAsync();  // Caller's responsibility
 ```
 
 **IRelationshipManager Implementations:**
-- Handle validation, repository operations, AND transactions
-- **MUST** call `unitOfWork.SaveChangesAsync()` after all changes
-- Example:
+- **ALWAYS inherit from `RelationshipManagerBase<TEntity, TRelatedEntity, TJunctionEntity>`**
+- Base class handles validation, repository operations, AND transactions
+- Base class **automatically** calls `unitOfWork.SaveChangesAsync()` after all changes
+- Concrete implementations only define three abstract properties:
+  - `CreateJunctionEntity` - Factory function for junction entity instantiation
+  - `EntityIdSelector` - Expression to extract parent entity ID from junction
+  - `RelatedEntityIdSelector` - Expression to extract related entity ID from junction
+
+**Example:**
 ```csharp
-public async Task<RelationshipUpdateResult> UpdateRelationshipsAsync(
-    Guid userId, 
-    EntityReferencesDTO changes,
-    CancellationToken cancellationToken)
+public class UserRoleRelationshipManager 
+    : RelationshipManagerBase<User, Role, UserRole>
 {
-    // Remove relationships
-    foreach (var roleId in changes.IdsToRemove)
+    public UserRoleRelationshipManager(
+        IRepository<User> userRepository,
+        IRepository<Role> roleRepository,
+        IRepository<UserRole> userRoleRepository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider,
+        ILogger<UserRoleRelationshipManager> logger)
+        : base(userRepository, roleRepository, userRoleRepository, unitOfWork, serviceProvider, logger)
     {
-        var userRole = await _userRoleRepository.FindAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
-        await _userRoleRepository.DeleteAsync(userRole, cancellationToken);
     }
-    
-    // Add relationships
-    foreach (var roleId in changes.IdsToAdd)
-    {
-        await _userRoleRepository.CreateAsync(new UserRole(userId, roleId), cancellationToken);
-    }
-    
-    await _unitOfWork.SaveChangesAsync(cancellationToken);  // Manager's responsibility
-    
-    return RelationshipUpdateResult.Success(changes.IdsToAdd.Count, changes.IdsToRemove.Count);
+
+    protected override Func<Guid, Guid, UserRole> CreateJunctionEntity => 
+        (userId, roleId) => new UserRole(userId, roleId);
+
+    protected override Expression<Func<UserRole, Guid>> EntityIdSelector => 
+        ur => ur.UserId;
+
+    protected override Expression<Func<UserRole, Guid>> RelatedEntityIdSelector => 
+        ur => ur.RoleId;
 }
 ```
+
+**What RelationshipManagerBase Provides:**
+- Generic implementation of all three `IRelationshipManager` methods
+- Entity existence validation
+- DTO validation via `IValidator<EntityReferencesDTO>`
+- Add/Remove operations with duplicate detection
+- Transaction management (calls `SaveChangesAsync`)
+- Comprehensive logging with entity type names
+- Bulk operations with aggregated results
+- Error handling and recovery
 
 **API Controllers:**
 - Delegate to `IRelationshipManager`
@@ -940,22 +1140,35 @@ public class User
 
 **3. IRelationshipManager Implementation**
 ```csharp
-public class UserRoleRelationshipManager : IRelationshipManager<User, Role>
+public class UserRoleRelationshipManager 
+    : RelationshipManagerBase<User, Role, UserRole>
 {
-    private readonly IRepository<User> _userRepository;
-    private readonly IRepository<Role> _roleRepository;
-    private readonly IRepository<UserRole> _userRoleRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    
-    public async Task<RelationshipUpdateResult> UpdateRelationshipsAsync(
-        Guid userId, 
-        EntityReferencesDTO changes,
-        CancellationToken cancellationToken)
+    public UserRoleRelationshipManager(
+        IRepository<User> userRepository,
+        IRepository<Role> roleRepository,
+        IRepository<UserRole> userRoleRepository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider,
+        ILogger<UserRoleRelationshipManager> logger)
+        : base(userRepository, roleRepository, userRoleRepository, unitOfWork, serviceProvider, logger)
     {
-        // Implementation as shown above
     }
+
+    // Define junction entity factory
+    protected override Func<Guid, Guid, UserRole> CreateJunctionEntity => 
+        (userId, roleId) => new UserRole(userId, roleId);
+
+    // Define how to extract parent entity ID from junction
+    protected override Expression<Func<UserRole, Guid>> EntityIdSelector => 
+        ur => ur.UserId;
+
+    // Define how to extract related entity ID from junction
+    protected override Expression<Func<UserRole, Guid>> RelatedEntityIdSelector => 
+        ur => ur.RoleId;
 }
 ```
+
+**Note:** The base class `RelationshipManagerBase<TEntity, TRelatedEntity, TJunctionEntity>` provides complete implementation of all three interface methods. Concrete classes only define the three abstract properties above (~30 lines total vs ~200 lines without base class).
 
 **4. Controller Implementation**
 ```csharp

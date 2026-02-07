@@ -21,6 +21,7 @@ using Inventorization.Auth.Domain.DataAccess.Seeding;
 using Inventorization.Auth.DTO.DTO.User;
 using Inventorization.Auth.DTO.DTO.Role;
 using Inventorization.Auth.DTO.DTO.Permission;
+using Inventorization.Auth.Domain.PropertyAccessors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -138,6 +139,15 @@ builder.Services.AddScoped<IRepository<UserRole>>(sp =>
     var dbContext = sp.GetRequiredService<AuthDbContext>();
     return new BaseRepository<UserRole>(dbContext);
 });
+
+// Property Accessors for UserRole junction entity
+builder.Services.AddScoped<IEntityIdPropertyAccessor<UserRole>, UserRoleEntityIdPropertyAccessor>();
+builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<UserRole>, UserRoleRelatedEntityIdPropertyAccessor>();
+
+// Property Accessors for RolePermission junction entity
+builder.Services.AddScoped<IEntityIdPropertyAccessor<RolePermission>, RolePermissionEntityIdPropertyAccessor>();
+builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<RolePermission>, RolePermissionRelatedEntityIdPropertyAccessor>();
+
 builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
 builder.Services.AddScoped<IValidator<Inventorization.Base.DTOs.EntityReferencesDTO>, EntityReferencesValidator>();
 
