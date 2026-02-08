@@ -2,7 +2,7 @@
  * Data model parser and validator
  */
 
-import Ajv, { ValidateFunction } from 'ajv';
+import Ajv, { ValidateFunction, Schema } from 'ajv';
 import addFormats from 'ajv-formats';
 import { DataModel } from '../models/DataModel';
 import { FileManager } from '../utils/FileManager';
@@ -27,8 +27,8 @@ export class DataModelParser {
     );
     const resolvedPath = schemaPath || defaultSchemaPath;
 
-    const schema = await FileManager.readJson(resolvedPath);
-    this.validator = this.ajv.compile(schema as any);
+    const schema = await FileManager.readJson<Schema>(resolvedPath);
+    this.validator = this.ajv.compile(schema);
   }
 
   /**
@@ -42,7 +42,7 @@ export class DataModelParser {
   /**
    * Parse and validate data model from object
    */
-  parse(data: any): DataModel {
+  parse(data: unknown): DataModel {
     if (!this.validator) {
       throw new Error('Schema not loaded. Call loadSchema() first.');
     }
@@ -194,7 +194,7 @@ export class DataModelParser {
   /**
    * Get validation errors without throwing
    */
-  getValidationErrors(data: any): string[] {
+  getValidationErrors(data: unknown): string[] {
     if (!this.validator) {
       return ['Schema not loaded'];
     }

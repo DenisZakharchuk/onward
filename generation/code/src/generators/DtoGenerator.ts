@@ -8,12 +8,12 @@ import { TypeMapper } from '../utils/TypeMapper';
 import * as path from 'path';
 
 export class DtoGenerator extends BaseGenerator {
-  async generate(model: DataModel, outputDir: string): Promise<void> {
+  async generate(model: DataModel): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
-    const baseNamespace = 'Inventorization';
+    const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const dtoProjectPath = path.join(outputDir, `Inventorization.${contextName}.DTO`);
+    const dtoProjectPath = `${baseNamespace}.${contextName}.DTO`;
 
     for (const entity of model.entities) {
       await this.generateEntityDtos(entity, dtoProjectPath, namespace, baseNamespace);
@@ -60,7 +60,7 @@ export class DtoGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entityDir, `Create${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('create-dto.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate('create-dto.cs.hbs', context, filePath, true);
   }
 
   private async generateUpdateDto(
@@ -79,7 +79,7 @@ export class DtoGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entityDir, `Update${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('update-dto.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate('update-dto.cs.hbs', context, filePath, true);
   }
 
   private async generateDeleteDto(
@@ -95,7 +95,7 @@ export class DtoGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entityDir, `Delete${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('delete-dto.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate('delete-dto.cs.hbs', context, filePath, true);
   }
 
   private async generateDetailsDto(
@@ -116,7 +116,7 @@ export class DtoGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entityDir, `${entity.name}DetailsDTO.cs`);
-    await this.writeRenderedTemplate('details-dto.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate('details-dto.cs.hbs', context, filePath, true);
   }
 
   private async generateSearchDto(
@@ -135,7 +135,7 @@ export class DtoGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entityDir, `${entity.name}SearchDTO.cs`);
-    await this.writeRenderedTemplate('search-dto.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate('search-dto.cs.hbs', context, filePath, true);
   }
 
   private getDtoProperties(
@@ -157,7 +157,13 @@ export class DtoGenerator extends BaseGenerator {
     });
   }
 
-  private propertyToDto(property: Property, dtoType: string, forceNullable: boolean = false): any {
+  private propertyToDto(property: Property, dtoType: string, forceNullable: boolean = false): {
+    name: string;
+    type: string;
+    description?: string;
+    defaultValue: string | null;
+    validationAttributes: string[];
+  } {
     const isNullable = forceNullable || !property.required;
     const type = TypeMapper.toCSharpType(property.enumType || property.type, isNullable);
 
@@ -177,7 +183,7 @@ export class DtoGenerator extends BaseGenerator {
     }
 
     if (property.defaultValue) {
-      return property.defaultValue;
+      return String(property.defaultValue);
     }
 
     // String properties default to default! for non-nullable reference types

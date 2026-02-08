@@ -1,46 +1,43 @@
 /**
- * Entity generator - creates entity classes (both generated and custom stubs)
+ * Entity generator - creates entity classes
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property } from '../models/DataModel';
+import { DataModel, Entity, Property, Relationship } from '../models/DataModel';
 import { NamingConventions } from '../utils/NamingConventions';
 import { TypeMapper } from '../utils/TypeMapper';
-import { FileManager } from '../utils/FileManager';
 import * as path from 'path';
 
 export class EntityGenerator extends BaseGenerator {
-  async generate(model: DataModel, outputDir: string): Promise<void> {
+  async generate(model: DataModel): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
+    const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const domainProjectPath = path.join(outputDir, `Inventorization.${contextName}.Domain`);
-    const entitiesDir = path.join(domainProjectPath, 'Entities');
+    const entitiesDir = `${baseNamespace}.${contextName}.Domain/Entities`;
 
     for (const entity of model.entities) {
       if (entity.isJunction) {
         await this.generateJunctionEntity(entity, entitiesDir, namespace);
       } else {
-        await this.generateRegularEntity(entity, entitiesDir, namespace);
+        await this.generateRegularEntity(entity, entitiesDir, namespace, model.relationships || []);
       }
-
-      // Create custom stub if it doesn't exist
-      await this.generateCustomEntityStub(entity, entitiesDir, namespace);
     }
   }
 
   private async generateRegularEntity(
     entity: Entity,
     entitiesDir: string,
-    namespace: string
+    namespace: string,
+    relationships: Relationship[]
   ): Promise<void> {
+    // Regular properties include FK properties (they are Guid properties)
     const properties = entity.properties.filter(
-      (p) => !p.isCollection && !p.navigationProperty
+      (p) => !p.isCollection
     );
 
-    const navigationProps = entity.properties.filter(
-      (p) => p.isCollection || p.navigationProperty
-    );
+    // Generate navigation properties from FK metadata and relationships
+    const navigationProps = this.buildNavigationProperties(entity.properties, entity.name, relationships);
 
     const context = {
       namespace,
@@ -51,11 +48,11 @@ export class EntityGenerator extends BaseGenerator {
       validations: this.getValidations(properties),
       propertyAssignments: this.getPropertyAssignments(properties),
       properties: this.getProperties(properties),
-      navigationProperties: this.getNavigationProperties(navigationProps),
+      navigationProperties: navigationProps,
     };
 
-    const filePath = path.join(entitiesDir, `${entity.name}.generated.cs`);
-    await this.writeRenderedTemplate('entity.generated.cs.hbs', context, filePath, true);
+    const filePath = path.join(entitiesDir, `${entity.name}.cs`);
+    await this.writeRenderedTemplate('entity.cs.hbs', context, filePath, true);
   }
 
   private async generateJunctionEntity(
@@ -95,44 +92,15 @@ export class EntityGenerator extends BaseGenerator {
       })),
     };
 
-    const filePath = path.join(entitiesDir, `${entity.name}.generated.cs`);
-    await this.writeRenderedTemplate('junction-entity.generated.cs.hbs', context, filePath, true);
-  }
-
-  private async generateCustomEntityStub(
-    entity: Entity,
-    entitiesDir: string,
-    namespace: string
-  ): Promise<void> {
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);
-    const exists = await FileManager.fileExists(filePath);
-
-    if (exists) {
-      return; // Don't overwrite custom logic
-    }
-
-    const updateableProps = entity.properties.filter(
-      (p) => !p.isForeignKey && !p.isCollection && p.name !== 'Id'
-    );
-
-    const context = {
-      namespace,
-      entityName: entity.name,
-      updateParams: updateableProps.map((p) => ({
-        type: TypeMapper.toCSharpType(p.type, !p.required),
-        paramName: NamingConventions.toCamelCase(p.name),
-        paramDescription: p.description || p.name,
-      })),
-      updateAssignments: updateableProps.map(
-        (p) =>
-          `${p.name} = ${NamingConventions.toCamelCase(p.name)};`
-      ),
-    };
-
-    await this.writeRenderedTemplate('entity.custom.cs.hbs', context, filePath, false);
+    await this.writeRenderedTemplate('junction-entity.cs.hbs', context, filePath, true);
   }
 
-  private getConstructorParams(properties: Property[]): any[] {
+  private getConstructorParams(properties: Property[]): Array<{
+    type: string;
+    paramName: string;
+    paramDescription: string;
+  }> {
     return properties
       .filter((p) => !p.isForeignKey || p.required)
       .map((p) => ({
@@ -176,7 +144,12 @@ export class EntityGenerator extends BaseGenerator {
     );
   }
 
-  private getProperties(properties: Property[]): any[] {
+  private getProperties(properties: Property[]): Array<{
+    name: string;
+    type: string;
+    description?: string;
+    defaultValue: unknown;
+  }> {
     return properties.map((p) => ({
       name: p.name,
       type: TypeMapper.toCSharpType(p.type, !p.required),
@@ -185,13 +158,67 @@ export class EntityGenerator extends BaseGenerator {
     }));
   }
 
-  private getNavigationProperties(properties: Property[]): any[] {
-    return properties.map((p) => ({
-      name: p.name,
-      type: p.collectionType || p.referencedEntity || 'object',
-      isCollection: p.isCollection,
-      nullable: !p.required,
-      description: p.description,
-    }));
+  /**
+   * Build navigation properties from FK metadata and relationships
+   */
+  private buildNavigationProperties(
+    properties: Property[],
+    entityName: string,
+    relationships: Relationship[]
+  ): Array<{
+    name: string;
+    type: string;
+    isCollection?: boolean;
+    nullable: boolean;
+    description?: string;
+  }> {
+    const navProps: Array<{
+      name: string;
+      type: string;
+      isCollection?: boolean;
+      nullable: boolean;
+      description?: string;
+    }> = [];
+
+    // 1. Single navigation properties from FK properties
+    for (const prop of properties) {
+      if (prop.isForeignKey && prop.navigationProperty && prop.referencedEntity) {
+        navProps.push({
+          name: prop.navigationProperty,
+          type: prop.referencedEntity,
+          isCollection: false,
+          nullable: !prop.required,
+          description: `Navigation to ${prop.referencedEntity}`,
+        });
+      }
+      // Collection properties defined directly in entity
+      else if (prop.isCollection && prop.collectionType) {
+        navProps.push({
+          name: prop.name,
+          type: prop.collectionType,
+          isCollection: true,
+          nullable: false,
+          description: prop.description,
+        });
+      }
+    }
+
+    // 2. Collection navigation properties from relationships
+    for (const rel of relationships) {
+      // One-to-Many: leftEntity has collection of rightEntity
+      if (rel.type === 'OneToMany' && rel.leftEntity === entityName && rel.leftNavigationProperty) {
+        navProps.push({
+          name: rel.leftNavigationProperty,
+          type: rel.rightEntity,
+          isCollection: true,
+          nullable: false,
+          description: `Collection of ${rel.rightEntity}`,
+        });
+      }
+      // Many-to-Many: both sides get collections (handled via junction entities)
+      // Many-to-One: rightEntity has single navigation (already handled by FK above)
+    }
+
+    return navProps;
   }
 }

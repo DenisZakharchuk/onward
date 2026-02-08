@@ -2,19 +2,22 @@
 
 /**
  * CLI entry point for the BoundedContext code generator
+ * Composition root - creates and wires dependencies
  */
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
 import ora from 'ora';
-import { DataModelParser } from './parser/DataModelParser';
+import { FileModelProvider } from './providers/FileModelProvider';
+import { FileResultWriter } from './writers/FileResultWriter';
 import { Orchestrator } from './orchestrator/Orchestrator';
 import * as path from 'path';
 
 interface GenerateOptions {
   outputDir: string;
   namespace?: string;
+  baseNamespace?: string;
   skipTests: boolean;
   dryRun: boolean;
   force: boolean;
@@ -24,26 +27,29 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
   const spinner = ora('Loading data model...').start();
 
   try {
-    // Parse and validate data model
-    const parser = new DataModelParser();
-    await parser.loadSchema();
+    // Create dependencies (composition root)
+    const modelProvider = new FileModelProvider();
+    const outputDir = path.resolve(options.outputDir);
+    const resultWriter = new FileResultWriter(outputDir);
 
+    // Load and validate data model
     spinner.text = 'Validating data model...';
-    const model = await parser.parseFromFile(dataModelPath);
+    const model = await modelProvider.load(dataModelPath);
 
     spinner.succeed(`Data model validated: ${chalk.green(model.boundedContext.name)}`);
 
     // Override namespace if provided
     if (options.namespace) {
       model.boundedContext.namespace = options.namespace;
+    } else if (options.baseNamespace) {
+      // Recompute namespace with custom base namespace
+      model.boundedContext.namespace = `${options.baseNamespace}.${model.boundedContext.name}`;
     }
-
-    // Resolve output directory
-    const outputDir = path.resolve(options.outputDir);
 
     console.log(chalk.blue('\nGeneration Settings:'));
     console.log(`  BoundedContext: ${chalk.yellow(model.boundedContext.name)}`);
     console.log(`  Namespace: ${chalk.yellow(model.boundedContext.namespace)}`);
+    console.log(`  Base Namespace: ${chalk.yellow(options.baseNamespace || 'Inventorization')}`);
     console.log(`  Output Directory: ${chalk.yellow(outputDir)}`);
     console.log(`  Skip Tests: ${chalk.yellow(options.skipTests)}`);
     console.log(`  Dry Run: ${chalk.yellow(options.dryRun)}`);
@@ -53,22 +59,24 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
       console.log(chalk.yellow('🔍 DRY RUN - No files will be written\n'));
     }
 
-    // Generate code
+    // Generate code with dependency injection
     spinner.start('Generating code...');
-    const orchestrator = new Orchestrator({
+    const orchestrator = new Orchestrator(resultWriter, {
       skipTests: options.skipTests,
       dryRun: options.dryRun,
       force: options.force,
+      sourceFile: path.basename(dataModelPath),
+      baseNamespace: options.baseNamespace,
     });
 
-    await orchestrator.generate(model, outputDir);
+    await orchestrator.generate(model);
 
     spinner.succeed(chalk.green('✅ Code generation completed successfully!'));
 
     if (!options.dryRun) {
       console.log(chalk.blue('\n📦 Next Steps:'));
       console.log(`  1. Review generated files in: ${chalk.yellow(outputDir)}`);
-      console.log(`  2. Add custom business logic to ${chalk.yellow('.cs')} files`);
+      console.log(`  2. Add custom business logic to ${chalk.yellow('domain services')}`);
       console.log(
         `  3. Build the solution: ${chalk.yellow('dotnet build')}`
       );
@@ -88,11 +96,20 @@ async function validateCommand(dataModelPath: string) {
   const spinner = ora('Validating data model...').start();
 
   try {
-    const parser = new DataModelParser();
-    await parser.loadSchema();
+    // Create model provider (composition root)
+    const modelProvider = new FileModelProvider();
 
-    const model = await parser.parseFromFile(dataModelPath);
+    // Validate
+    const result = await modelProvider.validate(dataModelPath);
 
+    if (!result.valid) {
+      spinner.fail('Validation failed');
+      console.error(chalk.red('\n❌ Errors:'));
+      result.errors.forEach((error) => console.error(chalk.red(`  - ${error}`)));
+      process.exit(1);
+    }
+
+    const model = result.model!;
     spinner.succeed(chalk.green('✅ Data model is valid!'));
 
     console.log(chalk.blue('\nData Model Summary:'));
@@ -145,6 +162,11 @@ yargs(hideBin(process.argv))
         .option('namespace', {
           alias: 'n',
           describe: 'Override namespace from data model',
+          type: 'string',
+        })
+        .option('base-namespace', {
+          alias: 'b',
+          describe: 'Base namespace prefix (default: Inventorization)',
           type: 'string',
         })
         .option('skip-tests', {

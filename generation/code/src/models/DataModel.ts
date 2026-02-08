@@ -56,7 +56,7 @@ export interface Property {
   minLength?: number;
   precision?: number;
   scale?: number;
-  defaultValue?: any;
+  defaultValue?: unknown;
   description?: string;
   displayName?: string;
   validationMessage?: string;
@@ -79,7 +79,7 @@ export interface DtoInclusion {
 export interface ValidationRules {
   regex?: string;
   customValidator?: string;
-  allowedValues?: any[];
+  allowedValues?: unknown[];
   min?: number;
   max?: number;
 }
@@ -120,6 +120,16 @@ export type CSharpType =
   | 'byte[]';
 
 /**
+ * Generation metadata injected into all templates
+ */
+export interface GenerationMetadata {
+  generationStamp: string;      // Unique identifier for this generation run
+  generatedAt: string;           // ISO timestamp
+  sourceFile: string;            // Source data model file name
+  baseNamespace: string;         // Base namespace prefix (e.g., 'Inventorization')
+}
+
+/**
  * Generated code context passed to templates
  */
 export interface TemplateContext {
@@ -131,6 +141,11 @@ export interface TemplateContext {
   property?: Property;
   properties?: Property[];
   relationship?: Relationship;
+  // Generation metadata (injected automatically)
+  generationStamp?: string;
+  generatedAt?: string;
+  sourceFile?: string;
+  baseNamespace?: string;
   // Computed values
   namespace?: string;
   className?: string;

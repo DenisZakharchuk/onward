@@ -19,6 +19,19 @@ See [Architecture.md](../Architecture.md) for complete architectural specificati
 - Domain service abstractions and entity modeling
 - Base abstractions and shared project organization
 
+## Code Generation
+See [GENERATION.md](../GENERATION.md) for complete code generation patterns and metaprogramming approach:
+- Template-based generation with Handlebars
+- Metadata-driven development (JSON data models)
+- Regeneration strategy (generated files can be overwritten; custom logic in services)
+- Generator patterns and extension points
+- Type safety enforcement (no `any` types)
+- Template context patterns and naming conventions
+- Generation phases and dependencies
+
+**Tool Location**: `generation/code/` - TypeScript-based generator for BoundedContext scaffolding
+**Custom Logic**: Add business logic in separate domain services, not in generated entities
+
 ## Backend Project Naming & Structure
 Follow the conventions from Architecture.md strictly:
 - **DTO Projects**: `Inventorization.[BoundedContextName].DTO` (class library)

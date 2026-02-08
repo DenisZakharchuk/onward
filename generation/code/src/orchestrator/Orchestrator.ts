@@ -3,45 +3,74 @@
  */
 
 import chalk from 'chalk';
-import { DataModel } from '../models/DataModel';
-import { BaseGenerator } from '../generators/BaseGenerator';
+import { DataModel, GenerationMetadata } from '../models/DataModel';
+import { IGenerator } from '../abstractions/IGenerator';
+import { IResultWriter } from '../abstractions/IResultWriter';
 import { DtoGenerator } from '../generators/DtoGenerator';
 import { EntityGenerator } from '../generators/EntityGenerator';
+import { GenerationStamp } from '../utils/GenerationStamp';
 import * as path from 'path';
 
 export interface OrchestratorOptions {
   skipTests?: boolean;
   dryRun?: boolean;
   force?: boolean;
+  sourceFile?: string;  // Name of source data model file
+  baseNamespace?: string;  // Base namespace prefix (default: 'Inventorization')
 }
 
 export class Orchestrator {
   private options: OrchestratorOptions;
-  private generators: BaseGenerator[] = [];
+  private generators: IGenerator[] = [];
+  private writer: IResultWriter;
 
-  constructor(options: OrchestratorOptions = {}) {
+  constructor(writer: IResultWriter, options: OrchestratorOptions = {}) {
+    this.writer = writer;
     this.options = {
-      skipTests: false,
-      dryRun: false,
-      force: true,
       ...options,
+      skipTests: options.skipTests ?? false,
+      dryRun: options.dryRun ?? false,
+      force: options.force ?? true,
+      baseNamespace: options.baseNamespace ?? 'Inventorization',
     };
   }
 
   /**
    * Generate complete BoundedContext code
    */
-  async generate(model: DataModel, outputDir: string): Promise<void> {
+  async generate(model: DataModel): Promise<void> {
     console.log(chalk.blue('\n🚀 Starting code generation...\n'));
+
+    // Generate unique stamp for this generation run
+    const generationStamp = GenerationStamp.create();
+    const generatedAt = GenerationStamp.getTimestamp();
+    const sourceFile = this.options.sourceFile || 'unknown';
+
+    const metadata: GenerationMetadata = {
+      generationStamp,
+      generatedAt,
+      sourceFile,
+      baseNamespace: this.options.baseNamespace!,
+    };
+
+    console.log(chalk.gray(`  Generation Stamp: ${generationStamp}`));
+    console.log(chalk.gray(`  Generated At: ${generatedAt}`));
+    console.log(chalk.gray(`  Source: ${sourceFile}\n`));
 
     // Initialize generators (in dependency order)
     this.initializeGenerators();
 
+    // Inject metadata and writer into all generators
+    for (const generator of this.generators) {
+      generator.setMetadata(metadata);
+      generator.setWriter(this.writer);
+    }
+
     // Create project directories
-    const projectPaths = this.getProjectPaths(model, outputDir);
+    const projectPaths = this.getProjectPaths(model);
 
     if (!this.options.dryRun) {
-      await this.ensureDirectories(projectPaths);
+      await this.ensureDirectories(projectPaths, model);
     }
 
     // Run generators in order
@@ -50,14 +79,14 @@ export class Orchestrator {
       console.log(chalk.cyan(`  ⚙️  Running ${generatorName}...`));
 
       if (!this.options.dryRun) {
-        await generator.generate(model, outputDir);
+        await generator.generate(model);
       } else {
         console.log(chalk.gray(`     (dry run - skipped)`));
       }
     }
 
     // Print summary
-    this.printSummary(model, projectPaths);
+    this.printSummary(model, projectPaths, generationStamp);
   }
 
   /**
@@ -105,46 +134,45 @@ export class Orchestrator {
   }
 
   /**
-   * Get project directory paths
+   * Get project directory paths (relative to output directory)
    */
-  private getProjectPaths(model: DataModel, outputDir: string) {
+  private getProjectPaths(model: DataModel) {
     const contextName = model.boundedContext.name;
+    const baseNamespace = this.options.baseNamespace!;
 
     return {
-      common: path.join(outputDir, `Inventorization.${contextName}.Common`),
-      dto: path.join(outputDir, `Inventorization.${contextName}.DTO`),
-      domain: path.join(outputDir, `Inventorization.${contextName}.Domain`),
-      api: path.join(outputDir, `Inventorization.${contextName}.API`),
-      tests: path.join(outputDir, `Inventorization.${contextName}.API.Tests`),
+      common: `${baseNamespace}.${contextName}.Common`,
+      dto: `${baseNamespace}.${contextName}.DTO`,
+      domain: `${baseNamespace}.${contextName}.Domain`,
+      api: `${baseNamespace}.${contextName}.API`,
+      tests: `${baseNamespace}.${contextName}.API.Tests`,
     };
   }
 
   /**
    * Ensure all project directories exist
    */
-  private async ensureDirectories(projectPaths: any): Promise<void> {
-    const fs = await import('fs-extra');
-
+  private async ensureDirectories(projectPaths: Record<string, string>, model: DataModel): Promise<void> {
     for (const [key, dirPath] of Object.entries(projectPaths)) {
-      await fs.ensureDir(dirPath as string);
+      await this.writer.ensureDirectory(dirPath as string);
 
       // Create subdirectories
       if (key === 'domain') {
-        await fs.ensureDir(path.join(dirPath as string, 'Entities'));
-        await fs.ensureDir(path.join(dirPath as string, 'EntityConfigurations'));
-        await fs.ensureDir(path.join(dirPath as string, 'Creators'));
-        await fs.ensureDir(path.join(dirPath as string, 'Modifiers'));
-        await fs.ensureDir(path.join(dirPath as string, 'Mappers'));
-        await fs.ensureDir(path.join(dirPath as string, 'SearchProviders'));
-        await fs.ensureDir(path.join(dirPath as string, 'Validators'));
-        await fs.ensureDir(path.join(dirPath as string, 'DataServices'));
-        await fs.ensureDir(path.join(dirPath as string, 'DbContexts'));
-        await fs.ensureDir(path.join(dirPath as string, 'DataAccess'));
-        await fs.ensureDir(path.join(dirPath as string, 'PropertyAccessors'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Entities'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'EntityConfigurations'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Creators'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Modifiers'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Mappers'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'SearchProviders'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Validators'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'DataServices'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'DbContexts'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'DataAccess'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'PropertyAccessors'));
       } else if (key === 'api') {
-        await fs.ensureDir(path.join(dirPath as string, 'Controllers'));
-      } else if (key === 'common' && this.hasEnums(projectPaths)) {
-        await fs.ensureDir(path.join(dirPath as string, 'Enums'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Controllers'));
+      } else if (key === 'common' && this.hasEnums(model)) {
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Enums'));
       }
     }
   }
@@ -159,22 +187,26 @@ export class Orchestrator {
   /**
    * Print generation summary
    */
-  private printSummary(model: DataModel, projectPaths: any): void {
+  private printSummary(model: DataModel, projectPaths: Record<string, string>, generationStamp: string): void {
     console.log(chalk.green('\n✅ Generation Summary:\n'));
+
+    console.log(chalk.blue('  Generation:'));
+    console.log(`    Stamp: ${chalk.yellow(generationStamp)}`);
+    console.log(`    BoundedContext: ${chalk.yellow(model.boundedContext.name)}`);
 
     const entityCount = model.entities.length;
     const junctionCount = model.entities.filter((e) => e.isJunction).length;
     const regularCount = entityCount - junctionCount;
 
-    console.log(chalk.blue('  Entities:'));
+    console.log(chalk.blue('\n  Entities:'));
     console.log(`    Regular Entities: ${chalk.yellow(regularCount)}`);
     console.log(`    Junction Entities: ${chalk.yellow(junctionCount)}`);
     console.log(`    Total: ${chalk.yellow(entityCount)}`);
 
     console.log(chalk.blue('\n  Generated Files per Entity:'));
     console.log(`    DTOs: ${chalk.yellow('5')} (Create, Update, Delete, Details, Search)`);
-    console.log(`    Domain: ${chalk.yellow('2')} (Entity.generated.cs, Entity.cs)`);
-    console.log(`    Total per entity: ${chalk.yellow('~15-20 files')}`);
+    console.log(`    Entity: ${chalk.yellow('1')} (Entity.cs)`);
+    console.log(`    Total per entity: ${chalk.yellow('~15-20 files')} (when complete)`);
 
     console.log(chalk.blue('\n  Project Paths:'));
     Object.entries(projectPaths).forEach(([key, dirPath]) => {

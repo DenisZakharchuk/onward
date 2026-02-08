@@ -122,7 +122,7 @@ export class FileManager {
   /**
    * Write JSON file
    */
-  static async writeJson(filePath: string, data: any, options?: fs.WriteOptions): Promise<void> {
+  static async writeJson(filePath: string, data: unknown, options?: fs.WriteOptions): Promise<void> {
     await fs.writeJson(path.resolve(filePath), data, { spaces: 2, ...options });
   }
 
