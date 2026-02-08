@@ -1,0 +1,34 @@
+namespace {{namespace}}.Domain.Entities;
+
+/// <summary>
+/// Custom business logic for {{entityName}}
+/// Add your custom methods here
+/// </summary>
+public partial class {{entityName}}
+{
+    /// <summary>
+    /// Update {{entityName}} properties
+    /// </summary>
+    {{#each updateParams}}
+    /// <param name="{{paramName}}">{{paramDescription}}</param>
+    {{/each}}
+    public void Update(
+        {{#each updateParams}}
+        {{type}} {{paramName}}{{#unless @last}},{{/unless}}
+        {{/each}}
+    )
+    {
+        // TODO: Add validation logic here
+
+        {{#each updateAssignments}}
+        {{this}}
+        {{/each}}
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // TODO: Add additional business logic methods as needed
+    // Example:
+    // public void Activate() { IsActive = true; UpdatedAt = DateTime.UtcNow; }
+    // public void Deactivate() { IsActive = false; UpdatedAt = DateTime.UtcNow; }
+}

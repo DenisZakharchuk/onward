@@ -1,0 +1,50 @@
+{
+  "name": "@inventorization/code-generator",
+  "version": "1.0.0",
+  "description": "Code generator for BoundedContext microservices in the Inventorization system",
+  "main": "dist/cli.js",
+  "bin": {
+    "gen-bounded-context": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "ts-node src/cli.ts",
+    "clean": "rm -rf dist",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint src --ext .ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "code-generator",
+    "microservices",
+    "bounded-context",
+    "dotnet",
+    "csharp"
+  ],
+  "author": "Inventorization Team",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.2.0",
+    "handlebars": "^4.7.8",
+    "ora": "^5.4.1",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.11.0",
+    "@types/yargs": "^17.0.32",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
