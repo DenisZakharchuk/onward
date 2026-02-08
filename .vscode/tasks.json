@@ -17,14 +17,14 @@
       }
     },
     {
-      "label": "Start Backend",
+      "label": "Start Goods Service",
       "type": "shell",
       "command": "dotnet",
       "args": ["run"],
       "options": {
-        "cwd": "${workspaceFolder}/backend/InventorySystem.API",
+        "cwd": "${workspaceFolder}/backend/Inventorization.Goods.API",
         "env": {
-          "ASPNETCORE_URLS": "http://localhost:5002"
+          "ASPNETCORE_URLS": "http://localhost:5022"
         }
       },
       "isBackground": true,
@@ -49,14 +49,14 @@
       "dependsOn": ["Start Infra"]
     },
     {
-      "label": "Debug Backend",
+      "label": "Debug Goods Service",
       "type": "shell",
       "command": "dotnet",
       "args": ["run", "--configuration", "Debug"],
       "options": {
-        "cwd": "${workspaceFolder}/backend/InventorySystem.API",
+        "cwd": "${workspaceFolder}/backend/Inventorization.Goods.API",
         "env": {
-          "ASPNETCORE_URLS": "http://localhost:5002",
+          "ASPNETCORE_URLS": "http://localhost:5022",
           "ASPNETCORE_ENVIRONMENT": "Development"
         }
       },
@@ -80,6 +80,16 @@
         "group": "dev"
       },
       "dependsOn": ["Start Infra"]
+    },
+    {
+      "label": "Start Backend",
+      "dependsOn": ["Start Auth Service", "Start Goods Service"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug Backend",
+      "dependsOn": ["Debug Auth Service", "Debug Goods Service"],
+      "problemMatcher": []
     },
     {
       "label": "Start Auth Service",
@@ -193,7 +203,7 @@
     },
     {
       "label": "Start All",
-      "dependsOn": ["Start Backend", "Start Auth Service", "Start Frontend"],
+      "dependsOn": ["Start Backend", "Start Frontend"],
       "problemMatcher": []
     }
   ]

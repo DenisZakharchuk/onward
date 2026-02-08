@@ -1,0 +1,23 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using InventorySystem.API.Base.Controllers;
+using Inventorization.Goods.Domain.Entities;
+using Inventorization.Goods.Domain.DataServices;
+using Inventorization.Goods.DTO.DTO.Category;
+
+namespace Inventorization.Goods.API.Controllers;
+
+/// <summary>
+/// Controller for managing Categories
+/// Inherits all CRUD operations from DataController base class
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryDataService>
+{
+    public CategoriesController(ICategoryDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
+        : base(service, logger)
+    {
+    }
+}

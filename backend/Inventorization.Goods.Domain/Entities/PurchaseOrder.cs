@@ -1,4 +1,5 @@
 using Inventorization.Base.Models;
+using Inventorization.Goods.Common.Enums;
 
 namespace Inventorization.Goods.Domain.Entities;
 
@@ -145,16 +146,4 @@ public class PurchaseOrder : BaseEntity
     {
         return Items.Sum(i => i.TotalPrice);
     }
-}
-
-/// <summary>
-/// Enum representing possible statuses of a purchase order
-/// </summary>
-public enum PurchaseOrderStatus
-{
-    Draft = 0,
-    Submitted = 1,
-    Approved = 2,
-    Received = 3,
-    Cancelled = 4
 }

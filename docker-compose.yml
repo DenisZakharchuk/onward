@@ -22,6 +22,27 @@ services:
       timeout: 5s
       retries: 5
 
+  # PostgreSQL for Goods microservice
+  postgres-goods:
+    image: postgres:16-alpine
+    container_name: inventory-postgres-goods
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: inventorization_goods
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_goods_data:/var/lib/postgresql/data
+    networks:
+      - inventory-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: inventory-pgadmin
@@ -38,6 +59,7 @@ services:
       - inventory-network
     depends_on:
       - postgres-auth
+      - postgres-goods
 
   mongodb:
     image: mongo:7.0
@@ -77,6 +99,8 @@ services:
 
 volumes:
   postgres_auth_data:
+    driver: local
+  postgres_goods_data:
     driver: local
   pgadmin_data:
     driver: local

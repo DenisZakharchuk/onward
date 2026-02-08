@@ -13,6 +13,10 @@ public class GoodSupplierConfiguration : JunctionEntityConfiguration<GoodSupplie
     
     protected override void ConfigureJunctionEntity(EntityTypeBuilder<GoodSupplier> builder)
     {
+        // Ignore computed properties (they're just aliases for base class properties)
+        builder.Ignore(e => e.GoodId);
+        builder.Ignore(e => e.SupplierId);
+        
         // Configure metadata columns
         builder.Property(e => e.SupplierPrice)
             .HasPrecision(18, 2)
@@ -23,15 +27,15 @@ public class GoodSupplierConfiguration : JunctionEntityConfiguration<GoodSupplie
         
         builder.HasIndex(e => e.IsPreferred);
         
-        // Configure relationships
+        // Configure relationships using base class properties
         builder.HasOne(e => e.Good)
             .WithMany(g => g.GoodSuppliers)
-            .HasForeignKey(e => e.GoodId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(e => e.EntityId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         builder.HasOne(e => e.Supplier)
             .WithMany(s => s.GoodSuppliers)
-            .HasForeignKey(e => e.SupplierId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(e => e.RelatedEntityId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

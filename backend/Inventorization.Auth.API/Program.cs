@@ -148,7 +148,12 @@ builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<UserRole>, UserRoleR
 builder.Services.AddScoped<IEntityIdPropertyAccessor<RolePermission>, RolePermissionEntityIdPropertyAccessor>();
 builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<RolePermission>, RolePermissionRelatedEntityIdPropertyAccessor>();
 
+// Relationship Metadata Registration
+builder.Services.AddSingleton<IRelationshipMetadata<User, Role>>(Inventorization.Auth.Domain.DataModelRelationships.UserRoles);
+
+// Relationship Managers
 builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
+
 builder.Services.AddScoped<IValidator<Inventorization.Base.DTOs.EntityReferencesDTO>, EntityReferencesValidator>();
 
 // ===== Authentication & Authorization Services =====

@@ -215,6 +215,36 @@ public class User
   - DTO projects: `Inventorization.[BoundedContextName].DTO` (class library)
   - Domain projects: `Inventorization.[BoundedContextName].Domain` (class library, with Entities, Services, DbContexts, UOWs)
   - API projects: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
+  - Common projects: `Inventorization.[BoundedContextName].Common` (class library for shared primitives)
+
+### Common Project Guidelines
+Each bounded context **should** have a separate Common project to store shared primitives that are used across multiple projects (DTO, Domain, API):
+
+**Purpose**: Store commonly used primitives that don't belong in Inventorization.Base (which is for cross-bounded-context abstractions)
+
+**What belongs in Common:**
+- **Enums**: Domain-specific enumerations (e.g., `PurchaseOrderStatus`, `OrderType`)
+- **Value Objects**: Immutable value types (e.g., `Money`, `Address`, `PhoneNumber`)
+- **Constants**: Bounded context-specific constants (e.g., validation limits, business rules)
+- **Custom Structs**: Domain-specific data structures
+
+**Project References:**
+- `DTO` project → references `Common`
+- `Domain` project → references `Common`  
+- `API` project → references `Common` (transitive via DTO/Domain)
+
+**Anti-Pattern**: DO NOT reference `Domain.Entities` from DTO project just to use an enum. Extract the enum to `Common` instead.
+
+**Example Structure:**
+```
+Inventorization.Goods.Common/
+  ├── Enums/
+  │   ├── PurchaseOrderStatus.cs
+  │   └── StockMovementType.cs
+  ├── Constants/
+  │   └── ValidationLimits.cs
+  └── GlobalUsings.cs
+```
 
 ## Base Abstractions and Data Structures
 - All base abstractions and common data structures (such as `CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, `UnitOfWorkBase<TDbContext>`, and all generic interfaces like `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, `IPropertyAccessor`, `IValidator`, `IUnitOfWork`, etc.) must be located in a separate shared project named `Inventorization.Base`.

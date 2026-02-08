@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />
+    <ProjectReference Include="..\Inventorization.Goods.Common\Inventorization.Goods.Common.csproj" />
   </ItemGroup>
 
 </Project>

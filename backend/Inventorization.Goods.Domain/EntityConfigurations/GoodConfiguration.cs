@@ -26,14 +26,23 @@ public class GoodConfiguration : BaseEntityConfiguration<Good>
         builder.Property(e => e.UnitPrice)
             .HasPrecision(18, 2);
         
+        builder.Property(e => e.QuantityInStock)
+            .IsRequired()
+            .HasDefaultValue(0);
+        
         builder.Property(e => e.UnitOfMeasure)
             .HasMaxLength(50);
         
         builder.Property(e => e.IsActive)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(true);
         
         builder.Property(e => e.CreatedAt)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValueSql("NOW()");
+        
+        builder.Property(e => e.UpdatedAt)
+            .IsRequired(false);
         
         // Relationship: Good belongs to Category (optional)
         builder.HasOne(e => e.Category)
