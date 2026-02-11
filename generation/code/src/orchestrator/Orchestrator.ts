@@ -8,6 +8,14 @@ import { IGenerator } from '../abstractions/IGenerator';
 import { IResultWriter } from '../abstractions/IResultWriter';
 import { DtoGenerator } from '../generators/DtoGenerator';
 import { EntityGenerator } from '../generators/EntityGenerator';
+import { ConfigurationGenerator } from '../generators/ConfigurationGenerator';
+import { AbstractionGenerator } from '../generators/AbstractionGenerator';
+import { ValidatorGenerator } from '../generators/ValidatorGenerator';
+import { ServiceGenerator } from '../generators/ServiceGenerator';
+import { DataAccessGenerator } from '../generators/DataAccessGenerator';
+import { ControllerGenerator } from '../generators/ControllerGenerator';
+import { MetadataGenerator } from '../generators/MetadataGenerator';
+import { ProjectGenerator } from '../generators/ProjectGenerator';
 import { GenerationStamp } from '../utils/GenerationStamp';
 import * as path from 'path';
 
@@ -95,41 +103,43 @@ export class Orchestrator {
   private initializeGenerators(): void {
     // Order matters - dependencies first
     this.generators = [
-      // Phase 1: Enums and base types
+      // Phase 1: Metadata (first - needed by other generators)
+      new MetadataGenerator(),
+
+      // Phase 2: Enums and base types
       // new EnumGenerator(),
 
-      // Phase 2: Entities
+      // Phase 3: Entities
       new EntityGenerator(),
 
-      // Phase 3: DTOs
+      // Phase 4: DTOs
       new DtoGenerator(),
 
-      // Phase 4: Configurations
-      // new ConfigurationGenerator(),
+      // Phase 5: Configurations
+      new ConfigurationGenerator(),
 
-      // Phase 5: DbContext and UnitOfWork
-      // new DataAccessGenerator(),
+      // Phase 6: DbContext and UnitOfWork
+      new DataAccessGenerator(),
 
-      // Phase 6: Abstractions (Creators, Modifiers, Mappers, SearchProviders)
-      // new AbstractionGenerator(),
+      // Phase 7: Abstractions (Creators, Modifiers, Mappers, SearchProviders)
+      new AbstractionGenerator(),
 
-      // Phase 7: Validators
-      // new ValidatorGenerator(),
+      // Phase 8: Validators
+      new ValidatorGenerator(),
 
-      // Phase 8: DataServices
-      // new ServiceGenerator(),
+      // Phase 9: DataServices
+      new ServiceGenerator(),
 
-      // Phase 9: Controllers
-      // new ControllerGenerator(),
+      // Phase 10: Controllers
+      new ControllerGenerator(),
 
-      // Phase 10: Tests (if not skipped)
+      // Phase 11: Tests (if not skipped)
       // if (!this.options.skipTests) {
       //   this.generators.push(new TestGenerator());
       // }
 
-      // Phase 11: Project files and DI registrations
-      // new ProjectFileGenerator(),
-      // new ProgramGenerator(),
+      // Phase 12: Project files, GlobalUsings.cs, and .csproj files (LAST)
+      new ProjectGenerator(),
     ];
   }
 
@@ -141,6 +151,7 @@ export class Orchestrator {
     const baseNamespace = this.options.baseNamespace!;
 
     return {
+      meta: `${baseNamespace}.${contextName}.Meta`,
       common: `${baseNamespace}.${contextName}.Common`,
       dto: `${baseNamespace}.${contextName}.DTO`,
       domain: `${baseNamespace}.${contextName}.Domain`,

@@ -153,10 +153,15 @@ public class ProductDomainService : IProductDomainService
                   │
 ┌─────────────────▼───────────────────────────┐
 │ Generators (BaseGenerator)                   │
+│ - MetadataGenerator (DataModelMetadata)      │
 │ - EntityGenerator                            │
 │ - DtoGenerator                               │
-│ - ConfigurationGenerator (planned)           │
-│ - etc.                                       │
+│ - ConfigurationGenerator                     │
+│ - AbstractionGenerator                       │
+│ - ValidatorGenerator                         │
+│ - ServiceGenerator                           │
+│ - DataAccessGenerator                        │
+│ - ControllerGenerator                        │
 └─────────────────┬───────────────────────────┘
                   │
 ┌─────────────────▼───────────────────────────┐
@@ -544,6 +549,170 @@ public {{type}} {{name}} { get; set; }    ✅
 
 ---
 
+## Meta Project & DataModelMetadata
+
+### Purpose
+
+The **Meta Project** (`Inventorization.{Context}.Meta`) serves as the centralized metadata repository for a bounded context. It contains two core generated classes:
+
+1. **DataModelMetadata.cs** - Entity structure, property metadata, validation rules
+2. **DataModelRelationships.cs** - Relationship definitions between entities
+
+### Why a Separate Project?
+
+**Dependency Flow**:
+```
+Meta ← Domain, DTO, API, API.Tests
+```
+
+Meta project has **zero dependencies** on other projects, making metadata reusable across:
+- Domain (for entity validation)
+- DTO (for mapping validation)
+- API (for endpoint documentation)
+- Frontend (for form generation, validation)
+
+### DataModelMetadata Structure
+
+Generated static class containing metadata for all entities:
+
+```csharp
+public static class DataModelMetadata
+{
+    public static EntityMetadata Product { get; } = new EntityMetadata.Builder()
+        .WithName("Product")
+        .WithTable("Products", "catalog")
+        .WithProperty(prop => prop
+            .WithName("Name")
+            .WithType("string", false)
+            .WithValidation(val => val
+                .Required()
+                .MaxLength(200)))
+        .WithProperty(prop => prop
+            .WithName("Price")
+            .WithType("decimal", false)
+            .WithValidation(val => val
+                .Required()
+                .Precision(18, 2)))
+        .WithIndex(idx => idx
+            .Name("IX_Products_SKU")
+            .Columns("SKU")
+            .IsUnique(true))
+        .Build();
+    
+    public static EntityMetadata Category { get; } = ...;
+}
+```
+
+**Usage in Validators**:
+```csharp
+public class ProductValidator : IValidator<CreateProductDTO>
+{
+    public ValidationResult Validate(CreateProductDTO dto)
+    {
+        var metadata = DataModelMetadata.Product;
+        var nameProperty = metadata.Properties.First(p => p.Name == "Name");
+        
+        if (dto.Name?.Length > nameProperty.Validation.MaxLength)
+            return ValidationResult.Failure($"Name exceeds {nameProperty.Validation.MaxLength} characters");
+            
+        return ValidationResult.Success;
+    }
+}
+```
+
+**Usage in EF Configurations**:
+```csharp
+public class ProductConfiguration : IEntityTypeConfiguration<Product>
+{
+    public void Configure(EntityTypeBuilder<Product> builder)
+    {
+        var metadata = DataModelMetadata.Product;
+        builder.ToTable(metadata.TableName, metadata.SchemaName);
+        
+        foreach (var property in metadata.Properties)
+        {
+            // Apply configurations from metadata
+        }
+    }
+}
+```
+
+### DataModelRelationships Structure
+
+Generated static class containing all relationship metadata:
+
+```csharp
+public static class DataModelRelationships
+{
+    public static RelationshipMetadata CategoryProducts { get; } = new RelationshipMetadata.Builder()
+        .WithName("CategoryProducts")
+        .WithType(RelationshipType.OneToMany)
+        .WithPrincipal("Category", "CategoryId")
+        .WithDependent("Product", "CategoryId")
+        .WithCardinality(Cardinality.Required)
+        .WithDeleteBehavior(DeleteBehavior.Restrict)
+        .Build();
+    
+    public static RelationshipMetadata ProductTags { get; } = ...;
+}
+```
+
+**Usage in EF Configurations**:
+```csharp
+public class CategoryConfiguration : IEntityTypeConfiguration<Category>
+{
+    public void Configure(EntityTypeBuilder<Category> builder)
+    {
+        var relationship = DataModelRelationships.CategoryProducts;
+        
+        builder.HasMany(relationship.DependentNavigationProperty)
+               .WithOne(relationship.PrincipalNavigationProperty)
+               .HasForeignKey(relationship.ForeignKeyProperty)
+               .OnDelete(relationship.DeleteBehavior);
+    }
+}
+```
+
+### Metadata Benefits
+
+1. **Single Source of Truth**: All validation rules, indexes, relationships defined once
+2. **Type Safety**: Strongly-typed metadata accessible via IntelliSense
+3. **Reusability**: Same metadata drives Domain, DTO, API, Frontend
+4. **Discoverability**: IntelliSense shows all available entity metadata
+5. **Maintainability**: Changes to metadata auto-propagate to consumers
+6. **Documentation**: Self-documenting - metadata explains entity structure
+
+### Generation Context
+
+The `MetadataGenerator` builds metadata from JSON data model:
+
+```typescript
+buildEntityMetadataContext(entity: Entity): EntityMetadataContext {
+  return {
+    entityName: entity.name,
+    tableName: entity.tableName || `${entity.name}s`,
+    schemaName: entity.schemaName || 'dbo',
+    properties: entity.properties.map(p => ({
+      name: p.name,
+      type: TypeMapper.toCSharpType(p.type, p.nullable),
+      isNullable: p.nullable,
+      validation: {
+        isRequired: !p.nullable,
+        maxLength: p.validations?.maxLength,
+        precision: p.validations?.precision,
+        scale: p.validations?.scale,
+        regex: p.validations?.regex,
+        // ... other validation rules
+      }
+    })),
+    indexes: entity.indexes || [],
+    uniqueConstraints: entity.uniqueConstraints || []
+  };
+}
+```
+
+---
+
 ## Type Safety Patterns
 
 ### No `any` Types
@@ -593,13 +762,13 @@ TypeMapper.isStringType('string')                  // true
 Generators must run in dependency order to avoid missing references:
 
 ```
-Phase 1: Common Project (Enums, Value Objects)
+Phase 1: Metadata (DataModelMetadata, DataModelRelationships)
    ↓
-Phase 2: Entities (Domain Models)
+Phase 2: Common Project (Enums, Value Objects)
    ↓
-Phase 3: DTOs (Data Transfer Objects)
+Phase 3: Entities (Domain Models)
    ↓
-Phase 4: PropertyAccessors (for junctions)
+Phase 4: DTOs (Data Transfer Objects)
    ↓
 Phase 5: EntityConfigurations (EF Core mappings)
    ↓
@@ -609,7 +778,7 @@ Phase 7: Abstractions (Creators, Modifiers, Mappers, SearchProviders)
    ↓
 Phase 8: Validators
    ↓
-Phase 9: DataServices + RelationshipManagers
+Phase 9: DataServices
    ↓
 Phase 10: Controllers
    ↓
@@ -762,18 +931,22 @@ public DbSet<{{entityName}}> {{pluralize entityName}} => Set<{{entityName}}>();
 ### Generated Files Structure
 
 ```
+Inventorization.{Context}.Meta/                   ← METADATA PROJECT
+├── DataModelMetadata.cs                          ← Generated entity metadata
+└── DataModelRelationships.cs                     ← Generated relationship metadata
+
 Inventorization.{Context}.Domain/
 ├── Entities/
-│   ├── Product.cs                    ← GENERATED (can overwrite)
-│   └── Category.cs                   ← GENERATED (can overwrite)
+│   ├── Product.cs                                ← GENERATED (can overwrite)
+│   └── Category.cs                               ← GENERATED (can overwrite)
 ├── EntityConfigurations/
 │   ├── ProductConfiguration.cs
 │   └── CategoryConfiguration.cs
 ├── Creators/
 │   └── ProductCreator.cs
-├── Services/                         ← CUSTOM DOMAIN LOGIC
-│   ├── IProductDomainService.cs      ← Developer-owned
-│   └── ProductDomainService.cs       ← Developer-owned
+├── Services/                                     ← CUSTOM DOMAIN LOGIC
+│   ├── IProductDomainService.cs                  ← Developer-owned
+│   └── ProductDomainService.cs                   ← Developer-owned
 └── ... (other folders)
 
 Inventorization.{Context}.DTO/

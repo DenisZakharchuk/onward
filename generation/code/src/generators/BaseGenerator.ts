@@ -48,6 +48,11 @@ export abstract class BaseGenerator implements IGenerator {
       return arg1 === arg2 ? options.fn(this) : options.inverse(this);
     });
 
+    // Helper for equality check (used in {{#if (eq a b)}})
+    Handlebars.registerHelper('eq', (arg1: unknown, arg2: unknown) => {
+      return arg1 === arg2;
+    });
+
     // Helper for logical OR
     Handlebars.registerHelper('or', (...args: unknown[]) => {
       // Last argument is the options object

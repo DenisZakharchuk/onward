@@ -216,6 +216,88 @@ public class User
   - Domain projects: `Inventorization.[BoundedContextName].Domain` (class library, with Entities, Services, DbContexts, UOWs)
   - API projects: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
   - Common projects: `Inventorization.[BoundedContextName].Common` (class library for shared primitives)
+  - **Meta projects**: `Inventorization.[BoundedContextName].Meta` (class library for metadata definitions)
+
+### Meta Project Guidelines
+
+Each bounded context **must** have a separate Meta project to store complete metadata about entities, properties, and relationships:
+
+**Purpose**: Centralized metadata repository serving as single source of truth for:
+- Entity structure and property definitions
+- Validation rules and constraints
+- EF Core configuration metadata
+- UI form generation
+- API documentation
+- Code generation
+
+**What belongs in Meta:**
+- **DataModelMetadata**: Static class with `IDataModelMetadata<TEntity>` for each entity
+- **DataModelRelationships**: Static class with `IRelationshipMetadata<TEntity, TRelated>` for all relationships
+- Helper methods for metadata discovery
+
+**Project References:**
+- `Meta` project → references `Inventorization.Base` only (no other bounded context projects)
+- `Domain` project → references `Meta` (for entity configurations, validators)
+- `DTO` project → references `Meta` (optional, for validation metadata)
+- `API` project → references `Meta` (transitive via Domain, for Swagger docs)
+
+**Example Structure:**
+```
+Inventorization.Goods.Meta/
+  ├── DataModelMetadata.cs (static class with entity metadata)
+  ├── DataModelRelationships.cs (static class with relationship metadata)
+  └── GlobalUsings.cs
+```
+
+**DataModelMetadata.cs Pattern:**
+```csharp
+public static class DataModelMetadata
+{
+    public static readonly IDataModelMetadata<Good> Good = new DataModelMetadataBuilder<Good>()
+        .WithTable("Goods", schema: null)
+        .WithDisplayName("Good")
+        .WithDescription("Represents a product/item in the inventory system")
+        .WithAuditing()
+        .AddProperties(
+            new DataPropertyMetadata(
+                propertyName: nameof(Good.Name),
+                propertyType: typeof(string),
+                displayName: "Name",
+                isRequired: true,
+                maxLength: 200,
+                description: "Name of the good"))
+        .WithPrimaryKey(nameof(Good.Id))
+        .AddIndex(nameof(Good.Sku))
+        .Build();
+        
+    // Helper methods
+    public static IReadOnlyList<IDataModelMetadata> GetAllEntityMetadata() => ...
+}
+```
+
+**DataModelRelationships.cs Pattern:**
+```csharp
+public static class DataModelRelationships
+{
+    public static readonly IRelationshipMetadata<Good, Supplier> GoodSuppliers =
+        new RelationshipMetadata<Good, Supplier>(
+            type: RelationshipType.ManyToMany,
+            cardinality: RelationshipCardinality.Optional,
+            entityName: nameof(Good),
+            relatedEntityName: nameof(Supplier),
+            displayName: "Good Suppliers",
+            junctionEntityName: nameof(GoodSupplier),
+            navigationPropertyName: nameof(Good.GoodSuppliers),
+            description: "Manages supplier relationships for goods");
+}
+```
+
+**Benefits:**
+- Single source of truth for all entity/relationship metadata
+- Enables metadata-driven validation, configuration, and UI generation
+- Separates metadata from domain logic
+- Facilitates code generation and tooling
+- Type-safe metadata access
 
 ### Common Project Guidelines
 Each bounded context **should** have a separate Common project to store shared primitives that are used across multiple projects (DTO, Domain, API):
