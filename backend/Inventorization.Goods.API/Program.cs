@@ -69,6 +69,27 @@ builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Good.CreateG
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Good.UpdateGoodDTO>, 
     Inventorization.Goods.Domain.Validators.UpdateGoodValidator>();
 
+// ===== ADT-Based Search Components for Good =====
+// Query builder for ADT-based search
+builder.Services.AddScoped<IQueryBuilder<Inventorization.Goods.Domain.Entities.Good>, 
+    Inventorization.Goods.Domain.DataAccess.GoodQueryBuilder>();
+
+// Projection mapper
+builder.Services.AddScoped<Inventorization.Goods.Domain.Mappers.Projection.IGoodProjectionMapper, 
+    Inventorization.Goods.Domain.Mappers.Projection.GoodProjectionMapper>();
+
+// Projection expression builder for transformations
+builder.Services.AddScoped<Inventorization.Base.Services.ProjectionExpressionBuilder>();
+
+// Search query validator
+builder.Services.AddScoped<IValidator<Inventorization.Base.ADTs.SearchQuery>, 
+    Inventorization.Goods.Domain.Validators.GoodSearchQueryValidator>();
+
+// Search service (concrete type for dual method support)
+builder.Services.AddScoped<Inventorization.Goods.Domain.Services.GoodSearchService>();
+builder.Services.AddScoped<ISearchService<Inventorization.Goods.Domain.Entities.Good, Inventorization.Goods.DTO.ADTs.GoodProjection>>(
+    sp => sp.GetRequiredService<Inventorization.Goods.Domain.Services.GoodSearchService>());
+
 // Category entity abstractions
 builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CategoryDetailsDTO>, 
     Inventorization.Goods.Domain.Mappers.CategoryMapper>();
@@ -82,6 +103,23 @@ builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Category.Cre
     Inventorization.Goods.Domain.Validators.CreateCategoryValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Category.UpdateCategoryDTO>, 
     Inventorization.Goods.Domain.Validators.UpdateCategoryValidator>();
+
+// ===== ADT-Based Search Components for Category =====
+// Query builder for ADT-based search
+builder.Services.AddScoped<IQueryBuilder<Inventorization.Goods.Domain.Entities.Category>, 
+    Inventorization.Goods.Domain.DataAccess.CategoryQueryBuilder>();
+
+// Projection mapper
+builder.Services.AddScoped<Inventorization.Goods.Domain.Mappers.Projection.ICategoryProjectionMapper, 
+    Inventorization.Goods.Domain.Mappers.Projection.CategoryProjectionMapper>();
+
+// Search query validator
+builder.Services.AddScoped<Inventorization.Goods.Domain.Validators.CategorySearchQueryValidator>();
+
+// Search service (concrete type for dual method support)
+builder.Services.AddScoped<Inventorization.Goods.Domain.Services.CategorySearchService>();
+builder.Services.AddScoped<ISearchService<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.ADTs.CategoryProjection>>(
+    sp => sp.GetRequiredService<Inventorization.Goods.Domain.Services.CategorySearchService>());
 
 // Supplier entity abstractions
 builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.SupplierDetailsDTO>, 

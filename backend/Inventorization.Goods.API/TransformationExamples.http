@@ -1,0 +1,519 @@
+### Transformation Search Examples - Using /query/transform endpoint
+### 
+### These examples use the new dual search methods pattern:
+### - POST /api/goods/query - Regular projections (returns GoodProjection)
+### - POST /api/goods/query/transform - Transformations (returns TransformationResult)
+###
+### TransformationResult provides:
+### - Type-safe dynamic projections with schema metadata
+### - Each request has unique schema based on transformations
+### - Schema bounded by: request aliases + entity types + transformation outputs
+### - OpenAPI/Swagger documentation support
+
+@baseUrl = http://localhost:5022
+@contentType = application/json
+
+###############################
+### TRANSFORMATION EXAMPLES
+###############################
+
+### Example 1: Simple string transformations - Uppercase/Lowercase
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "upperName": {
+        "field": "Name",
+        "operation": "upper"
+      },
+      "lowerSku": {
+        "field": "Sku",
+        "operation": "lower"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 2: Arithmetic transformation - Calculate total value
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "unitPrice": {
+        "field": "UnitPrice"
+      },
+      "quantity": {
+        "field": "QuantityInStock"
+      },
+      "totalValue": {
+        "left": {
+          "field": "UnitPrice"
+        },
+        "right": {
+          "field": "QuantityInStock"
+        },
+        "operation": "multiply"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 3: Comparison transformation - Price check
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "unitPrice": {
+        "field": "UnitPrice"
+      },
+      "isExpensive": {
+        "left": {
+          "field": "UnitPrice"
+        },
+        "right": {
+          "value": 100.0
+        },
+        "operator": "gt"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 4: String concatenation - Display name
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "displayName": {
+        "parts": [
+          {
+            "field": "Name"
+          },
+          {
+            "value": " ("
+          },
+          {
+            "field": "Sku"
+          },
+          {
+            "value": ")"
+          }
+        ]
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 5: Conditional transformation - Stock status
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "quantity": {
+        "field": "QuantityInStock"
+      },
+      "stockStatus": [
+        {
+          "condition": {
+            "left": {
+              "field": "QuantityInStock"
+            },
+            "right": {
+              "value": 0
+            },
+            "operator": "eq"
+          },
+          "then": {
+            "value": "Out of Stock"
+          },
+          "else": [
+            {
+              "condition": {
+                "left": {
+                  "field": "QuantityInStock"
+                },
+                "right": {
+                  "value": 10
+                },
+                "operator": "lt"
+              },
+              "then": {
+                "value": "Low Stock"
+              },
+              "else": [
+                {
+                  "condition": {
+                    "left": {
+                      "field": "QuantityInStock"
+                    },
+                    "right": {
+                      "value": 50
+                    },
+                    "operator": "lt"
+                  },
+                  "then": {
+                    "value": "Medium Stock"
+                  },
+                  "else": {
+                    "value": "In Stock"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 6: Complex transformation - Multiple calculations
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "unitPrice": {
+        "field": "UnitPrice"
+      },
+      "priceWithTax": {
+        "left": {
+          "field": "UnitPrice"
+        },
+        "right": {
+          "value": 1.2
+        },
+        "operation": "multiply"
+      },
+      "totalValue": {
+        "left": {
+          "field": "UnitPrice"
+        },
+        "right": {
+          "field": "QuantityInStock"
+        },
+        "operation": "multiply"
+      },
+      "isLowStock": {
+        "left": {
+          "field": "QuantityInStock"
+        },
+        "right": {
+          "value": 10
+        },
+        "operator": "lt"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 7: Coalesce - Null handling
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {},
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "description": {
+        "values": [
+          {
+            "field": "Description"
+          },
+          {
+            "value": "No description available"
+          }
+        ]
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 8: With filtering - Only expensive goods
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "UnitPrice": {
+      "gt": 100
+    }
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "productName": {
+        "field": "Name",
+        "operation": "upper"
+      },
+      "price": {
+        "field": "UnitPrice"
+      },
+      "totalInventoryValue": {
+        "left": {
+          "field": "UnitPrice"
+        },
+        "right": {
+          "field": "QuantityInStock"
+        },
+        "operation": "multiply"
+      }
+    }
+  },
+  "sorting": {
+    "fields": [
+      {
+        "field": "UnitPrice",
+        "direction": "desc"
+      }
+    ]
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 5
+  }
+}
+
+### Example 9: Type cast transformation
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "priceAsString": {
+        "value": {
+          "field": "UnitPrice"
+        },
+        "targetType": "String"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 10: Multiple string operations
+POST {{baseUrl}}/api/goods/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "originalName": {
+        "field": "Name"
+      },
+      "upperName": {
+        "field": "Name",
+        "operation": "upper"
+      },
+      "lowerName": {
+        "field": "Name",
+        "operation": "lower"
+      },
+      "trimmedName": {
+        "field": "Name",
+        "operation": "trim"
+      },
+      "nameLength": {
+        "field": "Name",
+        "operation": "length"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 5
+  }
+}
+
+###############################
+### CATEGORY TRANSFORMATIONS
+###############################
+
+### Example 11: Category transformations - Simple
+POST {{baseUrl}}/api/categories/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "categoryName": {
+        "field": "Name",
+        "operation": "upper"
+      },
+      "hasDescription": {
+        "left": {
+          "field": "Description"
+        },
+        "right": {
+          "value": null
+        },
+        "operator": "neq"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 12: Category with null checks
+POST {{baseUrl}}/api/categories/query/transform
+Content-Type: {{contentType}}
+
+{
+  "filter": {},
+  "projection": {
+    "transform": {
+      "id": {
+        "field": "Id"
+      },
+      "name": {
+        "field": "Name"
+      },
+      "displayName": {
+        "values": [
+          {
+            "field": "Name"
+          },
+          {
+            "value": "Unnamed Category"
+          }
+        ]
+      },
+      "hasParent": {
+        "left": {
+          "field": "ParentCategoryId"
+        },
+        "right": {
+          "value": null
+        },
+        "operator": "neq"
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}

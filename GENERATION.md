@@ -423,6 +423,680 @@ NamingConventions.pluralize('Product')            // Products
 
 ---
 
+## ADT-Based Search Component Generation
+
+### Overview
+
+The ADT-based search architecture requires 8 infrastructure files per entity (~589 lines total). These are highly repetitive and ideal candidates for code generation. This section documents the generators and templates for ADT search components.
+
+**Background**: See [Architecture.md - ADT-Based Query/Search Architecture](Architecture.md#adt-based-querysearch-architecture) for architectural overview.
+
+**Generated Components** (per entity):
+
+| Component | Lines | Complexity | Template | Customization Need |
+|-----------|-------|------------|----------|-------------------|
+| QueryBuilder | ~13 | LOW | query-builder.generated.cs.hbs | Rare (ParameterName override) |
+| SearchService | ~28 | LOW | search-service.generated.cs.hbs | Rare (custom search logic) |
+| QueryController | ~25 | LOW | query-controller.generated.cs.hbs | Medium (custom endpoints) |
+| ProjectionMapper | ~250 | **HIGH** | projection-mapper.generated.cs.hbs | Medium (complex nesting) |
+| ProjectionMapper Interface | ~3 | LOW | projection-mapper-interface.generated.cs.hbs | Never |
+| Projection DTO | ~30 | LOW | projection-dto.generated.cs.hbs | Rare (computed properties) |
+| SearchFields | ~40 | LOW | search-fields.generated.cs.hbs | Never |
+| SearchQueryValidator | ~200 | **HIGH** | search-query-validator.generated.cs.hbs | Rare (custom validation) |
+
+**Total: ~589 lines per entity** (ProjectionMapper and Validator are most complex)
+
+### Generator Classes
+
+All generators located in `generation/code/src/generators/`
+
+#### QueryBuilderGenerator
+
+**Purpose**: Generate empty QueryBuilder class inheriting from BaseQueryBuilder
+
+**Output**: `Domain/DataAccess/{Entity}QueryBuilder.cs` (~13 lines)
+
+**Template Context**:
+```typescript
+interface QueryBuilderContext {
+  namespace: string;              // Inventorization.Goods
+  entityName: string;             // Good
+  generationStamp: string;        // 20260214-a3f8c891
+  generatedAt: string;            // 2026-02-14 12:34:56 UTC
+  sourceFile: string;             // goods-context.json
+}
+```
+
+**Implementation Pattern**:
+```typescript
+export class QueryBuilderGenerator extends BaseGenerator {
+  async generate(model: DataModel, outputDir: string): Promise<void> {
+    const contextName = model.boundedContext.name;
+    const namespace = `Inventorization.${contextName}`;
+    const domainProjectPath = path.join(outputDir, `${namespace}.Domain`);
+    const dataAccessDir = path.join(domainProjectPath, 'DataAccess');
+    
+    for (const entity of model.entities) {
+      const context = {
+        namespace,
+        entityName: entity.name,
+        generationStamp: this.generationStamp,
+        generatedAt: new Date().toISOString(),
+        sourceFile: model.sourceFile
+      };
+      
+      const filePath = path.join(dataAccessDir, `${entity.name}QueryBuilder.cs`);
+      await this.writeRenderedTemplate(
+        'query-builder.generated.cs.hbs',
+        context,
+        filePath,
+        true  // Overwrite allowed
+      );
+    }
+  }
+}
+```
+
+**Why Generate?** Even though it's small, ensures consistency and saves ~13 lines × number of entities
+
+#### SearchServiceGenerator
+
+**Purpose**: Generate SearchService with constructor-only delegation to BaseSearchService
+
+**Output**: `Domain/Services/{Entity}SearchService.cs` (~28 lines)
+
+**Template Context**:
+```typescript
+interface SearchServiceContext {
+  namespace: string;
+  entityName: string;
+  projectionName: string;         // GoodProjection  
+  generationStamp: string;
+  generatedAt: string;
+  sourceFile: string;
+}
+```
+
+**Generated Code Structure**:
+```csharp
+public class GoodSearchService : BaseSearchService<Good, GoodProjection>
+{
+    public GoodSearchService(
+        IRepository<Good> repository,
+        IQueryBuilder<Good> queryBuilder,
+        IProjectionMapper<Good, GoodProjection> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        IValidator<SearchQuery> validator,
+        ILogger<GoodSearchService> logger)
+        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger)
+    {
+    }
+}
+```
+
+#### QueryControllerGenerator
+
+**Purpose**: Generate Query controller with HTTP endpoints
+
+**Output**: `API/Controllers/{Entity}sQueryController.cs` (~25 lines)
+
+**Template Context**:
+```typescript
+interface QueryControllerContext {
+  namespace: string;
+  entityName: string;
+  entityNamePlural: string;       // Goods (for route)
+  projectionName: string;
+  routePrefix: string;            // api/goods/query
+  generationStamp: string;
+  generatedAt: string;
+  sourceFile: string;
+}
+```
+
+**Route Convention**: `api/{entityPlural}/query` (e.g., `api/goods/query`, `api/categories/query`)
+
+**Endpoints Generated**:
+- `POST /api/{entityPlural}/query` → Regular search
+- `POST /api/{entityPlural}/query/transform` → Field transformations
+
+#### ProjectionMapperGenerator
+
+**Purpose**: Generate ProjectionMapper implementing 4 abstract methods from ProjectionMapperBase
+
+**Output**: `Domain/Mappers/Projection/{Entity}ProjectionMapper.cs` (~250 lines)
+
+**Template Context** (most complex):
+```typescript
+interface ProjectionMapperContext {
+  namespace: string;
+  entityName: string;
+  projectionName: string;
+  properties: PropertyContext[];        // Direct entity properties
+  relationships: RelationshipContext[]; // Navigation properties
+  maxDefaultDepth: number;              // Default depth for AllDeep (e.g., 3)
+  generationStamp: string;
+  generatedAt: string;
+  sourceFile: string;
+}
+
+interface PropertyContext {
+  name: string;                   // Name
+  type: string;                   // string
+  isNullable: boolean;           // false
+  camelName: string;             // name
+}
+
+interface RelationshipContext {
+  name: string;                   // Category
+  targetEntity: string;           // Category
+  targetProjection: string;       // CategoryProjection
+  targetMapperInterface: string;  // ICategoryProjectionMapper
+  isCollection: boolean;          // false
+  nullable: boolean;              // true
+  camelName: string;              // category
+}
+```
+
+**Generated Methods**:
+
+1. **GetAllFieldsProjection** - Expression tree for EF Core:
+```csharp
+protected override Expression<Func<Good, GoodProjection>> GetAllFieldsProjection(bool deep, int depth)
+{
+    return g => new GoodProjection
+    {
+        Id = g.Id,
+        Name = g.Name,
+        // ... all scalar properties
+        
+        // Conditional nested projection
+        Category = deep && depth > 0 && g.Category != null 
+            ? new CategoryProjection 
+            { 
+                Id = g.Category.Id,
+                Name = g.Category.Name,
+                // Recurse if still have depth
+                ParentCategory = depth > 1 && g.Category.ParentCategory != null
+                    ? new CategoryProjection { Id = g.Category.ParentCategory.Id, ... }
+                    : null
+            } 
+            : null
+    };
+}
+```
+
+2. **BuildSelectiveProjection** - HashSet pattern for selective fields:
+```csharp
+protected override Expression<Func<Good, GoodProjection>> BuildSelectiveProjection(
+    ProjectionRequest projection)
+{
+    // Evaluate OUTSIDE expression tree (EF Core incompatible operations)
+    var requestedFields = new HashSet<string>(
+        projection.Fields.Select(f => f.FieldName), 
+        StringComparer.OrdinalIgnoreCase);
+    
+    var hasName = requestedFields.Contains("Name");
+    var hasPrice = requestedFields.Contains("Price");
+    var hasCategoryName = requestedFields.Contains("Category.Name");
+    
+    // Use boolean constants in expression tree
+    return g => new GoodProjection
+    {
+        Name = hasName ? g.Name : null,
+        Price = hasPrice ? g.Price : null,
+        Category = hasCategoryName ? new CategoryProjection { Name = g.Category.Name } : null
+    };
+}
+```
+
+3. **MapAllFields** - In-memory mapping with depth control:
+```csharp
+protected override void MapAllFields(Good entity, GoodProjection result, 
+    bool deep, int maxDepth, int currentDepth)
+{
+    // Map all scalar properties
+    result.Id = entity.Id;
+    result.Name = entity.Name;
+    result.Price = entity.Price;
+    // ... all properties
+    
+    // Conditionally map relationships with depth tracking
+    if (deep && currentDepth < maxDepth && entity.Category != null)
+    {
+        var categoryProjection = ProjectionRequest.AllDeep(maxDepth - currentDepth - 1);
+        result.Category = _categoryMapper.Map(
+            entity.Category, 
+            categoryProjection, 
+            currentDepth + 1  // Increment depth
+        );
+    }
+}
+```
+
+4. **MapField** - Switch statement for individual field mapping:
+```csharp
+protected override void MapField(Good entity, GoodProjection result, string fieldName, 
+    int maxDepth, int currentDepth)
+{
+    switch (fieldName.ToLower())
+    {
+        case "id": result.Id = entity.Id; break;
+        case "name": result.Name = entity.Name; break;
+        case "price": result.Price = entity.Price; break;
+        
+        // Nested field syntax: "Category.Name"
+        case "category.name":
+            if (entity.Category != null)
+            {
+                result.Category ??= new CategoryProjection();
+                result.Category.Name = entity.Category.Name;
+            }
+            break;
+    }
+}
+```
+
+**Generation Challenges**:
+- **Depth Recursion**: Template must generate nested ternary operators for depth levels
+- **HashSet Pattern**: Template evaluates field checks outside expression tree
+- **Related Entity Mappers**: Must inject mapper interfaces for each relationship
+- **Null Safety**: All relationship accesses must be null-checked
+
+**Template Complexity**: This is the most complex generator due to expression tree requirements
+
+#### ProjectionMapperInterfaceGenerator
+
+**Purpose**: Generate marker interface extending IProjectionMapper
+
+**Output**: `Domain/Mappers/Projection/I{Entity}ProjectionMapper.cs` (~3 lines)
+
+**Template Context**:
+```typescript
+interface ProjectionMapperInterfaceContext {
+  namespace: string;
+  entityName: string;
+  projectionName: string;
+  generationStamp: string;
+}
+```
+
+**Generated Code**:
+```csharp
+public interface IGoodProjectionMapper : IProjectionMapper<Good, GoodProjection> { }
+```
+
+**Purpose**: Enables type-safe dependency injection for nested mappers
+
+#### ProjectionDtoGenerator
+
+**Purpose**: Generate Projection DTO with nullable properties
+
+**Output**: `DTO/ADTs/{Entity}Projection.cs` (~30 lines)
+
+**Template Context**:
+```typescript
+interface ProjectionDtoContext {
+  namespace: string;
+  entityName: string;
+  properties: PropertyContext[];        // All nullable
+  relationships: RelationshipContext[]; // All nullable projections
+  generationStamp: string;
+}
+```
+
+**Generated Code**:
+```csharp
+public class GoodProjection
+{
+    [JsonPropertyName("id")]
+    public Guid? Id { get; init; }
+    
+    [JsonPropertyName("name")]
+    public string? Name { get; init; }
+    
+    [JsonPropertyName("price")]
+    public decimal? Price { get; init; }
+    
+    [JsonPropertyName("category")]
+    public CategoryProjection? Category { get; init; }
+}
+```
+
+**Key Points**:
+- All properties nullable (selective projections may omit fields)
+- JsonPropertyName for camelCase JSON
+- Record or class with init-only setters
+- Related entities as nested projection types
+
+#### SearchFieldsGenerator
+
+**Purpose**: Generate field name constants for type-safe queries
+
+**Output**: `DTO/ADTs/{Entity}SearchFields.cs` (~40 lines)
+
+**Template Context**:
+```typescript
+interface SearchFieldsContext {
+  namespace: string;
+  entityName: string;
+  properties: PropertyContext[];
+  relationships: RelationshipContext[];
+  generationStamp: string;
+}
+```
+
+**Generated Code**:
+```csharp
+public static class GoodSearchFields
+{
+    // Direct properties
+    public const string Id = "Id";
+    public const string Name = "Name";
+    public const string Price = "Price";
+    public const string CategoryId = "CategoryId";
+    
+    // Nested properties (dot notation)
+    public const string CategoryName = "Category.Name";
+    public const string CategoryParentCategoryName = "Category.ParentCategory.Name";
+    
+    // Validation helper
+    public static bool IsValidField(string fieldName)
+    {
+        return fieldName switch
+        {
+            Id or Name or Price or CategoryId or CategoryName => true,
+            _ => false
+        };
+    }
+}
+```
+
+**Benefits**:
+- Compile-time safety for field names
+- IntelliSense support in client code
+- Prevents typos in field references
+
+#### SearchQueryValidatorGenerator
+
+**Purpose**: Generate validator using DataModelMetadata
+
+**Output**: `Domain/Validators/{Entity}SearchQueryValidator.cs` (~200 lines)
+
+**Template Context**:
+```typescript
+interface SearchQueryValidatorContext {
+  namespace: string;
+  entityName: string;
+  metadataClassName: string;  // DataModelMetadata.Good
+  properties: PropertyValidationContext[];
+  generationStamp: string;
+}
+
+interface PropertyValidationContext {
+  name: string;
+  type: string;
+  isNullable: boolean;
+  supportedOperators: FilterOperator[];  // Based on type
+}
+```
+
+**Generated Code**:
+```csharp
+public class GoodSearchQueryValidator : IValidator<SearchQuery>
+{
+    private static readonly IDataModelMetadata<Good> Metadata = DataModelMetadata.Good;
+    
+    public async Task<ValidationResult> ValidateAsync(
+        SearchQuery query, 
+        CancellationToken ct = default)
+    {
+        var errors = new List<string>();
+        
+        if (query.Filter != null)
+            ValidateFilter(query.Filter, errors);
+        
+        if (query.Projection != null)
+            ValidateProjection(query.Projection, errors);
+        
+        if (query.Sort != null)
+ValidateSort(query.Sort, errors);
+        
+        return errors.Any() 
+            ? ValidationResult.Invalid(errors)
+            : ValidationResult.Valid();
+    }
+    
+    private void ValidateFilter(FilterExpression filter, List<string> errors)
+    {
+        switch (filter)
+        {
+            case LeafFilter leaf:
+                ValidateFilterCondition(leaf.Condition, errors);
+                break;
+            case AndFilter and:
+                foreach (var f in and.Filters) ValidateFilter(f, errors);
+                break;
+            case OrFilter or:
+                foreach (var f in or.Filters) ValidateFilter(f, errors);
+                break;
+        }
+    }
+    
+    private void ValidateFilterCondition(FilterCondition condition, List<string> errors)
+    {
+        // Check field exists
+        if (!Metadata.Properties.ContainsKey(condition.FieldName))
+        {
+            errors.Add($"Field '{condition.FieldName}' does not exist on entity Good");
+            return;
+        }
+        
+        var propertyMetadata = Metadata.Properties[condition.FieldName];
+        
+        // Validate type compatibility
+        if (condition.Value != null)
+        {
+            var expectedType = propertyMetadata.Type;
+            var actualType = condition.Value.GetType();
+            
+            if (!IsTypeCompatible(expectedType, actualType, propertyMetadata.IsNullable))
+            {
+                errors.Add($"Field '{condition.FieldName}' expects type {expectedType.Name} but got {actualType.Name}");
+            }
+        }
+        
+        // Validate operator compatibility
+        ValidateOperator(condition, propertyMetadata, errors);
+    }
+    
+    private void ValidateOperator(FilterCondition condition, PropertyMetadata property, List<string> errors)
+    {
+        switch (condition.Operator)
+        {
+            case FilterOperator.Contains:
+            case FilterOperator.StartsWith:
+            case FilterOperator.EndsWith:
+                if (property.Type != typeof(string))
+                    errors.Add($"String operators only valid for string fields, but '{condition.FieldName}' is {property.Type.Name}");
+                break;
+                
+            case FilterOperator.GreaterThan:
+            case FilterOperator.LessThan:
+                if (!IsComparable(property.Type))
+                    errors.Add($"Comparison operators require comparable types, but '{condition.FieldName}' is {property.Type.Name}");
+                break;
+        }
+    }
+}
+```
+
+**Validation Types**:
+1. **Field Existence**: Field must exist in metadata
+2. **Type Compatibility**: Value type must match property type
+3. **Operator Compatibility**: Operator must be valid for property type
+4. **Relationship Depth**: Validate nested field paths (e.g., "Category.Name")
+
+**Metadata Usage**: Generator references `DataModelMetadata.{Entity}` for runtime validation
+
+### Template Patterns
+
+#### Depth-Controlled Nesting Template
+
+For generating nested projections with depth limits:
+
+```handlebars
+{{#if deep}}
+{{entityName}} = deep && depth > 0 && entity.{{entityName}} != null 
+    ? new {{projectionName}}
+    {
+        {{#each properties}}
+        {{name}} = entity.{{../entityName}}.{{name}},
+        {{/each}}
+        
+        {{#each nestedRelationships}}
+        {{name}} = depth > 1 && entity.{{../entityName}}.{{name}} != null
+            ? new {{projectionName}} { /* recursive nesting */ }
+            : null,
+        {{/each}}
+    }
+    : null
+{{/if}}
+```
+
+#### HashSet Field Evaluation Template
+
+For selective field mapping:
+
+```handlebars
+// Evaluate outside expression tree
+var requestedFields = new HashSet<string>(
+    projection.Fields.Select(f => f.FieldName), 
+    StringComparer.OrdinalIgnoreCase);
+
+{{#each properties}}
+var has{{pascalCase name}} = requestedFields.Contains("{{name}}");
+{{/each}}
+
+// Use in expression tree
+return entity => new {{projectionName}}
+{
+    {{#each properties}}
+    {{name}} = has{{pascalCase name}} ? entity.{{name}} : null,
+    {{/each}}
+};
+```
+
+#### Relationship Mapper Injection Template
+
+```handlebars
+{{#each relationships}}
+private readonly I{{targetEntity}}ProjectionMapper _{{camelCase targetEntity}}Mapper;
+{{/each}}
+
+public {{entityName}}ProjectionMapper(
+    {{#each relationships}}
+    I{{targetEntity}}ProjectionMapper {{camelCase targetEntity}}Mapper{{#unless @last}},{{/unless}}
+    {{/each}}
+)
+{
+    {{#each relationships}}
+    _{{camelCase targetEntity}}Mapper = {{camelCase targetEntity}}Mapper;
+    {{/each}}
+}
+```
+
+### DI Registration Code Generation
+
+Generate registration code for each entity:
+
+```csharp
+// Query Builder
+builder.Services.AddScoped<IQueryBuilder<{{entityName}}>, {{entityName}}QueryBuilder>();
+
+// Projection Mapper (dual registration)
+builder.Services.AddScoped<I{{entityName}}ProjectionMapper, {{entityName}}ProjectionMapper>();
+builder.Services.AddScoped<IProjectionMapper<{{entityName}}, {{entityName}}Projection>>(
+    sp => sp.GetRequiredService<I{{entityName}}ProjectionMapper>());
+
+// Validator
+builder.Services.AddScoped<IValidator<SearchQuery>, {{entityName}}SearchQueryValidator>();
+
+// Search Service (dual registration)
+builder.Services.AddScoped<{{entityName}}SearchService>();
+builder.Services.AddScoped<ISearchService<{{entityName}}, {{entityName}}Projection>>(
+    sp => sp.GetRequiredService<{{entityName}}SearchService>());
+```
+
+**Note**: ProjectionExpressionBuilder registered once as shared service
+
+### Generation Phases
+
+ADT search components added to existing generation phases:
+
+```typescript
+// Phase 5: Domain Infrastructure (after entities, before services)
+phases.push({
+  name: "ADT Query Infrastructure",
+  generators: [
+    new QueryBuilderGenerator(),
+    new ProjectionMapperInterfaceGenerator(),
+    new ProjectionMapperGenerator(),
+    new SearchFieldsGenerator(),
+    new ProjectionDtoGenerator(),
+  ]
+});
+
+// Phase 6: Domain Services
+phases.push({
+  name: "Domain Services",
+  generators: [
+    // ... existing service generators
+    new SearchServiceGenerator(),
+    new SearchQueryValidatorGenerator(),
+  ]
+});
+
+// Phase 7: API Layer
+phases.push({
+  name: "API Controllers",
+  generators: [
+    // ... existing controller generators
+    new QueryControllerGenerator(),
+  ]
+});
+```
+
+**Dependencies**:
+- Requires: MetadataGenerator (DataModelMetadata), EntityGenerator
+- Before: DI registration, tests
+
+### Best Practices
+
+1. **Overwrite Policy**: All ADT search components use `overwrite: true` - regeneration expected
+2. **Custom Logic**: Business rules go in domain services, not in generated SearchService
+3. **Depth Defaults**: Use depth=3 as default for AllDeep projections (balance between completeness and performance)
+4. **Null Safety**: All templates must handle nullable relationships
+5. **HashSet Pattern**: Always evaluate field checks outside expression trees for EF Core compatibility
+6. **Metadata Sync**: Validators must stay in sync with DataModelMetadata
+7. **Testing**: Generate unit tests for validators and projection mappers
+
+### Customization Points
+
+**When to override generated code**:
+
+1. **QueryBuilder**: Override `ParameterName` if conflict with other variables
+2. **SearchService**: Override search methods for custom filtering/authorization
+3. **QueryController**: Add custom endpoints for specialized queries
+4. **ProjectionMapper**: Override for complex computed properties or custom nesting logic
+
+**When NOT to modify**:
+- ProjectionMapper Interface (always marker interface)
+- SearchFields (always simple constants)
+- Projection DTO (pure data structure)
+
+---
+
 ## Handlebars Template Patterns
 
 ### Template Structure

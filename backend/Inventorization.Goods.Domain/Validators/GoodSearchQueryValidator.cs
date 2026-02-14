@@ -1,0 +1,228 @@
+using Inventorization.Base.Abstractions;
+using Inventorization.Base.ADTs;
+using Inventorization.Base.DTOs;
+using Inventorization.Goods.Domain.Entities;
+
+namespace Inventorization.Goods.Domain.Validators;
+
+/// <summary>
+/// Validates SearchQuery against Good entity metadata.
+/// Ensures field names, operators, and types are valid before query execution.
+/// </summary>
+public class GoodSearchQueryValidator : IValidator<SearchQuery>
+{
+    private static readonly IDataModelMetadata<Good> Metadata = DataModelMetadata.Good;
+    
+    public Task<ValidationResult> ValidateAsync(SearchQuery dto, CancellationToken cancellationToken = default)
+    {
+        if (dto == null)
+            return Task.FromResult(ValidationResult.WithErrors("SearchQuery cannot be null"));
+        
+        var errors = new List<string>();
+        
+        // Validate pagination
+        if (dto.Pagination.PageNumber < 1)
+            errors.Add("Page number must be at least 1");
+        
+        if (dto.Pagination.PageSize < 1 || dto.Pagination.PageSize > 100)
+            errors.Add("Page size must be between 1 and 100");
+        
+        // Validate filter expression
+        if (dto.Filter != null)
+        {
+            ValidateFilterExpression(dto.Filter, errors);
+        }
+        
+        // Validate projection fields
+        if (dto.Projection != null)
+        {
+            ValidateProjection(dto.Projection, errors);
+        }
+        
+        // Validate sort fields
+        if (dto.Sort != null)
+        {
+            ValidateSort(dto.Sort, errors);
+        }
+        
+        return Task.FromResult(errors.Any() 
+            ? ValidationResult.WithErrors(errors.ToArray()) 
+            : ValidationResult.Ok());
+    }
+    
+    private void ValidateFilterExpression(FilterExpression expression, List<string> errors)
+    {
+        switch (expression)
+        {
+            case LeafFilter leaf:
+                ValidateFilterCondition(leaf.Condition, errors);
+                break;
+            
+            case AndFilter and:
+                if (and.Expressions.Count == 0)
+                    errors.Add("AND filter must have at least one expression");
+                foreach (var expr in and.Expressions)
+                    ValidateFilterExpression(expr, errors);
+                break;
+            
+            case OrFilter or:
+                if (or.Expressions.Count == 0)
+                    errors.Add("OR filter must have at least one expression");
+                foreach (var expr in or.Expressions)
+                    ValidateFilterExpression(expr, errors);
+                break;
+        }
+    }
+    
+    private void ValidateFilterCondition(FilterCondition condition, List<string> errors)
+    {
+        // Check if field exists in metadata
+        if (!Metadata.Properties.ContainsKey(condition.FieldName))
+        {
+            errors.Add($"Field '{condition.FieldName}' does not exist in Good entity");
+            return;
+        }
+        
+        var propertyMetadata = Metadata.Properties[condition.FieldName];
+        
+        // Validate condition type compatibility with field type
+        switch (condition)
+        {
+            case EqualsCondition eq:
+                ValidateValueType(eq.Value, propertyMetadata, "Equals", errors);
+                break;
+            
+            case GreaterThanCondition gt:
+                ValidateComparableType(propertyMetadata, "GreaterThan", errors);
+                ValidateValueType(gt.Value, propertyMetadata, "GreaterThan", errors);
+                break;
+            
+            case LessThanCondition lt:
+                ValidateComparableType(propertyMetadata, "LessThan", errors);
+                ValidateValueType(lt.Value, propertyMetadata, "LessThan", errors);
+                break;
+            
+            case GreaterThanOrEqualCondition gte:
+                ValidateComparableType(propertyMetadata, "GreaterThanOrEqual", errors);
+                ValidateValueType(gte.Value, propertyMetadata, "GreaterThanOrEqual", errors);
+                break;
+            
+            case LessThanOrEqualCondition lte:
+                ValidateComparableType(propertyMetadata, "LessThanOrEqual", errors);
+                ValidateValueType(lte.Value, propertyMetadata, "LessThanOrEqual", errors);
+                break;
+            
+            case ContainsCondition contains:
+                ValidateStringType(propertyMetadata, "Contains", errors);
+                break;
+            
+            case StartsWithCondition startsWith:
+                ValidateStringType(propertyMetadata, "StartsWith", errors);
+                break;
+            
+            case InCondition inCondition:
+                if (inCondition.Values.Count == 0)
+                    errors.Add($"IN condition for field '{condition.FieldName}' must have at least one value");
+                break;
+            
+            case IsNullCondition:
+            case IsNotNullCondition:
+                // Always valid
+                break;
+        }
+    }
+    
+    private void ValidateProjection(ProjectionRequest projection, List<string> errors)
+    {
+        foreach (var field in projection.Fields)
+        {
+            if (field.IsRelated)
+            {
+                // Validate related field path (e.g., "Category.Name")
+                if (string.IsNullOrEmpty(field.RelationPath))
+                {
+                    errors.Add($"Related field '{field.FieldName}' must have a RelationPath");
+                    continue;
+                }
+                
+                // For now, just validate that it starts with a known navigation property
+                // In a full implementation, you'd validate against DataModelRelationships
+                if (!field.RelationPath.Equals("Category", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Unknown relation path '{field.RelationPath}'");
+                }
+            }
+            else
+            {
+                // Validate direct field
+                var fieldName = field.FieldName.Contains('.') 
+                    ? field.FieldName.Split('.')[0] 
+                    : field.FieldName;
+                
+                if (!Metadata.Properties.ContainsKey(fieldName))
+                {
+                    errors.Add($"Field '{fieldName}' does not exist in Good entity");
+                }
+            }
+        }
+    }
+    
+    private void ValidateSort(SortRequest sort, List<string> errors)
+    {
+        foreach (var field in sort.Fields)
+        {
+            if (!Metadata.Properties.ContainsKey(field.FieldName))
+            {
+                errors.Add($"Sort field '{field.FieldName}' does not exist in Good entity");
+            }
+        }
+    }
+    
+    private void ValidateValueType(object value, IDataPropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        if (value == null)
+            return;
+        
+        var valueType = value.GetType();
+        var propertyType = Nullable.GetUnderlyingType(propertyMetadata.PropertyType) ?? propertyMetadata.PropertyType;
+        
+        // Check if types are compatible
+        if (!propertyType.IsAssignableFrom(valueType))
+        {
+            // Try to convert
+            try
+            {
+                Convert.ChangeType(value, propertyType);
+            }
+            catch
+            {
+                errors.Add($"{operatorName} operator on field '{propertyMetadata.PropertyName}' expects type {propertyType.Name} but got {valueType.Name}");
+            }
+        }
+    }
+    
+    private void ValidateComparableType(IDataPropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        var type = Nullable.GetUnderlyingType(propertyMetadata.PropertyType) ?? propertyMetadata.PropertyType;
+        
+        if (!IsComparableType(type))
+        {
+            errors.Add($"{operatorName} operator cannot be used on field '{propertyMetadata.PropertyName}' of type {type.Name}");
+        }
+    }
+    
+    private void ValidateStringType(IDataPropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        var type = Nullable.GetUnderlyingType(propertyMetadata.PropertyType) ?? propertyMetadata.PropertyType;
+        
+        if (type != typeof(string))
+        {
+            errors.Add($"{operatorName} operator can only be used on string fields, but '{propertyMetadata.PropertyName}' is {type.Name}");
+        }
+    }
+    
+    private bool IsComparableType(Type type)
+    {
+        return type.IsValueType || type == typeof(string) || type == typeof(DateTime);
+    }
+}

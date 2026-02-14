@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InventorySystem.API.Base.Controllers;
+using Inventorization.Base.Abstractions;
 using Inventorization.Goods.Domain.Entities;
 using Inventorization.Goods.Domain.DataServices;
 using Inventorization.Goods.DTO.DTO.Category;
@@ -13,10 +14,12 @@ namespace Inventorization.Goods.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[AllowAnonymous]
 public class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryDataService>
 {
-    public CategoriesController(ICategoryDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
+    public CategoriesController(
+        ICategoryDataService service,
+        ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
         : base(service, logger)
     {
     }

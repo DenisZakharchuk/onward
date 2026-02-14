@@ -16,6 +16,14 @@ import { DataAccessGenerator } from '../generators/DataAccessGenerator';
 import { ControllerGenerator } from '../generators/ControllerGenerator';
 import { MetadataGenerator } from '../generators/MetadataGenerator';
 import { ProjectGenerator } from '../generators/ProjectGenerator';
+import { QueryBuilderGenerator } from '../generators/QueryBuilderGenerator';
+import { SearchServiceGenerator } from '../generators/SearchServiceGenerator';
+import { QueryControllerGenerator } from '../generators/QueryControllerGenerator';
+import { ProjectionMapperInterfaceGenerator } from '../generators/ProjectionMapperInterfaceGenerator';
+import { ProjectionMapperGenerator } from '../generators/ProjectionMapperGenerator';
+import { ProjectionDtoGenerator } from '../generators/ProjectionDtoGenerator';
+import { SearchFieldsGenerator } from '../generators/SearchFieldsGenerator';
+import { SearchQueryValidatorGenerator } from '../generators/SearchQueryValidatorGenerator';
 import { GenerationStamp } from '../utils/GenerationStamp';
 import * as path from 'path';
 
@@ -114,6 +122,7 @@ export class Orchestrator {
 
       // Phase 4: DTOs
       new DtoGenerator(),
+      new ProjectionDtoGenerator(),
 
       // Phase 5: Configurations
       new ConfigurationGenerator(),
@@ -121,17 +130,24 @@ export class Orchestrator {
       // Phase 6: DbContext and UnitOfWork
       new DataAccessGenerator(),
 
-      // Phase 7: Abstractions (Creators, Modifiers, Mappers, SearchProviders)
+      // Phase 7: Abstractions (Creators, Modifiers, Mappers, SearchProviders, ADT Query Infrastructure)
       new AbstractionGenerator(),
+      new QueryBuilderGenerator(),
+      new ProjectionMapperInterfaceGenerator(),
+      new ProjectionMapperGenerator(),
+      new SearchFieldsGenerator(),
 
       // Phase 8: Validators
       new ValidatorGenerator(),
+      new SearchQueryValidatorGenerator(),
 
       // Phase 9: DataServices
       new ServiceGenerator(),
+      new SearchServiceGenerator(),
 
       // Phase 10: Controllers
       new ControllerGenerator(),
+      new QueryControllerGenerator(),
 
       // Phase 11: Tests (if not skipped)
       // if (!this.options.skipTests) {
@@ -174,14 +190,22 @@ export class Orchestrator {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Creators'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Modifiers'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Mappers'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Mappers/Projection'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'SearchProviders'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Validators'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'DataServices'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Services/Query'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'QueryBuilders'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Constants'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'DbContexts'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'DataAccess'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'PropertyAccessors'));
+      } else if (key === 'dto') {
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'DTO'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'ADTs'));
       } else if (key === 'api') {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Controllers'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Controllers/Query'));
       } else if (key === 'common' && this.hasEnums(model)) {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Enums'));
       }
@@ -215,9 +239,10 @@ export class Orchestrator {
     console.log(`    Total: ${chalk.yellow(entityCount)}`);
 
     console.log(chalk.blue('\n  Generated Files per Entity:'));
-    console.log(`    DTOs: ${chalk.yellow('5')} (Create, Update, Delete, Details, Search)`);
+    console.log(`    DTOs: ${chalk.yellow('6')} (Create, Update, Delete, Details, Search, Projection)`);
     console.log(`    Entity: ${chalk.yellow('1')} (Entity.cs)`);
-    console.log(`    Total per entity: ${chalk.yellow('~15-20 files')} (when complete)`);
+    console.log(`    ADT Query Infrastructure: ${chalk.yellow('8')} (QueryBuilder, SearchService, QueryController, ProjectionMapper, etc.)`);
+    console.log(`    Total per entity: ${chalk.yellow('~20-25 files')} (when complete)`);
 
     console.log(chalk.blue('\n  Project Paths:'));
     Object.entries(projectPaths).forEach(([key, dirPath]) => {

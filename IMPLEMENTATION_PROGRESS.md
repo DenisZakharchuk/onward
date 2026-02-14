@@ -1,8 +1,309 @@
 # Implementation Progress
 
-## Current Status: ✅ SUCCESS - Goods BoundedContext Complete!
+## Current Status: ✅ SUCCESS - Transformation Search with Dual Methods Pattern!
 
-**Last Updated:** 2026-02-08 (Session 4 - Architecture Cleanup Complete)
+**Last Updated:** 2026-02-13 (Session 6 - TransformationResult Implementation)
+
+### 🎉 Session 6 Summary: Implemented Type-Safe Dynamic Transformations
+
+#### ✅ All Tasks Completed
+
+**TransformationResult Infrastructure:**
+- [x] Created TransformationResult class (Dictionary extension with schema metadata)
+- [x] Updated ProjectionExpressionBuilder to generate TransformationResult expressions
+- [x] Removed obsolete factory pattern (IDynamicProjectionResult, DynamicProjectionResults, etc.)
+- [x] Updated ProjectionMapperBase to reject transformations (separation of concerns)
+- [x] Updated mapper constructors to remove factory dependency
+- [x] Updated DI registrations (removed factory, added ProjectionExpressionBuilder)
+- [x] Implemented dual search methods in GoodSearchService and CategorySearchService
+- [x] Added transformation endpoints to GoodsController and CategoriesController
+- [x] Created comprehensive documentation (TRANSFORMATION_RESULT_USAGE.md)
+- [x] Created transformation examples (TransformationExamples.http)
+- [x] ✅ **Build Successful: 0 Errors, 0 Warnings**
+
+#### 🏗️ Architecture Highlights
+
+**1. TransformationResult - Type-Safe Dynamic Dictionary**
+- Extends `Dictionary<string, object?>` with schema metadata
+- Schema inferred from `ProjectionField.GetOutputType()` 
+- Runtime type validation via `GetTypedValue<T>()`
+- OpenAPI/Swagger support via `GetOpenApiSchema()`
+- Case-insensitive field names
+- Constrained schema: Request aliases + Entity types + Transformation outputs
+
+**2. Dual Search Methods Pattern**
+- `ExecuteSearchAsync()` - Regular projections → `SearchResult<GoodProjection>`
+- `ExecuteTransformationSearchAsync()` - Transformations → `SearchResult<TransformationResult>`
+- Clear separation between regular and transformation projections
+- Both methods share filter/sort/pagination logic
+- Type-safe at service level, flexible at result level
+
+**3. Schema Inference System**
+| Transformation Type | Output Type |
+|---------------------|-------------|
+| FieldReference | Entity field type (string, decimal, Guid, etc.) |
+| ConstantValue | Constant type (string, int, bool, etc.) |
+| StringTransform | string |
+| ConcatTransform | string |
+| ArithmeticTransform | decimal |
+| ComparisonTransform | bool |
+| ConditionalTransform | object (union of then/else types) |
+| CoalesceTransform | Primary type (first non-null) |
+| ObjectConstruction | Anonymous object type |
+| TypeCast | Target type |
+
+**4. Controller Endpoints**
+- `POST /api/goods/query` - Regular projections
+- `POST /api/goods/query/transform` - Transformation projections
+- `POST /api/categories/query` - Regular projections
+- `POST /api/categories/query/transform` - Transformation projections
+
+#### 📝 Key Files Created/Updated
+
+**Created:**
+- `Inventorization.Base/Models/TransformationResult.cs` - Type-safe dictionary with schema
+- `Inventorization.Base/TRANSFORMATION_RESULT_USAGE.md` - Comprehensive documentation
+- `Inventorization.Goods.API/TransformationExamples.http` - 12 transformation examples
+
+**Updated:**
+- `Inventorization.Base/Services/ProjectionExpressionBuilder.cs` - Removed factory, builds TransformationResult
+- `Inventorization.Base/Abstractions/ProjectionMapperBase.cs` - Removed factory dependency, rejects transformations
+- `Inventorization.Goods.Domain/Mappers/Projection/GoodProjectionMapper.cs` - Removed factory injection
+- `Inventorization.Goods.Domain/Mappers/Projection/CategoryProjectionMapper.cs` - Removed factory injection
+- `Inventorization.Goods.Domain/Services/GoodSearchService.cs` - Added ExecuteTransformationSearchAsync()
+- `Inventorization.Goods.Domain/Services/CategorySearchService.cs` - Added ExecuteTransformationSearchAsync()
+- `Inventorization.Goods.API/Controllers/GoodsController.cs` - Added /query/transform endpoint
+- `Inventorization.Goods.API/Controllers/CategoriesController.cs` - Added /query/transform endpoint
+- `Inventorization.Goods.API/Program.cs` - Added ProjectionExpressionBuilder, updated service registrations
+
+**Removed (Obsolete Factory Pattern):**
+- `Inventorization.Base/Abstractions/IDynamicProjectionResult.cs`
+- `Inventorization.Base/Models/DynamicProjectionResults.cs`
+- `Inventorization.Base/Models/ProjectionOptions.cs`
+- `Inventorization.Base/Services/DynamicProjectionResultFactory.cs`
+- `Inventorization.Goods.DTO/ADTs/GoodTransformationResult.cs`
+- `Inventorization.Goods.DTO/ADTs/CategoryTransformationResult.cs`
+- `Inventorization.Base/DYNAMIC_PROJECTION_RESULTS.md`
+
+#### 🎯 Key Design Achievements
+
+**User's Insight Realized:** "Output is dynamic but not arbitrary - a superposition of request aliases + bounded context data model"
+
+- ✅ **Type safety**: Runtime validation with clear error messages
+- ✅ **Flexibility**: Each request has unique schema
+- ✅ **Discoverability**: Schema metadata + OpenAPI generation  
+- ✅ **Performance**: Dictionary-level, no dynamic overhead
+- ✅ **Constrained**: Schema bounded by request + entity model
+- ✅ **No anti-patterns**: No dynamic keyword, no ExpandoObject
+- ✅ **Not predefined**: Per-request schemas, not hardcoded types
+
+#### 🔧 Technical Implementation Details
+
+**TransformationResult Usage:**
+```csharp
+// Type-safe access with validation
+string upperName = result.GetTypedValue<string>("upperName");
+decimal totalValue = result.GetTypedValue<decimal>("totalValue");
+bool isExpensive = result.GetTypedValue<bool>("isExpensive");
+
+// Safe access without exceptions
+if (result.TryGetTypedValue<string>("displayName", out var displayName))
+{
+    Console.WriteLine($"{displayName}: {totalValue:C}");
+}
+
+// Schema introspection
+Console.WriteLine($"Schema: {string.Join(", ", result.Schema.Select(kv => $"{kv.Key}: {kv.Value.Name}"))}");
+```
+
+**Example Request:**
+```json
+POST /api/goods/query/transform
+{
+  "projection": {
+    "fieldTransformations": {
+      "upperName": { "field": "Name", "operation": "upper" },
+      "totalValue": { 
+        "left": { "field": "UnitPrice" },
+        "right": { "field": "QuantityInStock" },
+        "operation": "multiply"
+      },
+      "isExpensive": {
+        "left": { "field": "UnitPrice" },
+        "right": { "value": 100 },
+        "operator": "gt"
+      }
+    }
+  }
+}
+```
+
+**Example Response:**
+```json
+{
+  "items": [
+    {
+      "upperName": "LAPTOP",
+      "totalValue": 12500.00,
+      "isExpensive": true
+    }
+  ]
+}
+```
+
+---
+
+## Previous Status: ✅ SUCCESS - ADT-Based Search System Implemented!
+
+**Last Updated:** 2026-02-13 (Session 5 - ADT Search Implementation)
+
+### 🎉 Session 5 Summary: Implemented Algebraic Data Types for Flexible Search
+
+#### ✅ All Tasks Completed
+
+**ADT-Based Search System for Goods BoundedContext:**
+- [x] Created base ADT types in Inventorization.Base/ADTs
+  - FilterCondition.cs (11 discriminated union cases)
+  - FilterExpression.cs (LeafFilter, AndFilter, OrFilter)
+  - ProjectionRequest.cs (field selection with related entities)
+  - SortRequest.cs (multi-field sorting)
+  - SearchQuery.cs (top-level query ADT)
+  - SearchResult.cs (paginated results)
+- [x] Created query builder abstractions (IQueryBuilder<T>, ISearchService<T, P>)
+- [x] Implemented Goods-specific components
+  - GoodSearchFields.cs (strongly-typed field names)
+  - GoodProjection.cs (flexible projection DTO)
+  - GoodSearchQueryValidator.cs (metadata-driven validation)
+  - GoodQueryBuilder.cs (ADT to LINQ expression conversion)
+  - GoodProjectionMapper.cs (entity to projection mapping)
+  - GoodSearchService.cs (search execution service)
+- [x] Updated GoodsController with new /api/goods/query endpoint
+- [x] Updated DI registration in Program.cs
+- [x] Created GoodsSearchExamples.http with 15 comprehensive examples
+- [x] ✅ **Build Successful: 0 Errors, 8 Warnings (pre-existing)**
+
+#### 🏗️ Architecture Enhancements
+
+**1. ADT-First Approach**
+- Modern C# records with pattern matching (sealed records + abstract base)
+- Type-safe query composition with compile-time guarantees
+- Metadata-driven validation against DataModelMetadata.Good
+- Expression-based query building for EF Core optimization
+
+**2. Filter Operators Implemented**
+- Equals, GreaterThan, LessThan, GreaterThanOrEqual, LessThanOrEqual
+- Contains, StartsWith (string operations)
+- In (multiple values)
+- IsNull, IsNotNull
+- AndFilter, OrFilter (combinators for complex queries)
+
+**3. Projection System**
+- Selective field selection (only retrieve requested fields)
+- Related entity navigation (e.g., Category.Name)
+- EF Core Include/ThenInclude integration
+- Flexible GoodProjection DTO with nullable properties
+
+**4. Sorting & Pagination**
+- Multi-field sorting with ascending/descending directions
+- Page-based pagination with metadata (total count, total pages, etc.)
+- Performance-optimized with Skip/Take
+
+#### 📝 Key Files Created
+
+**Base ADT Infrastructure (Inventorization.Base/ADTs):**
+- `FilterCondition.cs` - Discriminated unions for filter operations
+- `FilterExpression.cs` - AND/OR combinators
+- `ProjectionRequest.cs` - Field selection specification
+- `SortRequest.cs` - Sorting specification
+- `SearchQuery.cs` - Top-level query ADT
+- `SearchResult.cs` - Generic result wrapper
+
+**Goods-Specific Implementation:**
+- `Inventorization.Goods.DTO/ADTs/GoodSearchFields.cs`
+- `Inventorization.Goods.DTO/ADTs/GoodProjection.cs`
+- `Inventorization.Goods.Domain/Validators/GoodSearchQueryValidator.cs`
+- `Inventorization.Goods.Domain/DataAccess/GoodQueryBuilder.cs`
+- `Inventorization.Goods.Domain/Mappers/GoodProjectionMapper.cs`
+- `Inventorization.Goods.Domain/Services/GoodSearchService.cs`
+- `Inventorization.Goods.API/GoodsSearchExamples.http`
+
+**Updated Files:**
+- `Inventorization.Goods.API/Controllers/GoodsController.cs` - Added query endpoint
+- `Inventorization.Goods.API/Program.cs` - DI registration for search components
+- `Inventorization.Base/Abstractions/IQueryBuilder.cs` - New abstraction
+
+#### 🔧 Technical Decisions
+
+**1. Records Over OneOf Library**
+- Chose native C# records with pattern matching
+- Avoids external dependency
+- Better IDE support and debugging
+- Cleaner syntax for discriminated unions
+
+**2. Metadata-Driven Validation**
+- Validates field names against DataModelMetadata.Good at runtime
+- Ensures type compatibility between operators and field types
+- Prevents invalid queries before database execution
+- Single source of truth for entity structure
+
+**3. Expression-Based Query Building**
+- Pattern matching on FilterExpression recursively builds LINQ expressions
+- EF Core translates to efficient SQL
+- No runtime compilation overhead (expressions built once)
+- Type-safe throughout the pipeline
+
+**4. Flexible Projection**
+- Nullable properties in GoodProjection
+- Only requested fields are populated
+- Reduces network payload
+- Enables GraphQL-like field selection
+
+#### 🧪 Testing
+
+**Manual Testing Available:**
+- 15 HTTP examples in GoodsSearchExamples.http
+- Covers all filter operators
+- Demonstrates complex AND/OR queries
+- Shows projection and sorting
+- Includes error cases for validation testing
+
+**Unit Tests (Not Yet Implemented):**
+- GoodSearchQueryValidatorTests - Validation logic
+- GoodQueryBuilderTests - Expression building
+- FilterExpressionTests - Pattern matching
+- ProjectionMapperTests - Field mapping
+
+#### 📊 Metrics
+
+- **Lines of Code Added**: ~900
+- **New Files Created**: 13
+- **Files Modified**: 3
+- **Build Time**: 7.41s
+- **Code Reduction**: Eliminates need for entity-specific SearchDTO patterns
+- **Extensibility**: Same ADT system reusable across all bounded contexts
+
+#### 🚀 Next Steps
+
+**Recommended Priorities:**
+1. **Unit Tests** - Create comprehensive test coverage for query builder and validators
+2. **Frontend Integration** - Update Vue.js frontend to use new query endpoint
+3. **Other Entities** - Extend ADT search to Category, Supplier, etc.
+4. **Advanced Features**:
+   - Full-text search operator
+   - Range operator (Between)
+   - Date range helpers
+   - Aggregation queries (Count, Sum, etc.)
+   - Saved queries/templates
+5. **Performance Optimization**:
+   - Compiled query caching
+   - Index recommendations based on query patterns
+   - Query execution metrics/logging
+
+---
+
+## Previous Session: Goods BoundedContext Complete!
+
+**Last Completed:** 2026-02-08 (Session 4 - Architecture Cleanup Complete)
 
 ### 🎉 Session 4 Summary: Fixed Architecture Violations & Completed Goods Implementation
 

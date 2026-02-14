@@ -1,0 +1,466 @@
+@baseUrl = http://localhost:5022
+@contentType = application/json
+
+###############################
+### CATEGORY ADT SEARCH EXAMPLES
+###############################
+
+### Example 1: Simple equality filter
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 2: String contains filter
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "Name": {
+      "contains": "Electronics"
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 3: Multiple filters with AND
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$and": [
+      { "IsActive": true },
+      { "Name": { "contains": "Tech" } }
+    ]
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 4: Date range filter (created in last 30 days)
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "CreatedAt": {
+      "gte": "2026-01-14T00:00:00Z"
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 5: Selective field projection
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "ParentCategoryId": {
+      "notNull": true
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "ParentCategory.Name"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 6a: All fields non-deep - Returns only Category properties
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "all": {
+      "deep": false
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 6b: All fields deep (depth=3) - Returns Category + ParentCategory chain
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "ParentCategoryId": {
+      "notNull": true
+    }
+  },
+  "projection": {
+    "all": {
+      "deep": true,
+      "depth": 3
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+###############################
+### SORTING EXAMPLES
+###############################
+
+### Example 7: Sort by name ascending
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "sort": {
+    "Name": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 8: Sort by created date descending (newest first)
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "sort": {
+    "CreatedAt": "desc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 9: Multi-field sorting
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "ParentCategoryId",
+    "CreatedAt"
+  ],
+  "sort": [
+    { "fieldName": "ParentCategoryId", "direction": "asc" },
+    { "fieldName": "Name", "direction": "asc" }
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+###############################
+### COMPLEX QUERY EXAMPLES
+###############################
+
+### Example 10: Complex query with OR, projection, and sorting
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$or": [
+      { "Name": { "contains": "Electronics" } },
+      { "Name": { "contains": "Computers" } }
+    ]
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Description",
+    "IsActive"
+  ],
+  "sort": {
+    "Name": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 11: Find root categories (no parent)
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$and": [
+      { "ParentCategoryId": { "null": true } },
+      { "IsActive": true }
+    ]
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Description"
+  ],
+  "sort": {
+    "Name": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 20
+  }
+}
+
+### Example 12: Find subcategories of a specific parent
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$and": [
+      { "ParentCategoryId": { "eq": "3f52f950-52d9-49e6-8d09-3eeea32ced08" } },
+      { "IsActive": true }
+    ]
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Description",
+    "ParentCategoryId"
+  ],
+  "sort": {
+    "Name": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 13: StartsWith filter
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "Name": {
+      "startsWith": "Tech"
+    }
+  },
+  "projection": [
+    "Id",
+    "Name"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 14: IN operator for multiple IDs
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "Id": {
+      "in": [
+        "3f52f950-52d9-49e6-8d09-3eeea32ced08",
+        "7e07a74c-19c3-49e8-b916-8b8bf9594b8e"
+      ]
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Description"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 15: Recently updated categories
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$and": [
+      { "UpdatedAt": { "notNull": true } },
+      { "UpdatedAt": { "gte": "2026-02-01T00:00:00Z" } }
+    ]
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "CreatedAt",
+    "UpdatedAt"
+  ],
+  "sort": {
+    "UpdatedAt": "desc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+###############################
+### PAGINATION EXAMPLES
+###############################
+
+### Example 16: First page
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": [
+    "Id",
+    "Name"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 5
+  }
+}
+
+### Example 17: Second page
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": [
+    "Id",
+    "Name"
+  ],
+  "pagination": {
+    "pageNumber": 2,
+    "pageSize": 5
+  }
+}
+
+###############################
+### NESTED PROJECTION EXAMPLES
+###############################
+
+### Example 18: Nested ParentCategory projection
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "ParentCategoryId": {
+      "notNull": true
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Description",
+    "ParentCategory.Id",
+    "ParentCategory.Name",
+    "ParentCategory.Description"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 19: Find inactive categories
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": false
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Description",
+    "UpdatedAt"
+  ],
+  "sort": {
+    "UpdatedAt": "desc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 20: Complex nested query
+POST {{baseUrl}}/api/categories/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$and": [
+      {
+        "$or": [
+          { "Name": { "contains": "Electronics" } },
+          { "Description": { "contains": "electronic" } }
+        ]
+      },
+      { "IsActive": true }
+    ]
+  },
+  "projection": {
+    "all": {
+      "deep": true,
+      "depth": 2
+    }
+  },
+  "sort": [
+    { "fieldName": "Name", "direction": "asc" }
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}

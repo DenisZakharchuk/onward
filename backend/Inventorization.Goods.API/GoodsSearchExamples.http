@@ -1,0 +1,773 @@
+### Goods ADT-Based Search Examples (MongoDB-style compact syntax)
+### 
+### These examples demonstrate flexible ADT query capabilities with compact JSON format
+### Use with REST Client extension in VS Code
+###
+### Supported Operators:
+### - Equality: implicit (direct value) or {"eq": value}
+### - Comparison: {"gt": n}, {"gte": n}, {"lt": n}, {"lte": n}
+### - Text: {"contains": "text"}, {"startsWith": "prefix"}
+### - Lists: {"in": [val1, val2, ...]}
+### - Null checks: {"null": true}, {"notNull": true}
+### - Combinators: {"$and": [...]}, {"$or": [...]}
+###
+### Format Features:
+### - Implicit AND: multiple fields in same object
+### - Compact projection: array of field names ["Id", "Name", "Sku"]
+### - All fields non-deep: {"all": {"deep": false}}
+### - All fields deep: {"all": {"deep": true, "depth": 2}}
+### - Compact sort: {"field": "asc|desc"}
+### - Related fields: "Category.Name" format
+
+### Variables
+@baseUrl = http://localhost:5022
+@contentType = application/json
+
+###############################
+### BASIC FILTERING EXAMPLES
+###############################
+
+### Example 1: Simple equality filter - Active goods only
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 2: Price range filter (implicit AND)
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "UnitPrice": {
+      "gte": 10.00,
+      "lte": 100.00
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 20
+  }
+}
+
+###############################
+### TEXT SEARCH EXAMPLES
+###############################
+
+### Example 3: Text search with Contains operator
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "Name": {
+      "contains": "widget"
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 4: Complex OR filter - Search by Name OR SKU
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$or": [
+      { "Name": { "contains": "premium" } },
+      { "Sku": { "startsWith": "PRE-" } }
+    ]
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+###############################
+### PROJECTION EXAMPLES
+###############################
+
+### Example 5: Filter with projection - Select specific fields only
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Sku",
+    "UnitPrice"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 6: Filter with related entity projection - Include Category
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "CategoryId": {
+      "notNull": true
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Category.Name"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 6a: All fields non-deep - Returns only Good properties
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "all": {
+      "deep": false
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 6b: All fields deep (depth=2) - Returns Good + Category + ParentCategory
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "CategoryId": {
+      "notNull": true
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Category.Name",
+    "UnitPrice",
+    "QuantityInStock"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+###############################
+### SORTING EXAMPLES
+###############################
+
+### Example 7: Filter with sorting - Ascending by Name
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "sort": {
+    "Name": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 8: Multi-field sorting - Category DESC, then Price ASC
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "sort": {
+    "CategoryId": "desc",
+    "UnitPrice": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+###############################
+### ADVANCED FILTERING EXAMPLES
+###############################
+
+### Example 9: Complex nested filter - Active AND (Low stock OR High price)
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$and": [
+      { "IsActive": true },
+      {
+        "$or": [
+          { "QuantityInStock": { "lt": 10 } },
+          { "UnitPrice": { "gt": 500.00 } }
+        ]
+      }
+    ]
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 15
+  }
+}
+
+### Example 10: Pagination - Second page
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "pagination": {
+    "pageNumber": 2,
+    "pageSize": 10
+  }
+}
+
+### Example 11: In operator - Search by multiple SKUs
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "Sku": {
+      "in": ["SKU-001", "SKU-002", "SKU-003"]
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 12: IsNull operator - Find goods without category
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "CategoryId": {
+      "null": true
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 13: Complete query - Filter + Projection + Sort + Pagination
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true,
+    "UnitPrice": {
+      "gt": 50.00
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Sku",
+    "UnitPrice",
+    "QuantityInStock",
+    "Category.Name"
+  ],
+  "sort": {
+    "UnitPrice": "desc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 20
+  }
+}
+
+###############################
+### REAL-WORLD USE CASES
+###############################
+
+### Example 14: Low stock alert - Items below reorder point
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true,
+    "QuantityInStock": {
+      "lt": 20
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Sku",
+    "QuantityInStock",
+    "UnitPrice"
+  ],
+  "sort": {
+    "QuantityInStock": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 50
+  }
+}
+
+### Example 15: Premium products - High value inventory items
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true,
+    "UnitPrice": {
+      "gte": 100.00
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Sku",
+    "UnitPrice",
+    "Category.Name"
+  ],
+  "sort": {
+    "UnitPrice": "desc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 25
+  }
+}
+
+### Example 16: Quick search - Search across Name and SKU
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$or": [
+      { "Name": { "contains": "laptop" } },
+      { "Sku": { "contains": "laptop" } }
+    ]
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Sku",
+    "UnitPrice",
+    "QuantityInStock"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 20
+  }
+}
+
+### Example 17: Active inventory by category - Filter by specific categories
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true,
+    "CategoryId": {
+      "in": ["cat-1-guid", "cat-2-guid", "cat-3-guid"]
+    }
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Category.Name",
+    "UnitPrice",
+    "QuantityInStock"
+  ],
+  "sort": {
+    "Category.Name": "asc",
+    "Name": "asc"
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 50
+  }
+}
+
+### Example 18: Out of stock items - Zero or null quantity
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "$or": [
+      { "QuantityInStock": 0 },
+      { "QuantityInStock": { "null": true } }
+    ]
+  },
+  "projection": [
+    "Id",
+    "Name",
+    "Sku",
+    "QuantityInStock"
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 100
+  }
+}
+
+###############################
+### ERROR HANDLING EXAMPLES
+###############################
+
+### Example 19: Error case - Invalid field name (should fail validation)
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "NonExistentField": true
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 20: Error case - Invalid pagination (page size too large)
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 999
+  }
+}
+
+###############################
+### TRANSFORMATION EXAMPLES (Phase 1 - Infrastructure)
+###############################
+### Note: These examples demonstrate the new composite transformation syntax
+### Phase 1: ADT structure, JSON parsing, and expression builder are complete
+### Phase 2: Execution support will be added to return dynamic results
+###
+### Transformation Features:
+### - Unlimited nesting/composition
+### - String operations: toUpper, toLower, substring, concat, trim, replace, length
+### - Arithmetic: add, subtract, multiply, divide, round, abs
+### - Conditionals: case/when (SQL CASE WHEN equivalent)
+### - Comparisons: eq, gt, gte, lt, lte
+### - Field references: "FieldName" or {"field": "FieldName"}
+### - Constants: direct values or {"const": value}
+
+### Example 21: Simple string transformation - Uppercase name
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "upperName": {"toUpper": "Name"},
+      "lowerSku": {"toLower": "Sku"}
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 22: Arithmetic transformation - Calculate total value
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "name": "Name",
+      "unitPrice": "UnitPrice",
+      "quantity": "QuantityInStock",
+      "totalValue": {
+        "multiply": ["UnitPrice", "QuantityInStock"]
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 23: String concatenation - Build display name
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "displayName": {
+        "concat": {
+          "inputs": ["Name", " (", "Sku", ")"],
+          "separator": ""
+        }
+      },
+      "price": "UnitPrice"
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 24: Conditional transformation - Stock status
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "name": "Name",
+      "quantity": "QuantityInStock",
+      "stockStatus": {
+        "case": {
+          "when": [
+            {
+              "condition": {"eq": ["QuantityInStock", 0]},
+              "then": "Out of Stock"
+            },
+            {
+              "condition": {"lt": ["QuantityInStock", 10]},
+              "then": "Low Stock"
+            },
+            {
+              "condition": {"lt": ["QuantityInStock", 50]},
+              "then": "Medium Stock"
+            }
+          ],
+          "else": "In Stock"
+        }
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 25: Nested composition - Complex transformation
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "formattedName": {
+        "concat": {
+          "inputs": [
+            {"toUpper": {"substring": {"input": "Name", "start": 0, "length": 1}}},
+            {"toLower": {"substring": {"input": "Name", "start": 1}}}
+          ],
+          "separator": ""
+        }
+      },
+      "priceWithTax": {
+        "round": {
+          "multiply": ["UnitPrice", 1.2]
+        }
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 26: Short-form syntax - Simpler notation
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "upperName": {"toUpper": "Name"},
+      "nameLength": {"length": "Name"},
+      "doublePrice": {"multiply": ["UnitPrice", 2]}
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 5
+  }
+}
+
+### Example 27: Coalesce - Null handling
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {},
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "name": "Name",
+      "categoryName": {
+        "coalesce": ["Category.Name", "Uncategorized"]
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 28: Object construction - Nested result
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "name": "Name",
+      "pricing": {
+        "object": {
+          "unit": "UnitPrice",
+          "withTax": {"multiply": ["UnitPrice", 1.2]},
+          "total": {"multiply": ["UnitPrice", "QuantityInStock"]}
+        }
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 29: Substring extraction - SKU prefix
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "fullSku": "Sku",
+      "skuPrefix": {
+        "substring": {
+          "input": "Sku",
+          "start": 0,
+          "length": 3
+        }
+      },
+      "name": "Name"
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+### Example 30: Replace operation - Text substitution
+POST {{baseUrl}}/api/goods/query
+Content-Type: {{contentType}}
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "projection": {
+    "transform": {
+      "id": "Id",
+      "originalName": "Name",
+      "sanitizedName": {
+        "replace": {
+          "input": "Name",
+          "oldValue": " ",
+          "newValue": "_"
+        }
+      }
+    }
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}

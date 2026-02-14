@@ -203,6 +203,700 @@ public class User
 - Relationships managed purely through CRUD operations
 - Junction entity has additional metadata requiring full service layer
 
+## ADT-Based Query/Search Architecture
+
+### Overview
+
+The ADT-based (Algebraic Data Type) query architecture provides a type-safe, composable, and highly testable approach to querying entities. It replaces traditional query providers with a layered architecture built on immutable ADT structures.
+
+**Key Benefits:**
+- **Type Safety**: Compile-time validation of query structure
+- **Composability**: Filters, projections, and transformations can be nested and combined
+- **Testability**: Each layer independently testable with clear interfaces
+- **Consistency**: All entities follow identical query pattern
+- **Flexibility**: Virtual methods allow customization without breaking base behavior
+- **Metadata-Driven**: Validators use DataModelMetadata for runtime type checking
+
+**Philosophy**: Instead of building queries imperatively, clients construct declarative ADT structures (SearchQuery) that describe what they want. The backend translates these structures into LINQ expressions and SQL.
+
+### Component Layers
+
+The architecture follows a clean 4-layer pattern with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Client (HTTP POST /api/{entity}/query)              │
+│ Sends: SearchQuery ADT (JSON)                       │
+└─────────────────┬───────────────────────────────────┘
+                  │ HTTP POST with SearchQuery
+┌─────────────────▼───────────────────────────────────┐
+│ Layer 1: QueryController (BaseQueryController)      │
+│ - Route handling ([ApiController])                   │
+│ - Request validation                                 │
+│ - Response wrapping (ServiceResult)                  │
+│ Injects: ISearchService<TEntity, TProjection>       │
+└─────────────────┬───────────────────────────────────┘
+                  │ Delegates to service
+┌─────────────────▼───────────────────────────────────┐
+│ Layer 2: SearchService (BaseSearchService)          │
+│ - Query validation orchestration                     │
+│ - Query building orchestration                       │
+│ - Projection application orchestration              │
+│ - Error handling and logging                        │
+│ Injects: IRepository, IQueryBuilder,                │
+│          IProjectionMapper, IValidator, Logger       │
+└─────────────────┬───────────────────────────────────┘
+                  │ Uses multiple components
+        ┌─────────┼─────────┬──────────┬──────────┐
+        ▼         ▼         ▼          ▼          ▼
+   IQueryBuilder  IProjection IValidator IRepository ProjectionExpression
+   (Layer 3)      Mapper      (validate) (data)     Builder (transforms)
+                  (Layer 4)
+```
+
+**Layer Responsibilities:**
+
+1. **Controller Layer**: HTTP concerns only (routing, status codes, response wrapping)
+2. **Service Layer**: Orchestration and business logic flow
+3. **Query Builder Layer**: ADT → LINQ expression translation
+4. **Infrastructure Layer**: Projection mapping, validation, data access
+
+### Base Classes
+
+#### BaseQueryController\<TEntity, TProjection\>
+
+**Location**: `InventorySystem.API.Base/Controllers/BaseQueryController.cs`
+
+**Purpose**: Provides standardized HTTP endpoints for ADT-based queries
+
+**Generic Constraints:**
+- `TEntity : class` - The entity being queried
+- `TProjection : class, new()` - The DTO projection result type
+
+**Dependencies (Constructor Injection):**
+```csharp
+ISearchService<TEntity, TProjection> searchService
+ILogger logger
+```
+
+**Virtual Members:**
+```csharp
+protected virtual string EntityName => typeof(TEntity).Name;  // For logging
+public virtual async Task<ActionResult<ServiceResult<SearchResult<TProjection>>>> Query(...)
+public virtual async Task<ActionResult<ServiceResult<SearchResult<TransformationResult>>>> QueryWithTransformations(...)
+```
+
+**Endpoints:**
+- `[HttpPost]` `/api/{entity}/query` → Regular search with projections
+- `[HttpPost("transform")]` `/api/{entity}/query/transform` → Computed field transformations
+
+**Concrete Implementation** (per entity, ~25 lines):
+```csharp
+[ApiController]
+[Route("api/goods/query")]
+[AllowAnonymous]
+public class GoodsQueryController : BaseQueryController<Good, GoodProjection>
+{
+    public GoodsQueryController(
+        ISearchService<Good, GoodProjection> searchService,
+        ILogger<GoodsQueryController> logger)
+        : base(searchService, logger) { }
+}
+```
+
+#### BaseSearchService\<TEntity, TProjection\>
+
+**Location**: `Inventorization.Base/DataAccess/BaseSearchService.cs`
+
+**Purpose**: Orchestrates query execution pipeline (validate → build → execute → project)
+
+**Generic Constraints:**
+- `TEntity : class`
+- `TProjection : class, new()` - Required by IProjectionMapper
+
+**Dependencies (Constructor Injection):**
+```csharp
+IRepository<TEntity> repository           // Data access
+IQueryBuilder<TEntity> queryBuilder       // ADT → LINQ expression
+IProjectionMapper<TEntity, TProjection> projectionMapper  // Entity → DTO
+ProjectionExpressionBuilder expressionBuilder  // Field transformations
+IValidator<SearchQuery> validator         // Query validation
+ILogger logger                            // Logging
+```
+
+**Virtual Members:**
+```csharp
+protected virtual string EntityName => typeof(TEntity).Name;  // For logging
+public virtual async Task<ServiceResult<SearchResult<TProjection>>> ExecuteSearchAsync(...)
+public virtual async Task<ServiceResult<SearchResult<TransformationResult>>> ExecuteTransformationSearchAsync(...)
+```
+
+**Execution Flow:**
+1. Validate SearchQuery using IValidator
+2. Get base IQueryable from repository
+3. Build filtered/sorted query using IQueryBuilder
+4. Count total results (before pagination)
+5. Apply pagination
+6. Execute query with projection (or transformations)
+7. Return SearchResult wrapped in ServiceResult
+
+**Concrete Implementation** (per entity, ~28 lines):
+```csharp
+public class GoodSearchService : BaseSearchService<Good, GoodProjection>
+{
+    public GoodSearchService(
+        IRepository<Good> repository,
+        IQueryBuilder<Good> queryBuilder,
+        IProjectionMapper<Good, GoodProjection> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        IValidator<SearchQuery> validator,
+        ILogger<GoodSearchService> logger)
+        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger) { }
+}
+```
+
+#### BaseQueryBuilder\<TEntity\>
+
+**Location**: `Inventorization.Base/DataAccess/BaseQueryBuilder.cs`
+
+**Purpose**: Converts SearchQuery ADT (filters, projections, sorting) to LINQ expressions
+
+**Generic Constraints:**
+- `TEntity : class`
+
+**Virtual Members:**
+```csharp
+protected virtual string ParameterName => typeof(TEntity).Name.ToLower()[0].ToString();
+```
+Defaults to first character of entity name ("Good" → "g", "Category" → "c")
+
+**Key Methods:**
+```csharp
+Expression<Func<TEntity, bool>>? BuildFilterExpression(FilterExpression? filter)
+IQueryable<TEntity> ApplyProjection(IQueryable<TEntity> query, ProjectionRequest? projection)
+IQueryable<TEntity> ApplySorting(IQueryable<TEntity> query, SortRequest? sort)
+IQueryable<TEntity> BuildQuery(IQueryable<TEntity> baseQuery, SearchQuery searchQuery)
+```
+
+**Pattern Matching**: Recursively processes FilterExpression ADT variants:
+- `LeafFilter` → Single condition (Equals, GreaterThan, Contains, etc.)
+- `AndFilter` → Logical AND of child filters
+- `OrFilter` → Logical OR of child filters
+
+**Concrete Implementation** (per entity, ~13 lines):
+```csharp
+public class GoodQueryBuilder : BaseQueryBuilder<Good>
+{
+    // Empty body - uses all defaults from base class
+    // Override ParameterName only if custom name needed
+}
+```
+
+#### ProjectionMapperBase\<TEntity, TProjection\>
+
+**Location**: `Inventorization.Base/Abstractions/ProjectionMapperBase.cs`
+
+**Purpose**: Maps entities to DTOs using EF Core expressions or in-memory mapping
+
+**Template Method Pattern** - Base class provides:
+```csharp
+public virtual Expression<Func<TEntity, TProjection>> GetProjectionExpression(ProjectionRequest? projection)
+public virtual TProjection Map(TEntity entity, ProjectionRequest? projection, int currentDepth = 0)
+```
+
+**Abstract Methods** (must be implemented by concrete classes):
+```csharp
+protected abstract Expression<Func<TEntity, TProjection>> GetAllFieldsProjection(bool deep, int depth);
+protected abstract Expression<Func<TEntity, TProjection>> BuildSelectiveProjection(ProjectionRequest projection);
+protected abstract void MapAllFields(TEntity entity, TProjection result, bool deep, int maxDepth, int currentDepth);
+protected abstract void MapField(TEntity entity, TProjection result, string fieldName, int maxDepth, int currentDepth);
+```
+
+**Concrete Implementation** (per entity, ~250 lines - most complex infrastructure component):
+```csharp
+public class GoodProjectionMapper : ProjectionMapperBase<Good, GoodProjection>, IGoodProjectionMapper
+{
+    private readonly ICategoryProjectionMapper _categoryMapper;  // For nested projections
+    
+    protected override Expression<Func<Good, GoodProjection>> GetAllFieldsProjection(bool deep, int depth)
+    {
+        return g => new GoodProjection
+        {
+            Id = g.Id,
+            Name = g.Name,
+            // ... all properties
+            Category = deep && depth > 0 && g.Category != null 
+                ? new CategoryProjection { /* nested fields */ } 
+                : null
+        };
+    }
+    
+    protected override Expression<Func<Good, GoodProjection>> BuildSelectiveProjection(ProjectionRequest projection)
+    {
+        // HashSet for O(1) field lookups (evaluated outside expression tree)
+        var requestedFields = new HashSet<string>(
+            projection.Fields.Select(f => f.FieldName), 
+            StringComparer.OrdinalIgnoreCase);
+        
+        var hasName = requestedFields.Contains("Name");
+        var hasCategory = requestedFields.Contains("Category.Name");
+        
+        // Use constants in expression tree for EF Core compatibility
+        return g => new GoodProjection
+        {
+            Name = hasName ? g.Name : null,
+            Category = hasCategory ? new CategoryProjection { Name = g.Category.Name } : null
+        };
+    }
+    
+    protected override void MapAllFields(Good entity, GoodProjection result, 
+        bool deep, int maxDepth, int currentDepth)
+    {
+        result.Name = entity.Name;
+        // ... all properties
+        
+        if (deep && currentDepth < maxDepth && entity.Category != null)
+        {
+            var categoryProjection = ProjectionRequest.AllDeep(maxDepth - currentDepth - 1);
+            result.Category = _categoryMapper.Map(entity.Category, categoryProjection, currentDepth + 1);
+        }
+    }
+    
+    protected override void MapField(Good entity, GoodProjection result, string fieldName, 
+        int maxDepth, int currentDepth)
+    {
+        switch (fieldName.ToLower())
+        {
+            case "name": result.Name = entity.Name; break;
+            case "category.name":
+                if (entity.Category != null)
+                    result.Category = new GoodProjection { Name = entity.Category.Name };
+                break;
+        }
+    }
+}
+```
+
+### ADT Types Reference
+
+All ADT classes located in `Inventorization.Base/ADTs/`
+
+#### SearchQuery
+
+**Purpose**: Top-level query structure combining all query aspects
+
+```csharp
+public sealed record SearchQuery
+{
+    public FilterExpression? Filter { get; init; }        // WHERE clause
+    public ProjectionRequest? Projection { get; init; }    // SELECT fields
+    public SortRequest? Sort { get; init; }                // ORDER BY
+    public PageRequest Pagination { get; init; }           // LIMIT/OFFSET
+}
+```
+
+**Example JSON**:
+```json
+{
+  "filter": {
+    "type": "and",
+    "filters": [
+      { "type": "leaf", "condition": { "fieldName": "Price", "operator": "GreaterThan", "value": 100 } },
+      { "type": "leaf", "condition": { "fieldName": "IsActive", "operator": "Equals", "value": true } }
+    ]
+  },
+  "projection": {
+    "fields": [{ "fieldName": "Name" }, { "fieldName": "Category.Name" }]
+  },
+  "sort": {
+    "sortFields": [{ "fieldName": "Name", "direction": "Ascending" }]
+  },
+  "pagination": { "pageNumber": 1, "pageSize": 20 }
+}
+```
+
+#### FilterExpression (Abstract ADT)
+
+**Variants**:
+- `LeafFilter` - Single condition
+- `AndFilter` - Logical AND (contains `IReadOnlyList<FilterExpression> Filters`)
+- `OrFilter` - Logical OR (contains `IReadOnlyList<FilterExpression> Filters`)
+
+**Composability**: Filters nest recursively for complex conditions
+
+```csharp
+// (Price > 100 AND IsActive = true) OR (Category.Name = "Electronics")
+var filter = new OrFilter
+{
+    Filters = new[]
+    {
+        new AndFilter { Filters = new[] { priceFilter, activeFilter } },
+        categoryFilter
+    }
+};
+```
+
+#### FilterCondition
+
+**Operators Supported**:
+- `Equals`, `NotEquals`
+- `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`
+- `Contains`, `StartsWith`, `EndsWith` (string operations)
+- `In` (value in collection)
+- `IsNull`, `IsNotNull`
+
+```csharp
+public sealed record FilterCondition
+{
+    public required string FieldName { get; init; }
+    public required FilterOperator Operator { get; init; }
+    public object? Value { get; init; }
+}
+```
+
+#### ProjectionRequest
+
+**Purpose**: Specifies which fields to include in results
+
+```csharp
+public sealed record ProjectionRequest
+{
+    public IReadOnlyList<FieldProjection> Fields { get; init; }
+    public bool IsAllFields { get; init; }                    // true = SELECT *
+    public bool IncludeRelatedDeep { get; init; }             // Include navigation properties
+    public int Depth { get; init; }                           // Max nesting depth (1-7)
+    public IReadOnlyDictionary<string, ProjectionField>? FieldTransformations { get; init; }
+}
+```
+
+**Static Factory Methods**:
+```csharp
+ProjectionRequest.Default()           // All fields, shallow
+ProjectionRequest.AllDirect()         // All direct fields only
+ProjectionRequest.AllDeep(depth: 3)   // All fields with 3-level nesting
+new ProjectionRequest(field1, field2) // Selective fields
+```
+
+**Depth Control** (1-7 levels):
+- Prevents infinite recursion in self-referential entities (e.g., Category.ParentCategory)
+- Balances performance vs completeness
+- Default: 1 (one level of related entities)
+
+#### ProjectionField (Abstract ADT for Transformations)
+
+**Purpose**: Computed fields with transformations
+
+**Variants**:
+- `FieldReference` - Direct entity field
+- `ConstantValue` - Literal value
+- `StringTransform` - String operations (ToUpper, ToLower, Substring, Trim, etc.)
+- `ConcatTransform` - Concatenate multiple fields
+- `ArithmeticTransform` - Math operations (Add, Subtract, Multiply, Divide, etc.)
+- `ConditionalTransform` - IF/THEN/ELSE logic
+- `ComparisonTransform` - Boolean comparisons
+- `Cast<max_thinking_length>19930</max_thinking_length>Transform` - Type conversions
+- `CoalesceTransform` - NULL coalescing
+
+**Example** (uppercase product name):
+```json
+{
+  "projection": {
+    "fieldTransformations": {
+      "upperName": {
+        "operation": "ToUpper",
+        "input": { "fieldName": "Name" }
+      }
+    }
+  }
+}
+```
+
+#### SortRequest
+
+```csharp
+public sealed record SortRequest
+{
+    public IReadOnlyList<SortField> SortFields { get; init; }
+}
+
+public sealed record SortField
+{
+    public required string FieldName { get; init; }
+    public SortDirection Direction { get; init; } = SortDirection.Ascending;
+}
+```
+
+### Entity-to-Infrastructure Mapping
+
+For each entity, the following infrastructure classes are created:
+
+| Component | Naming Pattern | Location | Lines | Purpose |
+|-----------|---------------|----------|-------|---------|
+| Entity | `{Entity}` | Domain/Entities/ | Variable | Core domain model |
+| Query Builder | `{Entity}QueryBuilder` | Domain/DataAccess/ | ~13 | ADT → LINQ expressions |
+| Search Service | `{Entity}SearchService` | Domain/Services/ | ~28 | Query orchestration |
+| Query Controller | `{Entity}sQueryController` | API/Controllers/ | ~25 | HTTP endpoints |
+| Projection Mapper | `{Entity}ProjectionMapper` | Domain/Mappers/Projection/ | ~250 | Entity → DTO mapping |
+| Projection Interface | `I{Entity}ProjectionMapper` | Domain/Mappers/Projection/ | ~3 | Marker interface |
+| Projection DTO | `{Entity}Projection` | DTO/ADTs/ | ~30 | DTO structure |
+| Search Fields | `{Entity}SearchFields` | DTO/ADTs/ | ~40 | Field name constants |
+| Validator | `{Entity}SearchQueryValidator` | Domain/Validators/ | ~200 | Query validation |
+
+**Total: ~589 lines per entity** (mostly concentrated in ProjectionMapper and Validator)
+
+**Examples**:
+- `Good` entity → `GoodQueryBuilder`, `GoodSearchService`, `GoodsQueryController`, `GoodProjectionMapper`, `IGoodProjectionMapper`, `GoodProjection`, `GoodSearchFields`, `GoodSearchQueryValidator`
+- `Category` entity → `CategoryQueryBuilder`, `CategorySearchService`, `CategoriesQueryController`, etc.
+
+### Projection Strategies
+
+#### 1. All Fields (Shallow)
+
+Returns all entity properties, one level of related entities
+
+```csharp
+var projection = ProjectionRequest.Default();
+// Result: Good with all properties, Category with ID only
+```
+
+#### 2. All Fields (Deep)
+
+Returns all entity properties, nested related entities up to specified depth
+
+```csharp
+var projection = ProjectionRequest.AllDeep(depth: 3);
+// Result: Good → Category → ParentCategory → ParentCategory (3 levels)
+```
+
+**Depth Limits**: 1-7 levels enforced to prevent:
+- Stack overflow in recursive structures
+- Excessive SQL joins (performance)
+- Circular reference issues
+
+#### 3. Selective Fields
+
+Returns only specified fields
+
+```csharp
+var projection = new ProjectionRequest(
+    new FieldProjection { FieldName = "Name" },
+    new FieldProjection { FieldName = "Price" },
+    new FieldProjection { FieldName = "Category.Name" }
+);
+// Result: { "name": "...", "price": ..., "category": { "name": "..." } }
+```
+
+**Nested Field Syntax**: Use dot notation (`"Category.Name"`) for related entity fields
+
+#### 4. Field Transformations
+
+Returns computed fields using ProjectionField ADTs
+
+```csharp
+var projection = new ProjectionRequest
+{
+    FieldTransformations = new Dictionary<string, ProjectionField>
+    {
+        ["upperName"] = new StringTransform 
+        { 
+            Operation = StringOperation.ToUpper,
+            Input = new FieldReference { FieldName = "Name" }
+        },
+        ["total"] = new ArithmeticTransform
+        {
+            Operation = ArithmeticOperation.Multiply,
+            Left = new FieldReference { FieldName = "Price" },
+            Right = new FieldReference { FieldName = "Quantity" }
+        }
+    }
+};
+// Result: TransformationResult with dynamic fields
+```
+
+**Execution**: Transformations execute **in-memory after database query** (client evaluation)
+
+### Validator Pattern
+
+Uses `DataModelMetadata` for runtime type-safe validation:
+
+```csharp
+public class GoodSearchQueryValidator : IValidator<SearchQuery>
+{
+    private static readonly IDataModelMetadata<Good> Metadata = DataModelMetadata.Good;
+    
+    public async Task<ValidationResult> ValidateAsync(SearchQuery query, CancellationToken ct = default)
+    {
+        var errors = new List<string>();
+        
+        if (query.Filter != null)
+            ValidateFilter(query.Filter, errors);
+        
+        if (query.Projection != null)
+            ValidateProjection(query.Projection, errors);
+            
+        return errors.Any() 
+            ? ValidationResult.Invalid(errors)
+            : ValidationResult.Valid();
+    }
+    
+    private void ValidateFilterCondition(FilterCondition condition, List<string> errors)
+    {
+        // Check if field exists
+        if (!Metadata.Properties.ContainsKey(condition.FieldName))
+        {
+            errors.Add($"Field '{condition.FieldName}' does not exist on entity Good");
+            return;
+        }
+        
+        var propertyMetadata = Metadata.Properties[condition.FieldName];
+        
+        // Validate type compatibility
+        if (condition.Value != null)
+        {
+            var expectedType = propertyMetadata.Type;
+            var actualType = condition.Value.GetType();
+            
+            if (!IsTypeCompatible(expectedType, actualType))
+            {
+                errors.Add($"Field '{condition.FieldName}' expects type {expectedType} but got {actualType}");
+            }
+        }
+        
+        // Validate operator compatibility
+        if (condition.Operator == FilterOperator.Contains && propertyMetadata.Type != typeof(string))
+        {
+            errors.Add($"Contains operator only valid for string fields");
+        }
+    }
+}
+```
+
+**Benefits**:
+- No hardcoded field names in validator
+- Type safety at runtime based on metadata
+- Automatically stays in sync with entity changes
+- Clear error messages for clients
+
+### Dependency Injection Registration Pattern
+
+Each entity requires careful DI registration following this pattern:
+
+```csharp
+// In Program.cs or DI configuration
+
+// 1. Query Builder
+builder.Services.AddScoped<IQueryBuilder<Good>, GoodQueryBuilder>();
+
+// 2. Projection Mapper (dual registration: entity-specific + generic)
+builder.Services.AddScoped<IGoodProjectionMapper, GoodProjectionMapper>();
+builder.Services.AddScoped<IProjectionMapper<Good, GoodProjection>>(
+    sp => sp.GetRequiredService<IGoodProjectionMapper>());
+
+// 3. Validator
+builder.Services.AddScoped<IValidator<SearchQuery>, GoodSearchQueryValidator>();
+
+// 4. Search Service (dual registration: concrete + interface)
+builder.Services.AddScoped<GoodSearchService>();
+builder.Services.AddScoped<ISearchService<Good, GoodProjection>>(
+    sp => sp.GetRequiredService<GoodSearchService>());
+
+// 5. Query Controller (automatic via AddControllers)
+```
+
+**Shared Services** (register once per application):
+```csharp
+builder.Services.AddScoped<ProjectionExpressionBuilder>();
+```
+
+**Why Dual Registration?**
+- Entity-specific interfaces (e.g., `IGoodProjectionMapper`) allow type-safe nested mapper injection
+- Generic interfaces (e.g., `IProjectionMapper<Good, GoodProjection>`) enable polymorphic service injection
+- Both resolve to same singleton instance
+
+### Adding New Entities to ADT-Based Search
+
+**Steps to enable ADT-based querying for a new entity:**
+
+1. **Create Entity** - Follow immutability pattern with private setters, dedicated constructor
+
+2. **Create Infrastructure Classes** (8 files per entity):
+   
+   a. **QueryBuilder** (Domain/DataAccess/{Entity}QueryBuilder.cs):
+   ```csharp
+   public class ProductQueryBuilder : BaseQueryBuilder<Product> { }
+   ```
+   
+   b. **SearchService** (Domain/Services/{Entity}SearchService.cs):
+   ```csharp
+   public class ProductSearchService : BaseSearchService<Product, ProductProjection>
+   {
+       public ProductSearchService(
+           IRepository<Product> repository,
+           IQueryBuilder<Product> queryBuilder,
+           IProjectionMapper<Product, ProductProjection> projectionMapper,
+           ProjectionExpressionBuilder expressionBuilder,
+           IValidator<SearchQuery> validator,
+           ILogger<ProductSearchService> logger)
+           : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger) { }
+   }
+   ```
+   
+   c. **QueryController** (API/Controllers/{Entity}sQueryController.cs):
+   ```csharp
+   [ApiController]
+   [Route("api/products/query")]
+   [AllowAnonymous]
+   public class ProductsQueryController : BaseQueryController<Product, ProductProjection>
+   {
+       public ProductsQueryController(
+           ISearchService<Product, ProductProjection> searchService,
+           ILogger<ProductsQueryController> logger)
+           : base(searchService, logger) { }
+   }
+   ```
+   
+   d. **ProjectionMapper** (Domain/Mappers/Projection/{Entity}ProjectionMapper.cs):
+   - Implement 4 abstract methods
+   - Handle nested entity projections
+   - Use HashSet pattern for selective fields
+   
+   e. **ProjectionMapper Interface** (Domain/Mappers/Projection/I{Entity}ProjectionMapper.cs):
+   ```csharp
+   public interface IProductProjectionMapper : IProjectionMapper<Product, ProductProjection> { }
+   ```
+   
+   f. **Projection DTO** (DTO/ADTs/{Entity}Projection.cs):
+   - All properties nullable
+   - Match entity structure
+   - Include related entity projections
+   
+   g. **SearchFields** (DTO/ADTs/{Entity}SearchFields.cs):
+   - String constants for field names
+   - Validation helpers
+   
+   h. **Validator** (Domain/Validators/{Entity}SearchQueryValidator.cs):
+   - Use `DataModelMetadata.{Entity}` for validation
+   - Validate filters, projections, sorts
+
+3. **Register in DI** - Follow dual registration pattern (see above)
+
+4. **Test** - Entity immediately queryable via:
+   - `POST /api/products/query` - Regular search
+   - `POST /api/products/query/transform` - Field transformations
+
+**Note**: Most of these classes are boilerplate and should be code-generated (see GENERATION.md)
+
+### Best Practices
+
+1. **Virtual Properties**: Override `ParameterName` and `EntityName` only when defaults don't fit
+2. **Projection Depth**: Use `AllDeep(3)` as reasonable default, adjust based on performance
+3. **Selective Projections**: For large entities, prefer selective fields to reduce payload size
+4. **Transformations**: Use sparingly - they execute in-memory (client evaluation)
+5. **Validation**: Always validate field names and types using validators
+6. **Testing**: Test each layer independently using interface mocks
+7. **Error Handling**: Let base classes handle exceptions, override only for custom logging
+8. **Performance**: Monitor SQL queries, add indexes for frequently filtered/sorted fields
+
 ## Dependency Injection Rules
 - All DataService implementations (e.g., CustomerService) must be injected as their corresponding IDataService<T...> or specific interface (e.g., ICustomerService), not as concrete types.
 - All service, repository, and abstraction dependencies should be injected as interfaces, not concrete types, to maximize testability and flexibility.
