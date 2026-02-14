@@ -905,12 +905,295 @@ builder.Services.AddScoped<ProjectionExpressionBuilder>();
 - Every API project must have a corresponding unittest project (e.g., Inventorization.[BoundedContextName].API.Tests).
 - Every concrete abstraction (service, repository, creator, modifier, query provider, etc.) must be covered with unit tests in the unittest project.
 
+---
+
+## Dependency Injection (DI) Project Pattern
+
+**REQUIRED**: Every bounded context **must** have a dedicated DI project to centralize and standardize dependency injection configuration.
+
+### DI Project Purpose
+
+The DI project encapsulates all Service Collection registration logic for a bounded context, eliminating boilerplate from `Program.cs` and ensuring consistent registration patterns across all microservices.
+
+### Project Structure
+
+```
+Inventorization.[BoundedContextName].DI/
+├── Extensions/
+│   └── [BoundedContextName]ServiceCollectionExtensions.cs
+├── Inventorization.[BoundedContextName].DI.csproj
+└── GlobalUsings.cs
+```
+
+### Project References
+
+The DI project must reference:
+- `Inventorization.Base` (for shared abstractions and base types)
+- `Inventorization.[BoundedContextName].DTO` (for DTO types)
+- `Inventorization.[BoundedContextName].Domain` (for domain services, entities, and DbContext)
+- `Inventorization.[BoundedContextName].Common` (for enums and constants, if applicable)
+
+**Important**: DI project should NOT reference the API project to prevent circular dependencies.
+
+### Service Collection Extension Pattern
+
+All DI configuration for a bounded context is encapsulated in a static extension method:
+
+**Example: CommerceServiceCollectionExtensions.cs**
+
+```csharp
+using Inventorization.Base.Abstractions;
+using Inventorization.Base.DataAccess;
+using Inventorization.Base.Services;
+using Inventorization.Commerce.Domain;
+using Inventorization.Commerce.Domain.DataServices;
+using Inventorization.Commerce.Domain.EntityConfigurations;
+using Inventorization.Commerce.Domain.Mappers;
+using Inventorization.Commerce.Domain.PropertyAccessors;
+using Inventorization.Commerce.Domain.SearchProviders;
+using Inventorization.Commerce.Domain.Validators;
+using Inventorization.Commerce.DTO;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Inventorization.Commerce.DI.Extensions;
+
+/// <summary>
+/// Dependency Injection extension for Commerce bounded context.
+/// Registers all domain services, repositories, mappers, validators, and data access components.
+/// </summary>
+public static class CommerceServiceCollectionExtensions
+{
+    /// <summary>
+    /// Adds all Commerce bounded context services to the dependency injection container.
+    /// </summary>
+    /// <example>
+    /// usage in Program.cs:
+    /// <code>
+    /// builder.Services.AddCommerceServices(builder.Configuration);
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddCommerceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // DbContext registration
+        services.AddDbContext<CommerceDbContext>(options =>
+            options.UseNpgsql(
+                configuration.GetConnectionString("CommerceDb") ??
+                throw new InvalidOperationException("CommerceDb connection string not found")));
+
+        // Unit of Work
+        services.AddScoped<ICommerceUnitOfWork, CommerceUnitOfWork>();
+
+        // Repositories
+        services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+
+        // Entity: Product
+        services.AddScoped<IMapper<Product, ProductDetailsDTO>, ProductMapper>();
+        services.AddScoped<IEntityCreator<Product, CreateProductDTO>, ProductCreator>();
+        services.AddScoped<IEntityModifier<Product, UpdateProductDTO>, ProductModifier>();
+        services.AddScoped<ISearchQueryProvider<Product, ProductSearchDTO>, ProductSearchProvider>();
+        services.AddScoped<IValidator<CreateProductDTO>, CreateProductValidator>();
+        services.AddScoped<IValidator<UpdateProductDTO>, UpdateProductValidator>();
+        services.AddScoped<IProductDataService, ProductDataService>();
+
+        // Entity: Order
+        services.AddScoped<IMapper<Order, OrderDetailsDTO>, OrderMapper>();
+        services.AddScoped<IEntityCreator<Order, CreateOrderDTO>, OrderCreator>();
+        services.AddScoped<IEntityModifier<Order, UpdateOrderDTO>, OrderModifier>();
+        services.AddScoped<ISearchQueryProvider<Order, OrderSearchDTO>, OrderSearchProvider>();
+        services.AddScoped<IValidator<CreateOrderDTO>, CreateOrderValidator>();
+        services.AddScoped<IValidator<UpdateOrderDTO>, UpdateOrderValidator>();
+        services.AddScoped<IOrderDataService, OrderDataService>();
+
+        // Additional relationship managers, services, etc.
+        
+        return services;
+    }
+}
+```
+
+When using in `Program.cs`:
+
+```csharp
+using Inventorization.Commerce.DI.Extensions;
+
+var builder = WebApplicationBuilder.CreateBuilder(args);
+
+builder.Services
+    .AddCommerceServices(builder.Configuration)
+    .AddGoodsServices(builder.Configuration)
+    .AddAuthServices(builder.Configuration);
+
+// ... rest of configuration
+```
+
+### Generation Pattern
+
+The DI project structure and extension method are **automatically generated** by the code generator when scaffolding a new bounded context:
+
+**Command:**
+```bash
+npm start generate examples/commerce-bounded-context.json -- --output-dir ../../backend
+```
+
+**Generated Files:**
+- `Inventorization.Commerce.DI.csproj` (project file)
+- `Extensions/CommerceServiceCollectionExtensions.cs` (DI extension)
+- `GlobalUsings.cs` (common imports)
+
+**Generation Details:**
+- Extension method signature follows the pattern: `Add[ContextName]Services(this IServiceCollection, IConfiguration)`
+- All DTO, domain service, mapper, validator, and creator/modifier registrations are generated based on metadata
+- Entity relationships (many-to-many, one-to-many, one-to-one) generate corresponding relationship manager registrations
+- DbContext connection string read from `[ContextName]Db` configuration key
+
+### Regeneration Strategy
+
+The DI extension is safe to regenerate:
+- **Custom service registrations** can be added after the extension method call
+- **Complex DI logic** (conditional registration, factory methods) added to the extension before the `return services;`
+- **Custom dependencies** registered in separate extension methods and chained in `Program.cs`
+
+Example with custom registration:
+
+```csharp
+builder.Services
+    .AddCommerceServices(builder.Configuration)  // Generated extension
+    .AddCustomCommerceServices();                 // Custom extension
+
+public static IServiceCollection AddCustomCommerceServices(this IServiceCollection services)
+{
+    // Custom DI logic not generated
+    services.Decorate<IProductDataService>();  // Decorator pattern
+    services.AddCaching();                       // Custom caching logic
+    return services;
+}
+```
+
+### Validation
+
+All DI registrations should be validated:
+
+```csharp
+public static IServiceCollection AddCommerceServices(
+    this IServiceCollection services,
+    IConfiguration configuration)
+{
+    // ... registrations ...
+    
+    // Optional: Validate all registrations can be resolved (only in Development)
+    var serviceProvider = services.BuildServiceProvider();
+    serviceProvider.ValidateScopes();  // Throws if any scope validation fails
+    
+    return services;
+}
+```
+
+### Benefits
+
+- ✅ **Centralized DI configuration**: Single source of truth for all service registrations
+- ✅ **Consistency across microservices**: Standard pattern in every bounded context
+- ✅ **Reduced boilerplate**: Complex `Program.cs` reduced to one extension method call
+- ✅ **Type-safe registration**: All registrations checked at compile-time via provided interfaces
+- ✅ **Automatic generation**: Generated completely by code generator; custom logic added via separate extension methods
+- ✅ **Testability**: Easy to mock/stub services in unit tests by registering test implementations
+- ✅ **Maintainability**: Changes to entity structure automatically propagate to DI configuration during regeneration
+
+### Required Elements in Every Service Collection Extension
+
+1. **DbContext Registration** with connection string from configuration:
+   ```csharp
+   services.AddDbContext<[ContextName]DbContext>(options =>
+       options.UseNpgsql(
+           configuration.GetConnectionString("[ContextName]Db") ??
+           throw new InvalidOperationException("[ContextName]Db connection string not found")));
+   ```
+
+2. **Unit of Work Registration** (both specific and base interfaces):
+   ```csharp
+   services.AddScoped<I[ContextName]UnitOfWork, [ContextName]UnitOfWork>();
+   services.AddScoped<Inventorization.Base.DataAccess.IUnitOfWork>(sp =>
+       sp.GetRequiredService<I[ContextName]UnitOfWork>());
+   ```
+
+3. **Generic Repository Registration**:
+   ```csharp
+   services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+   ```
+
+4. **Entity-specific services** (mapper, creators, modifiers, validators, data service):
+   ```csharp
+   services.AddScoped<IMapper<[Entity], [Entity]DetailsDTO>, [Entity]Mapper>();
+   services.AddScoped<IEntityCreator<[Entity], Create[Entity]DTO>, [Entity]Creator>();
+   services.AddScoped<IEntityModifier<[Entity], Update[Entity]DTO>, [Entity]Modifier>();
+   services.AddScoped<ISearchQueryProvider<[Entity], [Entity]SearchDTO>, [Entity]SearchProvider>();
+   services.AddScoped<IValidator<Create[Entity]DTO>, Create[Entity]Validator>();
+   services.AddScoped<IValidator<Update[Entity]DTO>, Update[Entity]Validator>();
+   services.AddScoped<I[Entity]DataService, [Entity]DataService>();
+   ```
+
+5. **Relationship managers** (if applicable):
+   ```csharp
+   // Property accessors
+   services.AddScoped<IEntityIdPropertyAccessor<[JunctionEntity]>, [JunctionEntity]EntityIdPropertyAccessor>();
+   services.AddScoped<IRelatedEntityIdPropertyAccessor<[JunctionEntity]>, [JunctionEntity]RelatedEntityIdPropertyAccessor>();
+   
+   // Relationship metadata
+   services.AddKeyedSingleton<IRelationshipMetadata<[Entity], [Related]>>(
+       "[Relationship]",
+       (sp, key) => DataModelRelationships.[RelationshipName]);
+   
+   // Relationship manager
+   services.AddScoped<IRelationshipManager<[Entity], [Related]>>(sp =>
+       new [Entity][Related]RelationshipManager(
+           sp.GetRequiredService<IRepository<[Entity]>>(),
+           sp.GetRequiredService<IRepository<[Related]>>(),
+           sp.GetRequiredService<IRepository<[JunctionEntity]>>(),
+           sp.GetRequiredService<IUnitOfWork>(),
+           sp,
+           sp.GetRequiredService<ILogger<[Entity][Related]RelationshipManager>>(),
+           sp.GetRequiredKeyedService<IRelationshipMetadata<[Entity], [Related]>>("[Relationship]")));
+   ```
+
+---
+
 ## General Principles
-  - DTO projects: `Inventorization.[BoundedContextName].DTO` (class library)
-  - Domain projects: `Inventorization.[BoundedContextName].Domain` (class library, with Entities, Services, DbContexts, UOWs)
-  - API projects: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
-  - Common projects: `Inventorization.[BoundedContextName].Common` (class library for shared primitives)
-  - **Meta projects**: `Inventorization.[BoundedContextName].Meta` (class library for metadata definitions)
+
+### Project Naming Conventions
+
+Each bounded context requires the following project structure:
+
+  - **DTO Project**: `Inventorization.[BoundedContextName].DTO` (class library)
+    - Purpose: Data Transfer Objects and mapping abstractions
+    - Contents: DTOs organized in `DTO/[Entity]/` folders, mappers, validators
+    
+  - **Domain Project**: `Inventorization.[BoundedContextName].Domain` (class library)
+    - Purpose: Domain logic, entities, data access, business services
+    - Contents: Entities, DbContexts, Unit of Work, business services, entity configurations, search providers
+    
+  - **API Project**: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
+    - Purpose: RESTful API endpoints and HTTP routing
+    - Contents: Controllers, Swagger/OpenAPI configuration, middleware
+    
+  - **API Test Project**: `Inventorization.[BoundedContextName].API.Tests` (xUnit class library)
+    - Purpose: Comprehensive unit test coverage for all backend abstractions
+    - Contents: Data service tests, validator tests, mapper tests, search provider tests, instantiation tests
+    - **Required for every API project** (generated automatically by code generator)
+    
+  - **DI Project**: `Inventorization.[BoundedContextName].DI` (class library)
+    - Purpose: Centralized dependency injection configuration
+    - Contents: ServiceCollectionExtensions for all bounded context registrations
+    - **Required for every API project** (generated automatically by code generator)
+    
+  - **Common Project**: `Inventorization.[BoundedContextName].Common` (class library)
+    - Purpose: Shared primitives and constants not belonging to Inventorization.Base
+    - Contents: Domain-specific enums, value objects, constants
+    
+  - **Meta Project**: `Inventorization.[BoundedContextName].Meta` (class library)
+    - Purpose: Centralized metadata repository for code generation and configuration
+    - Contents: DataModelMetadata, DataModelRelationships static classes
 
 ### Meta Project Guidelines
 
@@ -1021,6 +1304,304 @@ Inventorization.Goods.Common/
   │   └── ValidationLimits.cs
   └── GlobalUsings.cs
 ```
+
+---
+
+## Test Project Scaffolding & Infrastructure
+
+**REQUIRED**: Every API project must have a corresponding test project (`Inventorization.[BoundedContextName].API.Tests`) with comprehensive unit test coverage for all domain abstractions.
+
+### Test Project Purpose
+
+The test project provides automated unit tests for:
+- **Data Services**: CRUD operations, pagination, filtering, error handling
+- **Validators**: Input validation, edge cases, business rule validation
+- **Mappers**: DTO-to-entity and entity-to-DTO mapping, LINQ projections
+- **Search Providers**: Query building, filtering expressions, pagination
+- **Entity Creators & Modifiers**: Entity instantiation and state mutations
+- **Instantiation**: Entity construction, validation, and immutability
+
+### Project Structure
+
+```
+Inventorization.[BoundedContextName].API.Tests/
+├── Inventorization.[BoundedContextName].API.Tests.csproj
+├── GlobalUsings.cs
+├── Services/                          # Data service tests
+│   ├── [Entity]DataServiceTests.cs
+│   └── ...
+├── Validators/                        # Validator tests
+│   ├── Create[Entity]ValidatorTests.cs
+│   ├── Update[Entity]ValidatorTests.cs
+│   └── ...
+├── Mappers/                           # Mapper tests
+│   ├── [Entity]MapperTests.cs
+│   └── ...
+├── SearchProviders/                   # Search provider tests
+│   ├── [Entity]SearchProviderTests.cs
+│   └── ...
+├── Creators/                          # Entity creator tests
+│   ├── [Entity]CreatorTests.cs
+│   └── ...
+├── Modifiers/                         # Entity modifier tests
+│   ├── [Entity]ModifierTests.cs
+│   └── ...
+└── Instantiation/                     # Entity instantiation tests
+    ├── [Entity]InstantiationTests.cs
+    └── ...
+```
+
+### Test Framework Stack
+
+All test projects use:
+
+- **xUnit**: Test framework with [Fact] and [Theory] attributes
+- **FluentAssertions**: Fluent assertion syntax for readable test assertions
+- **Moq**: Mocking library for interface-based dependencies
+- **Entity Framework Core InMemory**: Real DbContext for realistic async query testing (no query provider mocking)
+
+**Global Usings** (`GlobalUsings.cs`):
+
+```csharp
+global using Xunit;
+global using FluentAssertions;
+global using Moq;
+global using Inventorization.Base.Abstractions;
+global using Inventorization.Base.Services;
+global using Inventorization.[BoundedContextName].Domain;
+global using Inventorization.[BoundedContextName].Domain.DataServices;
+global using Inventorization.[BoundedContextName].Domain.Validators;
+global using Inventorization.[BoundedContextName].Domain.Mappers;
+global using Inventorization.[BoundedContextName].Domain.SearchProviders;
+global using Inventorization.[BoundedContextName].Domain.Creators;
+global using Inventorization.[BoundedContextName].Domain.Modifiers;
+global using Inventorization.[BoundedContextName].DTO;
+global using Inventorization.[BoundedContextName].Common.Enums;
+global using Microsoft.EntityFrameworkCore;
+```
+
+### Generation Pattern
+
+Test projects are **automatically generated** by the code generator when scaffolding a new bounded context:
+
+**Command:**
+```bash
+npm start generate examples/commerce-bounded-context.json -- --output-dir ../../backend
+```
+
+**Generated Test Files** (per entity):
+1. **Data Service Tests**: `Services/[Entity]DataServiceTests.cs`
+   - Tests CRUD operations (GetById, Create, Update, Delete)
+   - Tests pagination and filtering
+   - Tests error handling (not found, validation errors)
+   
+2. **Validator Tests**: `Validators/Create[Entity]ValidatorTests.cs`, `Update[Entity]ValidatorTests.cs`
+   - Tests valid inputs pass validation
+   - Tests invalid inputs fail with appropriate error messages
+   - Tests edge cases (empty strings, null values, boundary values)
+   
+3. **Mapper Tests**: `Mappers/[Entity]MapperTests.cs`
+   - Tests DTO-to-entity mapping
+   - Tests entity-to-DTO projection
+   - Tests null handling and type conversions
+   
+4. **Search Provider Tests**: `SearchProviders/[Entity]SearchProviderTests.cs`
+   - Tests query building with EF Core InMemory DbContext
+   - Tests filtering expressions
+   - Tests pagination logic
+   - Uses real `DbContextOptionsBuilder<[Context]DbContext>().UseInMemoryDatabase()` for each test
+   
+5. **Creator Tests**: `Creators/[Entity]CreatorTests.cs`
+   - Tests entity instantiation from CreateDTO
+   - Tests validation of input data
+   - Tests entity properties are set correctly
+   
+6. **Modifier Tests**: `Modifiers/[Entity]ModifierTests.cs`
+   - Tests entity state updates from UpdateDTO
+   - Tests modified properties are updated
+   - Tests immutable properties remain unchanged
+   
+7. **Instantiation Tests**: `Instantiation/[Entity]InstantiationTests.cs`
+   - Tests entity can be instantiated with valid data
+   - Tests entity properties have expected values after construction
+   - Tests entity immutability constraints
+   - Part of validation-driven development (ensuring entities behave as designed)
+
+### Search Provider Test Pattern (EF Core InMemory)
+
+Search provider tests use **Entity Framework Core InMemory** database for realistic async query testing:
+
+```csharp
+[Fact]
+public async Task SearchAsync_WithValidFilter_ReturnsMatchingEntities()
+{
+    // Arrange
+    var options = new DbContextOptionsBuilder<CommerceDbContext>()
+        .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+        .Options;
+    
+    await using var context = new CommerceDbContext(options);
+    
+    var product1 = new Product(name: "SKU-1", status: ProductStatus.Active);
+    var product2 = new Product(name: "SKU-2", status: ProductStatus.Inactive);
+    
+    context.Products.Add(product1);
+    context.Products.Add(product2);
+    await context.SaveChangesAsync();
+    
+    var searchProvider = new ProductSearchProvider();
+    var searchDTO = new ProductSearchDTO
+    {
+        Filter = new ProductFilterDTO { Status = ProductStatus.Active },
+        Page = new PageDTO { PageNumber = 1, PageSize = 10 }
+    };
+    
+    // Act
+    var query = context.Products.Where(searchProvider.BuildQuery(searchDTO));
+    var results = await query.ToListAsync();
+    
+    // Assert
+    results.Should().HaveCount(1);
+    results.First().Name.Should().Be("SKU-1");
+}
+```
+
+**Why InMemory DbContext instead of mocking IQueryable?**
+- Properly supports async operations (`ToListAsync()`, `CountAsync()`, etc.)
+- Executes LINQ-to-Objects, catching query bugs at test time
+- No need for custom `TestAsyncQueryProvider` or mocking complexities
+- Simulates real database behavior for accurate testing
+- Tests run fast (in-memory, no network I/O)
+
+### Entity Instantiation Test Pattern
+
+Instantiation tests verify entity construction and immutability:
+
+```csharp
+[Fact]
+public void Product_Constructor_InitializesPropertiesCorrectly()
+{
+    // Arrange
+    var name = "Test Product";
+    var sku = "SKU-001";
+    var status = ProductStatus.Active;
+    
+    // Act
+    var product = new Product(name: name, sku: sku, status: status);
+    
+    // Assert
+    product.Name.Should().Be(name);
+    product.Sku.Should().Be(sku);
+    product.Status.Should().Be(status);
+    product.IsActive.Should().BeTrue();
+    product.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+}
+
+[Fact]
+public void Product_UpdatePrice_ModifiesPropertyAndUpdatesTimestamp()
+{
+    // Arrange
+    var product = new Product(name: "Original", sku: "SKU-001", status: ProductStatus.Active);
+    var originalCreatedAt = product.CreatedAt;
+    var newPrice = 99.99m;
+    
+    // Act
+    System.Threading.Thread.Sleep(100);  // Ensure time difference
+    product.UpdatePrice(newPrice);
+    
+    // Assert
+    product.Price.Should().Be(newPrice);
+    product.UpdatedAt.Should().NotBeNull();
+    product.UpdatedAt.Should().BeAfter(originalCreatedAt);
+    product.CreatedAt.Should().Be(originalCreatedAt);  // CreatedAt never changes
+}
+
+[Fact]
+public void Product_Properties_CannotBeDirectlySet()
+{
+    // Arrange
+    var product = new Product(name: "Test", sku: "SKU-001", status: ProductStatus.Active);
+    
+    // Act & Assert
+    var property = typeof(Product).GetProperty(nameof(Product.Name));
+    property.SetMethod.Should().BeNull();  // Verify no public setter
+}
+```
+
+### Sample Data Generation
+
+The test generator produces valid sample data respecting:
+
+- **Regex Patterns**: For properties with regex constraints
+  - Pattern `^[A-Z0-9-]+$` generates `"SKU-1"`
+  - Pattern `^ORD-[0-9]{8}$` generates `"ORD-00000001"`
+  - Pattern `^[A-Z]{2}[0-9]{3}$` generates `"AB123"`
+
+- **Email Fields**: Auto-detected email properties
+  - Sample value: `"user@example.com"`
+
+- **String Properties**: Random strings of appropriate length
+  - Respects `MaxLength` constraints
+  - Example: 100-character `Description` generates a realistic string
+
+- **Numeric Properties**: Valid ranges for type
+  - `decimal` generates realistic prices (e.g., `99.99)
+  - `int` generates valid IDs or counts
+  - `DateTime` generates appropriate timestamps
+
+### Test Coverage Requirements
+
+Every bounded context **must** achieve minimum test coverage:
+
+| Component | Coverage | Notes |
+|-----------|----------|-------|
+| Data Services | 90%+ | CRUD ops, error cases, pagination |
+| Validators | 100% | All validation rules tested |
+| Mappers | 95%+ | Forward/reverse mapping, null handling |
+| Search Providers | 85%+ | Query building, filtering |
+| Entity Creators | 100% | All constructor paths tested |
+| Entity Modifiers | 100% | All state mutation methods tested |
+| Instantiation | 100% | All entities have instantiation tests |
+
+### Run Tests
+
+Generate tests for a bounded context:
+
+```bash
+# Generate test project for Commerce bounded context
+npm start generate examples/commerce-bounded-context.json -- --output-dir ../../backend
+
+# Navigate to test project
+cd backend/Inventorization.Commerce.API.Tests/
+
+# Run all tests
+dotnet test
+
+# Run specific test fixture
+dotnet test --filter "ClassName=CommerceNamespace.ProductDataServiceTests"
+
+# Run with coverage
+dotnet test /p:CollectCoverage=true
+```
+
+### Regeneration Strategy
+
+Tests are safe to regenerate:
+- **Test templates** are completely regenerated - any manual test edits will be overwritten
+- **Test fixtures** should NOT be manually edited (regenerate instead)
+- **Custom test logic** should go in separate test files NOT generated (e.g., `ProductDataServiceIntegrationTests.cs`)
+- **Configuration and setup** can be customized in test classes after generation (just before/after class definitions)
+
+### Benefits
+
+- ✅ **Comprehensive coverage**: Generated tests cover all data service methods, validators, mappers, search providers
+- ✅ **Consistent patterns**: All tests follow identical structure and assertion styles
+- ✅ **Fast execution**: InMemory databases, no network I/O, tests complete in milliseconds
+- ✅ **Type safety**: Compile-time validation of all test assertions
+- ✅ **Realistic data**: Sample data generation respects regex patterns, email formats, constraints
+- ✅ **Maintainability**: Changes to entity structure automatically propagate to tests during regeneration
+- ✅ **CI/CD ready**: Tests run in headless environment without dependencies
+- ✅ **Debugging support**: Detailed assertions using FluentAssertions provide clear failure messages
 
 ## Base Abstractions and Data Structures
 - All base abstractions and common data structures (such as `CreateDTO`, `UpdateDTO`, `DeleteDTO`, `DetailsDTO`, `SearchDTO`, `PageDTO`, `ServiceResult<T>`, `UnitOfWorkBase<TDbContext>`, and all generic interfaces like `IEntityCreator`, `IEntityModifier`, `ISearchQueryProvider`, `IMapper`, `IPropertyAccessor`, `IValidator`, `IUnitOfWork`, etc.) must be located in a separate shared project named `Inventorization.Base`.
@@ -2190,6 +2771,21 @@ IPropertyAccessor<TEntity, Guid?>                 // Related entity FK (nullable
 
 ## Bounded Context Boilerplate Checklist
 
+### Project-Level Setup (Required for All Bounded Contexts)
+
+✅ **DI Project**: `Inventorization.[BoundedContextName].DI` (generated)
+   - `Extensions/[ContextName]ServiceCollectionExtensions.cs` with all register logic
+   - References: Base, DTO, Domain, Common projects
+   
+✅ **Test Project**: `Inventorization.[BoundedContextName].API.Tests` (generated)
+   - Folder structure: Services/, Validators/, Mappers/, SearchProviders/, Creators/, Modifiers/, Instantiation/
+   - 211+ tests per entity set (data service, validator, mapper, search, creator, modifier, instantiation)
+   - Uses xUnit + FluentAssertions + Moq + EF Core InMemory
+   
+✅ **Program.cs in API Project** (generated)
+   - Adds all framework services and calls `builder.Services.Add[ContextName]Services(configuration)`
+   - DI extension integration complete
+
 ### Base Infrastructure (Required for All Bounded Contexts)
 
 ✅ **DbContext** using `ApplyConfigurationsFromAssembly()` (keep under 50 lines)  
@@ -2211,6 +2807,10 @@ IPropertyAccessor<TEntity, Guid?>                 // Related entity FK (nullable
    - Relationship metadata (keyed service)
    - Relationship manager (with metadata injection)
    - Validator
+   
+✅ **Generated Tests**:
+   - Many-to-many entity instantiation tests verify composite key behavior
+   - Relationship manager tests verify add/remove operations
 
 ### For One-to-Many Relationships
 
@@ -2225,6 +2825,9 @@ IPropertyAccessor<TEntity, Guid?>                 // Related entity FK (nullable
    - Property accessor
    - Relationship metadata (keyed service)
    - Relationship manager (with metadata injection)
+
+✅ **Generated Tests**:
+   - Child entity instantiation tests verify FK behavior
 
 ### For One-to-One Relationships
 
