@@ -78,11 +78,13 @@ public abstract class BaseSearchService<TEntity, TProjection> : ISearchService<T
                 .Skip((query.Pagination.PageNumber - 1) * query.Pagination.PageSize)
                 .Take(query.Pagination.PageSize);
             
-            // Execute query with projection
+            // Load entities first, then project with pre-sized list
+            var entities = await pagedQuery.ToListAsync(cancellationToken);
             var projectionExpression = ProjectionMapper.GetProjectionExpression(query.Projection);
-            var items = await pagedQuery
-                .Select(projectionExpression)
-                .ToListAsync(cancellationToken);
+            var projectionFunc = projectionExpression.Compile();
+            var items = new List<TProjection>(entities.Count);
+            foreach (var entity in entities)
+                items.Add(projectionFunc(entity));
             
             // Build result
             var result = new SearchResult<TProjection>
@@ -145,12 +147,10 @@ public abstract class BaseSearchService<TEntity, TProjection> : ISearchService<T
             // Get total count before pagination
             var totalCount = await builtQuery.CountAsync(cancellationToken);
 
-            // Apply pagination
+            // Apply pagination and load entities
             var pagedQuery = builtQuery
                 .Skip((query.Pagination.PageNumber - 1) * query.Pagination.PageSize)
                 .Take(query.Pagination.PageSize);
-
-            // Load entities into memory first
             var entities = await pagedQuery.ToListAsync(cancellationToken);
 
             // Build schema from transformations
@@ -165,7 +165,7 @@ public abstract class BaseSearchService<TEntity, TProjection> : ISearchService<T
                 query.Projection.FieldTransformations);
             var compiledExpression = transformationExpression.Compile();
 
-            // Apply transformations in memory
+            // Apply transformations in memory with pre-sized list
             var items = new List<TransformationResult>(entities.Count);
             foreach (var entity in entities)
                 items.Add(compiledExpression(entity));

@@ -186,12 +186,17 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
             var pageProperty = typeof(TSearchDTO).GetProperty("Page");
             var page = pageProperty?.GetValue(searchDto) as PageDTO ?? new PageDTO();
 
-            var mapper = ServiceProvider.GetRequiredService<IMapper<TEntity, TDetailsDTO>>();
-            var items = await query
+            // Load entities with pagination, then project with pre-sized list
+            var entities = await query
                 .Skip((page.PageNumber - 1) * page.PageSize)
                 .Take(page.PageSize)
-                .Select(mapper.GetProjection())
                 .ToListAsync(cancellationToken);
+            
+            var mapper = ServiceProvider.GetRequiredService<IMapper<TEntity, TDetailsDTO>>();
+            var projectionFunc = mapper.GetProjection().Compile();
+            var items = new List<TDetailsDTO>(entities.Count);
+            foreach (var entity in entities)
+                items.Add(projectionFunc(entity));
 
             return ServiceResult<PagedResult<TDetailsDTO>>.Success(
                 new PagedResult<TDetailsDTO>
