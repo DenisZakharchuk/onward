@@ -14,12 +14,12 @@ namespace Inventorization.Commerce.Domain.Validators;
 /// </summary>
 public class CreateCategoryValidator : IValidator<CreateCategoryDTO>
 {
-    public async Task<ValidationResult> ValidateAsync(
+    public Task<ValidationResult> ValidateAsync(
         CreateCategoryDTO dto,
         CancellationToken cancellationToken = default)
     {
         if (dto == null)
-            return ValidationResult.WithErrors("DTO cannot be null");
+            return Task.FromResult(ValidationResult.WithErrors("DTO cannot be null"));
 
         var errors = new List<string>();
 
@@ -33,8 +33,8 @@ public class CreateCategoryValidator : IValidator<CreateCategoryDTO>
     errors.Add("Description cannot exceed 500 characters");
 
 
-        return errors.Any()
+        return Task.FromResult(errors.Any()
             ? ValidationResult.WithErrors(errors.ToArray())
-            : ValidationResult.Ok();
+            : ValidationResult.Ok());
     }
 }

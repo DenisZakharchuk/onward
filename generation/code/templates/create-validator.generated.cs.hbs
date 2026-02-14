@@ -31,12 +31,12 @@ public class Create{{entityName}}Validator : IValidator<Create{{entityName}}DTO>
     }
 
     {{/if}}
-    public async Task<ValidationResult> ValidateAsync(
+    public Task<ValidationResult> ValidateAsync(
         Create{{entityName}}DTO dto,
         CancellationToken cancellationToken = default)
     {
         if (dto == null)
-            return ValidationResult.WithErrors("DTO cannot be null");
+            return Task.FromResult(ValidationResult.WithErrors("DTO cannot be null"));
 
         var errors = new List<string>();
 
@@ -45,8 +45,8 @@ public class Create{{entityName}}Validator : IValidator<Create{{entityName}}DTO>
 
         {{/each}}
 
-        return errors.Any()
+        return Task.FromResult(errors.Any()
             ? ValidationResult.WithErrors(errors.ToArray())
-            : ValidationResult.Ok();
+            : ValidationResult.Ok());
     }
 }
