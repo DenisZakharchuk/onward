@@ -320,7 +320,7 @@ public class ProjectionFieldConverter : JsonConverter<ProjectionField>
         if (element.ValueKind == JsonValueKind.Array)
         {
             // Short form: {"concat": ["field1", "field2"]}
-            var inputs = new List<ProjectionField>();
+            var inputs = new List<ProjectionField>(4);
             foreach (var item in element.EnumerateArray())
             {
                 inputs.Add(ParseProjectionField(item, options));
@@ -330,7 +330,7 @@ public class ProjectionFieldConverter : JsonConverter<ProjectionField>
 
         // Long form: {"concat": {"inputs": [...], "separator": " "}}
         var inputsElement = element.GetProperty("inputs");
-        var inputs2 = new List<ProjectionField>();
+        var inputs2 = new List<ProjectionField>(4);
         foreach (var item in inputsElement.EnumerateArray())
         {
             inputs2.Add(ParseProjectionField(item, options));
@@ -401,7 +401,7 @@ public class ProjectionFieldConverter : JsonConverter<ProjectionField>
 
     private ConditionalTransform ParseConditional(JsonElement element, JsonSerializerOptions options)
     {
-        var branches = new List<ConditionalBranch>();
+        var branches = new List<ConditionalBranch>(3);
         var whenElement = element.GetProperty("when");
 
         foreach (var branch in whenElement.EnumerateArray())
@@ -427,7 +427,7 @@ public class ProjectionFieldConverter : JsonConverter<ProjectionField>
 
     private CoalesceTransform ParseCoalesce(JsonElement element, JsonSerializerOptions options)
     {
-        var values = new List<ProjectionField>();
+        var values = new List<ProjectionField>(3);
         foreach (var item in element.EnumerateArray())
         {
             values.Add(ParseProjectionField(item, options));
@@ -438,7 +438,7 @@ public class ProjectionFieldConverter : JsonConverter<ProjectionField>
 
     private ObjectConstruction ParseObjectConstruction(JsonElement element, JsonSerializerOptions options)
     {
-        var properties = new Dictionary<string, ProjectionField>();
+        var properties = new Dictionary<string, ProjectionField>(12);
 
         foreach (var prop in element.EnumerateObject())
         {

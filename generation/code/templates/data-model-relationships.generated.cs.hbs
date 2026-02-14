@@ -48,12 +48,12 @@ public static class DataModelRelationships
     /// <summary>
     /// Get all relationship metadata
     /// </summary>
-    public static IReadOnlyList<RelationshipMetadata> GetAllRelationships() => new List<RelationshipMetadata>
+    public static IReadOnlyList<RelationshipMetadata> GetAllRelationships() => new RelationshipMetadata[]
     {
         {{#each relationships}}
         {{name}}{{#unless @last}},{{/unless}}
         {{/each}}
-    };
+    }.AsReadOnly();
 
     /// <summary>
     /// Get relationships involving a specific entity

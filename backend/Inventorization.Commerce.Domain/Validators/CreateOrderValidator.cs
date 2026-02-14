@@ -21,7 +21,7 @@ public class CreateOrderValidator : IValidator<CreateOrderDTO>
         if (dto == null)
             return Task.FromResult(ValidationResult.WithErrors("DTO cannot be null"));
 
-        var errors = new List<string>();
+        var errors = new List<string>(8);
 
         if (string.IsNullOrWhiteSpace(dto.OrderNumber))
     errors.Add("OrderNumber is required");

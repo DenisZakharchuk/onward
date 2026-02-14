@@ -68,7 +68,7 @@ public class {{entityName}} : BaseEntity
     /// </summary>
     {{/if}}
     {{#if isCollection}}
-    public ICollection<{{type}}> {{name}} { get; } = new List<{{type}}>();
+    public ICollection<{{type}}> {{name}} { get; } = new List<{{type}}>(10);
     {{else}}
     public {{type}}{{#if nullable}}?{{/if}} {{name}} { get; } = null!;
     {{/if}}

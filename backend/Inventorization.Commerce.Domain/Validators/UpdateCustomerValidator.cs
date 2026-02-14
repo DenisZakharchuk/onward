@@ -21,7 +21,7 @@ public class UpdateCustomerValidator : IValidator<UpdateCustomerDTO>
         if (dto == null)
             return Task.FromResult(ValidationResult.WithErrors("DTO cannot be null"));
 
-        var errors = new List<string>();
+        var errors = new List<string>(8);
 
         if (dto.Id == Guid.Empty)
     errors.Add("Id is required");

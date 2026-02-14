@@ -26,7 +26,7 @@ public class ProjectionRequestConverter : JsonConverter<ProjectionRequest?>
         // Compact format: array of strings
         if (reader.TokenType == JsonTokenType.StartArray)
         {
-            var fields = new List<FieldProjection>();
+            var fields = new List<FieldProjection>(8);
             
             while (reader.Read())
             {
@@ -82,7 +82,7 @@ public class ProjectionRequestConverter : JsonConverter<ProjectionRequest?>
             // Check for "transform" property (field transformations)
             if (root.TryGetProperty("transform", out var transformElement))
             {
-                var fieldTransformations = new Dictionary<string, ProjectionField>();
+                var fieldTransformations = new Dictionary<string, ProjectionField>(8);
                 var converter = new ProjectionFieldConverter();
                 
                 foreach (var prop in transformElement.EnumerateObject())
@@ -113,7 +113,7 @@ public class ProjectionRequestConverter : JsonConverter<ProjectionRequest?>
             // Original format with "fields" property
             if (root.TryGetProperty("fields", out var fieldsElement))
             {
-                var fields = new List<FieldProjection>();
+                var fields = new List<FieldProjection>(8);
                 
                 foreach (var fieldElement in fieldsElement.EnumerateArray())
                 {

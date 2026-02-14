@@ -30,7 +30,7 @@ public class {{entityName}}SearchQueryValidator : IValidator<SearchQuery>
         if (dto == null)
             return Task.FromResult(ValidationResult.WithErrors("SearchQuery cannot be null"));
         
-        var errors = new List<string>();
+        var errors = new List<string>(5);
         
         // Validate pagination
         if (dto.Pagination.PageNumber < 1)

@@ -194,6 +194,7 @@ export class EntityGenerator extends BaseGenerator {
     isCollection?: boolean;
     nullable: boolean;
     description?: string;
+    relationshipType?: string;
   }> {
     const navProps: Array<{
       name: string;
@@ -201,6 +202,7 @@ export class EntityGenerator extends BaseGenerator {
       isCollection?: boolean;
       nullable: boolean;
       description?: string;
+      relationshipType?: string;
     }> = [];
 
     // 1. Single navigation properties from FK properties
@@ -222,6 +224,7 @@ export class EntityGenerator extends BaseGenerator {
           isCollection: true,
           nullable: false,
           description: prop.description,
+          relationshipType: 'OneToMany',
         });
       }
     }
@@ -236,6 +239,7 @@ export class EntityGenerator extends BaseGenerator {
           isCollection: true,
           nullable: false,
           description: `Collection of ${rel.rightEntity}`,
+          relationshipType: 'OneToMany',
         });
       }
       // Many-to-Many: both sides get collections (handled via junction entities)

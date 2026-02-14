@@ -103,14 +103,14 @@ public static class DataModelMetadata
     /// <summary>
     /// Get all entity metadata in this bounded context
     /// </summary>
-    public static IReadOnlyList<EntityMetadata> GetAllEntityMetadata() => new List<EntityMetadata>
+    public static IReadOnlyList<EntityMetadata> GetAllEntityMetadata() => new EntityMetadata[]
     {
         {{#each entities}}
         {{#unless isJunction}}
         {{name}}{{#unless @last}},{{/unless}}
         {{/unless}}
         {{/each}}
-    };
+    }.AsReadOnly();
 
     /// <summary>
     /// Get metadata for a specific entity by name

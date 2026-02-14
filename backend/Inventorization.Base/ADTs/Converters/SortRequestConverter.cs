@@ -33,7 +33,7 @@ public class SortRequestConverter : JsonConverter<SortRequest?>
             }
             
             // Compact object format: {"Name": "asc", "Price": "desc"}
-            var fields = new List<SortField>();
+            var fields = new List<SortField>(3);
             foreach (var property in root.EnumerateObject())
             {
                 var fieldName = property.Name;
@@ -47,7 +47,7 @@ public class SortRequestConverter : JsonConverter<SortRequest?>
         // Compact format: array of single-property objects
         if (reader.TokenType == JsonTokenType.StartArray)
         {
-            var fields = new List<SortField>();
+            var fields = new List<SortField>(3);
             
             using var doc = JsonDocument.ParseValue(ref reader);
             foreach (var item in doc.RootElement.EnumerateArray())
@@ -88,7 +88,7 @@ public class SortRequestConverter : JsonConverter<SortRequest?>
     
     private SortRequest ParseOriginalFormat(JsonElement fieldsElement)
     {
-        var fields = new List<SortField>();
+        var fields = new List<SortField>(3);
         
         foreach (var fieldElement in fieldsElement.EnumerateArray())
         {

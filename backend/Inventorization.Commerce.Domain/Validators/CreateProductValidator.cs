@@ -21,7 +21,7 @@ public class CreateProductValidator : IValidator<CreateProductDTO>
         if (dto == null)
             return Task.FromResult(ValidationResult.WithErrors("DTO cannot be null"));
 
-        var errors = new List<string>();
+        var errors = new List<string>(8);
 
         if (string.IsNullOrWhiteSpace(dto.Name))
     errors.Add("Name is required");
