@@ -174,6 +174,7 @@ export class ProjectGenerator extends BaseGenerator {
         return `
   <ItemGroup>
     <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../InventorySystem.API.Base/InventorySystem.API.Base.csproj" />
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />

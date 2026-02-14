@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Inventorization.Base/Inventorization.Base.csproj" />
+    <ProjectReference Include="../InventorySystem.API.Base/InventorySystem.API.Base.csproj" />
     <ProjectReference Include="../Inventorization.Commerce.Meta/Inventorization.Commerce.Meta.csproj" />
     <ProjectReference Include="../Inventorization.Commerce.Common/Inventorization.Commerce.Common.csproj" />
     <ProjectReference Include="../Inventorization.Commerce.DTO/Inventorization.Commerce.DTO.csproj" />

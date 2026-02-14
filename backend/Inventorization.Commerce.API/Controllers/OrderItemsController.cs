@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Inventorization.Commerce.Domain.Entities;
 using Inventorization.Commerce.DTO.OrderItem;
 using Inventorization.Commerce.Domain.DataServices;
-using Inventorization.Base.Controllers;
+using InventorySystem.API.Base.Controllers;
 
 namespace Inventorization.Commerce.API.Controllers;
 
