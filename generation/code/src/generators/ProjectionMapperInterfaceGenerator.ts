@@ -22,6 +22,7 @@ export class ProjectionMapperInterfaceGenerator extends BaseGenerator {
 
       const context = {
         namespace,
+        baseNamespace,
         entityName: entity.name,
         projectionName: `${entity.name}Projection`,
       };

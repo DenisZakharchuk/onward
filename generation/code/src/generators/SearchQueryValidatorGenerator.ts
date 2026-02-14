@@ -21,19 +21,21 @@ export class SearchQueryValidatorGenerator extends BaseGenerator {
         continue;
       }
 
-      await this.generateValidator(entity, validatorsDir, namespace);
+      await this.generateValidator(entity, validatorsDir, namespace, baseNamespace);
     }
   }
 
   private async generateValidator(
     entity: Entity,
     validatorsDir: string,
-    namespace: string
+    namespace: string,
+    baseNamespace: string
   ): Promise<void> {
     const properties = entity.properties.filter((p) => !p.isCollection);
 
     const context = {
       namespace,
+      baseNamespace,
       entityName: entity.name,
       description: entity.description || entity.name,
       properties: this.buildPropertyValidationContext(properties),

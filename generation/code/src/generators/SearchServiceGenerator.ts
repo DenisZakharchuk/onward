@@ -22,6 +22,7 @@ export class SearchServiceGenerator extends BaseGenerator {
 
       const context = {
         namespace,
+        baseNamespace,
         entityName: entity.name,
         projectionName: `${entity.name}Projection`,
         description: entity.description || entity.name,

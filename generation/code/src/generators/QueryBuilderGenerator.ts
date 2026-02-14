@@ -22,6 +22,7 @@ export class QueryBuilderGenerator extends BaseGenerator {
 
       const context = {
         namespace,
+        baseNamespace,
         entityName: entity.name,
         description: entity.description || entity.name,
       };

@@ -26,6 +26,7 @@ export class ProjectionMapperGenerator extends BaseGenerator {
         entity,
         mappersDir,
         namespace,
+        baseNamespace,
         model.relationships || []
       );
     }
@@ -35,6 +36,7 @@ export class ProjectionMapperGenerator extends BaseGenerator {
     entity: Entity,
     mappersDir: string,
     namespace: string,
+    baseNamespace: string,
     relationships: Relationship[]
   ): Promise<void> {
     // Get scalar properties (exclude collections and navigation properties)
@@ -47,6 +49,7 @@ export class ProjectionMapperGenerator extends BaseGenerator {
 
     const context = {
       namespace,
+      baseNamespace,
       entityName: entity.name,
       projectionName: `${entity.name}Projection`,
       properties: this.buildPropertyContext(scalarProperties),

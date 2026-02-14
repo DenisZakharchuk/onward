@@ -26,6 +26,7 @@ export class QueryControllerGenerator extends BaseGenerator {
 
       const context = {
         namespace,
+        baseNamespace,
         entityName: entity.name,
         entityNamePlural,
         projectionName: `${entity.name}Projection`,
