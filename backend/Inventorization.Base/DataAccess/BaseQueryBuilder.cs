@@ -136,7 +136,9 @@ public abstract class BaseQueryBuilder<TEntity> : IQueryBuilder<TEntity> where T
         if (and.Expressions.Count == 0)
             return Expression.Constant(true);
         
-        var expressions = and.Expressions.Select(e => BuildExpressionBody(e, parameter)).ToList();
+        var expressions = new List<Expression>(4);
+        foreach (var expr in and.Expressions)
+            expressions.Add(BuildExpressionBody(expr, parameter));
         
         return expressions.Aggregate((left, right) => Expression.AndAlso(left, right));
     }
@@ -146,7 +148,9 @@ public abstract class BaseQueryBuilder<TEntity> : IQueryBuilder<TEntity> where T
         if (or.Expressions.Count == 0)
             return Expression.Constant(false);
         
-        var expressions = or.Expressions.Select(e => BuildExpressionBody(e, parameter)).ToList();
+        var expressions = new List<Expression>(4);
+        foreach (var expr in or.Expressions)
+            expressions.Add(BuildExpressionBody(expr, parameter));
         
         return expressions.Aggregate((left, right) => Expression.OrElse(left, right));
     }
@@ -223,7 +227,9 @@ public abstract class BaseQueryBuilder<TEntity> : IQueryBuilder<TEntity> where T
     private Expression BuildInExpression(InCondition condition, ParameterExpression parameter)
     {
         var property = Expression.Property(parameter, condition.FieldName);
-        var values = condition.Values.Select(v => Expression.Constant(v, property.Type)).ToList();
+        var values = new List<Expression>(20);
+        foreach (var v in condition.Values)
+            values.Add(Expression.Constant(v, property.Type));
         
         if (values.Count == 0)
             return Expression.Constant(false);

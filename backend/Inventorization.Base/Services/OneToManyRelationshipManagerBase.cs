@@ -168,8 +168,7 @@ public abstract class OneToManyRelationshipManagerBase<TParent, TChild>
         var currentChildIds = currentChildren.Select(c => GetEntityId(c)).ToHashSet();
 
         // Remove old children
-        var toRemove = currentChildren.Where(c => !childIds.Contains(GetEntityId(c))).ToList();
-        foreach (var child in toRemove)
+        foreach (var child in currentChildren.Where(c => !childIds.Contains(GetEntityId(c))))
         {
             if (Metadata.Cardinality == RelationshipCardinality.Required)
             {
@@ -182,8 +181,7 @@ public abstract class OneToManyRelationshipManagerBase<TParent, TChild>
         }
 
         // Add new children
-        var toAdd = childIds.Where(id => !currentChildIds.Contains(id)).ToList();
-        foreach (var childId in toAdd)
+        foreach (var childId in childIds.Where(id => !currentChildIds.Contains(id)))
         {
             var child = await ChildRepository.GetByIdAsync(childId, cancellationToken);
             if (child == null)
@@ -197,8 +195,11 @@ public abstract class OneToManyRelationshipManagerBase<TParent, TChild>
 
         await UnitOfWork.SaveChangesAsync(cancellationToken);
 
+        var removedCount = currentChildren.Count(c => !childIds.Contains(GetEntityId(c)));
+        var addedCount = childIds.Count(id => !currentChildIds.Contains(id));
+        
         Logger.LogInformation("Replaced children for {ParentName} {ParentId}: removed {RemovedCount}, added {AddedCount}", 
-            ParentName, parentId, toRemove.Count, toAdd.Count);
+            ParentName, parentId, removedCount, addedCount);
 
         return childIds.Count;
     }

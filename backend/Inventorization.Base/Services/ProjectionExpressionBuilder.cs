@@ -52,7 +52,7 @@ public class ProjectionExpressionBuilder
         var parameter = Expression.Parameter(typeof(TEntity), "entity");
         
         // Step 1: Infer schema from transformation output types
-        var schema = new Dictionary<string, Type>();
+        var schema = new Dictionary<string, Type>(10);
         foreach (var kvp in transformations)
         {
             var outputType = kvp.Value.GetOutputType();
@@ -64,7 +64,8 @@ public class ProjectionExpressionBuilder
         var createSchema = Expression.Assign(schemaVar, 
             Expression.New(typeof(Dictionary<string, Type>)));
         
-        var statements = new List<Expression> { createSchema };
+        var statements = new List<Expression>(15);
+        statements.Add(createSchema);
         
         // Add each field to schema
         var addMethod = typeof(Dictionary<string, Type>).GetMethod("Add")!;
@@ -394,7 +395,7 @@ public class ProjectionExpressionBuilder
     {
         // Build an anonymous type or ExpandoObject
         // For simplicity, we'll create a Dictionary<string, object?>
-        var properties = new List<ElementInit>();
+        var properties = new List<ElementInit>(12);
 
         foreach (var kvp in objConstruction.Properties)
         {

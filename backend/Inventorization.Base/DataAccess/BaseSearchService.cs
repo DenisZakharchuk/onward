@@ -154,7 +154,7 @@ public abstract class BaseSearchService<TEntity, TProjection> : ISearchService<T
             var entities = await pagedQuery.ToListAsync(cancellationToken);
 
             // Build schema from transformations
-            var schema = new Dictionary<string, Type>();
+            var schema = new Dictionary<string, Type>(15);
             foreach (var kvp in query.Projection.FieldTransformations)
             {
                 schema[kvp.Key] = kvp.Value.GetOutputType();
@@ -166,7 +166,9 @@ public abstract class BaseSearchService<TEntity, TProjection> : ISearchService<T
             var compiledExpression = transformationExpression.Compile();
 
             // Apply transformations in memory
-            var items = entities.Select(compiledExpression).ToList();
+            var items = new List<TransformationResult>(entities.Count);
+            foreach (var entity in entities)
+                items.Add(compiledExpression(entity));
 
             // Build result
             var result = new SearchResult<TransformationResult>
