@@ -27,6 +27,9 @@ public class CategoryModifier : IEntityModifier<Category, UpdateCategoryDTO>
             throw new ArgumentNullException(nameof(dto));
 
         entity.Update(
+            name: dto.Name,
+            description: dto.Description,
+            isActive: dto.IsActive
         );
 
     }

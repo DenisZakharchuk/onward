@@ -86,4 +86,45 @@ public class {{entityName}} : BaseEntity
     public DateTime? UpdatedAt { get; private set; }
 
     {{/if}}
+    {{#if hasUpdateMethod}}
+    /// <summary>
+    /// Updates {{entityName}} with new values
+    /// </summary>
+    {{#each updateParams}}
+    /// <param name="{{paramName}}">{{paramDescription}}</param>
+    {{/each}}
+    public void Update(
+        {{#each updateParams}}
+        {{type}} {{paramName}}{{#unless @last}},{{/unless}}
+        {{/each}}
+    )
+    {
+        {{#each updateValidations}}
+        {{{this}}}
+        {{/each}}
+
+        {{#each updateAssignments}}
+        {{{this}}}
+        {{/each}}
+
+        {{#if auditable}}
+        UpdatedAt = DateTime.UtcNow;
+        {{/if}}
+    }
+
+    {{/if}}
+    {{#each foreignKeySetters}}
+    /// <summary>
+    /// {{description}}
+    /// </summary>
+    /// <param name="{{paramName}}">{{entityName}} identifier</param>
+    public void Set{{entityName}}(Guid {{paramName}})
+    {
+        {{fkName}} = {{paramName}};
+        {{#if ../auditable}}
+        UpdatedAt = DateTime.UtcNow;
+        {{/if}}
+    }
+
+    {{/each}}
 }

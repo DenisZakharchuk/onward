@@ -27,6 +27,9 @@ public class OrderItemModifier : IEntityModifier<OrderItem, UpdateOrderItemDTO>
             throw new ArgumentNullException(nameof(dto));
 
         entity.Update(
+            quantity: dto.Quantity,
+            unitPrice: dto.UnitPrice,
+            totalPrice: dto.TotalPrice
         );
 
     }

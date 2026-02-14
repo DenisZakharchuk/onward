@@ -27,6 +27,10 @@ public class OrderModifier : IEntityModifier<Order, UpdateOrderDTO>
             throw new ArgumentNullException(nameof(dto));
 
         entity.Update(
+            orderNumber: dto.OrderNumber,
+            orderDate: dto.OrderDate,
+            totalAmount: dto.TotalAmount,
+            status: dto.Status
         );
 
     }

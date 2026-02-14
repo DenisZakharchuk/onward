@@ -39,6 +39,8 @@ export class EntityGenerator extends BaseGenerator {
     // Generate navigation properties from FK metadata and relationships
     const navigationProps = this.buildNavigationProperties(entity.properties, entity.name, relationships);
 
+    const updateableProps = this.getUpdateableProperties(properties);
+
     const context = {
       namespace,
       baseNamespace: this.metadata?.baseNamespace || 'Inventorization',
@@ -51,6 +53,11 @@ export class EntityGenerator extends BaseGenerator {
       propertyAssignments: this.getPropertyAssignments(properties),
       properties: this.getProperties(properties),
       navigationProperties: navigationProps,
+      hasUpdateMethod: updateableProps.length > 0,
+      updateParams: this.getUpdateParams(updateableProps),
+      updateValidations: this.getValidations(updateableProps),
+      updateAssignments: this.getUpdateAssignments(updateableProps),
+      foreignKeySetters: this.getForeignKeySetters(entity.properties),
     };
 
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);
@@ -240,5 +247,63 @@ export class EntityGenerator extends BaseGenerator {
 
   private hasEnumProperties(properties: Property[]): boolean {
     return properties.some((p) => p.enumType !== undefined);
+  }
+
+  /**
+   * Get properties that can be updated (exclude Id, CreatedAt, UpdatedAt, navigation props, FKs)
+   */
+  private getUpdateableProperties(properties: Property[]): Property[] {
+    return properties.filter(
+      (p) =>
+        p.name !== 'Id' &&
+        p.name !== 'CreatedAt' &&
+        p.name !== 'UpdatedAt' &&
+        !p.isCollection &&
+        !p.navigationProperty &&
+        !p.isForeignKey
+    );
+  }
+
+  /**
+   * Build Update() method parameters
+   */
+  private getUpdateParams(properties: Property[]): Array<{
+    type: string;
+    paramName: string;
+    paramDescription: string;
+  }> {
+    return properties.map((p) => ({
+      type: TypeMapper.toCSharpType(p.enumType || p.type, !p.required),
+      paramName: NamingConventions.toCamelCase(p.name),
+      paramDescription: p.description || p.name,
+    }));
+  }
+
+  /**
+   * Build Update() method property assignments
+   */
+  private getUpdateAssignments(properties: Property[]): string[] {
+    return properties.map(
+      (p) => `${p.name} = ${NamingConventions.toCamelCase(p.name)};`
+    );
+  }
+
+  /**
+   * Build SetXxx() methods for foreign key properties
+   */
+  private getForeignKeySetters(properties: Property[]): Array<{
+    fkName: string;
+    entityName: string;
+    paramName: string;
+    description: string;
+  }> {
+    return properties
+      .filter((p) => p.isForeignKey && p.referencedEntity)
+      .map((p) => ({
+        fkName: p.name,
+        entityName: p.referencedEntity!,
+        paramName: NamingConventions.toCamelCase(p.name),
+        description: p.description || `Set ${p.referencedEntity}`,
+      }));
   }
 }

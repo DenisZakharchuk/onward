@@ -27,6 +27,11 @@ public class CustomerModifier : IEntityModifier<Customer, UpdateCustomerDTO>
             throw new ArgumentNullException(nameof(dto));
 
         entity.Update(
+            firstName: dto.FirstName,
+            lastName: dto.LastName,
+            email: dto.Email,
+            phone: dto.Phone,
+            isActive: dto.IsActive
         );
 
     }

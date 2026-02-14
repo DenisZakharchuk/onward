@@ -45,14 +45,50 @@ export class ProjectionDtoGenerator extends BaseGenerator {
     // Get related entities for nested projections
     const relatedEntities = this.getRelatedEntities(entity, relationships);
 
+    // Build base properties from BaseEntity (Id, CreatedAt, UpdatedAt)
+    const baseProperties = [
+      {
+        name: 'Id',
+        type: 'Guid?',
+        jsonPropertyName: 'id',
+        description: 'Unique identifier',
+      },
+      {
+        name: 'CreatedAt',
+        type: 'DateTime?',
+        jsonPropertyName: 'createdAt',
+        description: 'Created timestamp',
+      },
+    ];
+
+    // Add UpdatedAt only if entity is auditable
+    if (entity.auditable !== false) {
+      baseProperties.push({
+        name: 'UpdatedAt',
+        type: 'DateTime?',
+        jsonPropertyName: 'updatedAt',
+        description: 'Last updated timestamp',
+      });
+    }
+
+    // Combine base properties with entity properties
+    const allProperties = [
+      ...baseProperties,
+      ...this.buildPropertyContext(scalarProperties),
+    ];
+
+    // Check if entity has enum properties
+    const hasEnums = scalarProperties.some((p) => p.enumType !== undefined);
+
     const context = {
       namespace,
       entityName: entity.name,
       projectionName: `${entity.name}Projection`,
       description: entity.description || entity.name,
-      properties: this.buildPropertyContext(scalarProperties),
+      properties: allProperties,
       relationships: this.buildRelationshipContext(relatedEntities),
       hasRelationships: relatedEntities.length > 0,
+      hasEnums,
     };
 
     const filePath = path.join(adtsDir, `${entity.name}Projection.cs`);
@@ -92,7 +128,7 @@ export class ProjectionDtoGenerator extends BaseGenerator {
   }> {
     return properties.map((p) => ({
       name: p.name,
-      type: TypeMapper.toCSharpType(p.type, true), // Always nullable
+      type: TypeMapper.toCSharpType(p.enumType || p.type, true), // Handle enums, always nullable
       jsonPropertyName: NamingConventions.toCamelCase(p.name),
       description: p.description || p.name,
     }));

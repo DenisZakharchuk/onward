@@ -27,6 +27,13 @@ public class AddressModifier : IEntityModifier<Address, UpdateAddressDTO>
             throw new ArgumentNullException(nameof(dto));
 
         entity.Update(
+            addressType: dto.AddressType,
+            street: dto.Street,
+            city: dto.City,
+            state: dto.State,
+            postalCode: dto.PostalCode,
+            country: dto.Country,
+            isDefault: dto.IsDefault
         );
 
     }

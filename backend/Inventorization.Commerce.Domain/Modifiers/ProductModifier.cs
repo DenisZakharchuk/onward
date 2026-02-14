@@ -27,6 +27,13 @@ public class ProductModifier : IEntityModifier<Product, UpdateProductDTO>
             throw new ArgumentNullException(nameof(dto));
 
         entity.Update(
+            name: dto.Name,
+            sKU: dto.SKU,
+            description: dto.Description,
+            price: dto.Price,
+            stockQuantity: dto.StockQuantity,
+            status: dto.Status,
+            isActive: dto.IsActive
         );
 
     }

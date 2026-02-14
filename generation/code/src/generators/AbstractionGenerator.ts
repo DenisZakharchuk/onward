@@ -62,13 +62,15 @@ export class AbstractionGenerator extends BaseGenerator {
   ): Promise<void> {
     const modifiersDir = path.join(domainProjectPath, 'Modifiers');
 
-    // Get properties that can be modified (exclude Id, CreatedAt)
+    // Get properties that can be modified (exclude Id, CreatedAt, UpdatedAt, navigation props, FKs)
     const modifiableProps = entity.properties.filter(
       (p) =>
         p.name !== 'Id' &&
         p.name !== 'CreatedAt' &&
+        p.name !== 'UpdatedAt' &&
         !p.isCollection &&
-        !p.navigationProperty
+        !p.navigationProperty &&
+        !p.isForeignKey
     );
 
     const context = {
@@ -77,9 +79,11 @@ export class AbstractionGenerator extends BaseGenerator {
       entityName: entity.name,
       hasDependencies: false,
       dependencies: [],
-      modifications: modifiableProps.map(
-        (p) => `entity.${p.name} = dto.${p.name};`
-      ),
+      updateArgs: modifiableProps.map((p) => ({
+        argName: NamingConventions.toCamelCase(p.name),
+        argValue: `dto.${p.name}`,
+      })),
+      conditionalUpdates: [],
     };
 
     const filePath = path.join(modifiersDir, `${entity.name}Modifier.cs`);
