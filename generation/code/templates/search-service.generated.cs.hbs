@@ -13,6 +13,7 @@ using {{baseNamespace}}.Base.ADTs;
 using {{baseNamespace}}.Base.DataAccess;
 using {{baseNamespace}}.Base.Services;
 using {{namespace}}.Domain.Entities;
+using {{namespace}}.Domain.Validators;
 using {{namespace}}.DTO.ADTs;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +31,7 @@ public class {{entityName}}SearchService : BaseSearchService<{{entityName}}, {{p
         IQueryBuilder<{{entityName}}> queryBuilder,
         IProjectionMapper<{{entityName}}, {{projectionName}}> projectionMapper,
         ProjectionExpressionBuilder expressionBuilder,
-        IValidator<SearchQuery> validator,
+        {{entityName}}SearchQueryValidator validator,
         ILogger<{{entityName}}SearchService> logger)
         : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger)
     {

@@ -14,7 +14,7 @@ interface ProjectContext {
 interface GlobalUsingsContext {
   baseNamespace: string;
   namespace: string; // Full BoundedContext namespace (e.g., "Inventorization.Goods" or "CompanyX.Goods")
-  projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests';
+  projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests' | 'di';
 }
 
 /**
@@ -27,6 +27,7 @@ export class ProjectGenerator extends BaseGenerator {
   private domainCsprojTemplate!: HandlebarsTemplateDelegate;
   private apiCsprojTemplate!: HandlebarsTemplateDelegate;
   private testsCsprojTemplate!: HandlebarsTemplateDelegate;
+  private diCsprojTemplate!: HandlebarsTemplateDelegate;
   private globalUsingsTemplate!: HandlebarsTemplateDelegate;
 
   async generate(model: DataModel): Promise<void> {
@@ -55,6 +56,9 @@ export class ProjectGenerator extends BaseGenerator {
     this.testsCsprojTemplate = Handlebars.compile(
       await FileManager.readFile(path.join(templateDir, 'tests.csproj.hbs'))
     );
+    this.diCsprojTemplate = Handlebars.compile(
+      await FileManager.readFile(path.join(templateDir, 'di.csproj.hbs'))
+    );
     this.globalUsingsTemplate = Handlebars.compile(
       await FileManager.readFile(path.join(templateDir, 'global-usings.hbs'))
     );
@@ -66,12 +70,13 @@ export class ProjectGenerator extends BaseGenerator {
     await this.generateProject('common', contextName, this.commonCsprojTemplate, model);
     await this.generateProject('dto', contextName, this.dtoCsprojTemplate, model);
     await this.generateProject('domain', contextName, this.domainCsprojTemplate, model);
+    await this.generateProject('di', contextName, this.diCsprojTemplate, model);
     await this.generateProject('api', contextName, this.apiCsprojTemplate, model);
     await this.generateProject('tests', contextName, this.testsCsprojTemplate, model);
   }
 
   private async generateProject(
-    projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests',
+    projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests' | 'di',
     contextName: string,
     template: HandlebarsTemplateDelegate,
     model: DataModel
@@ -114,6 +119,7 @@ export class ProjectGenerator extends BaseGenerator {
       case 'common': return 'Common';
       case 'dto': return 'DTO';
       case 'domain': return 'Domain';
+      case 'di': return 'DI';
       case 'api': return 'API';
       case 'tests': return 'API.Tests';
       default: throw new Error(`Unknown project type: ${projectType}`);
@@ -169,6 +175,21 @@ export class ProjectGenerator extends BaseGenerator {
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
   </ItemGroup>`;
+
+      case 'di':
+        return `
+  <ItemGroup>
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
+    <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
+    <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
+    <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>`;
       
       case 'api':
         return `
@@ -179,6 +200,7 @@ export class ProjectGenerator extends BaseGenerator {
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
     <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
+    <ProjectReference Include="../${namespace}.DI/${namespace}.DI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -191,6 +213,7 @@ export class ProjectGenerator extends BaseGenerator {
   <ItemGroup>
     <ProjectReference Include="../${namespace}.API/${namespace}.API.csproj" />
     <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
+    <ProjectReference Include="../${namespace}.DI/${namespace}.DI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -200,6 +223,7 @@ export class ProjectGenerator extends BaseGenerator {
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
   </ItemGroup>`;
       
       default:

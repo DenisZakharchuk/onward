@@ -27,6 +27,9 @@ import { SearchFieldsGenerator } from '../generators/SearchFieldsGenerator';
 import { SearchQueryValidatorGenerator } from '../generators/SearchQueryValidatorGenerator';
 import { GenerationStamp } from '../utils/GenerationStamp';
 import * as path from 'path';
+import { DiGenerator } from '../generators/DiGenerator';
+import { ApiProgramGenerator } from '../generators/ApiProgramGenerator';
+import { TestGenerator } from '../generators/TestGenerator';
 
 export interface OrchestratorOptions {
   skipTests?: boolean;
@@ -150,12 +153,14 @@ export class Orchestrator {
       new ControllerGenerator(),
       new QueryControllerGenerator(),
 
-      // Phase 11: Tests (if not skipped)
-      // if (!this.options.skipTests) {
-      //   this.generators.push(new TestGenerator());
-      // }
+      // Phase 11: DI and API Program
+      new DiGenerator(),
+      new ApiProgramGenerator(),
 
-      // Phase 12: Project files, GlobalUsings.cs, and .csproj files (LAST)
+      // Phase 12: Tests (if not skipped)
+      ...(this.options.skipTests ? [] : [new TestGenerator()]),
+
+      // Phase 13: Project files, GlobalUsings.cs, and .csproj files (LAST)
       new ProjectGenerator(),
     ];
   }
@@ -172,6 +177,7 @@ export class Orchestrator {
       common: `${baseNamespace}.${contextName}.Common`,
       dto: `${baseNamespace}.${contextName}.DTO`,
       domain: `${baseNamespace}.${contextName}.Domain`,
+      di: `${baseNamespace}.${contextName}.DI`,
       api: `${baseNamespace}.${contextName}.API`,
       tests: `${baseNamespace}.${contextName}.API.Tests`,
     };
@@ -207,6 +213,13 @@ export class Orchestrator {
       } else if (key === 'api') {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Controllers'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Controllers/Query'));
+      } else if (key === 'di') {
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Extensions'));
+      } else if (key === 'tests') {
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Services'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Validators'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Mappers'));
+        await this.writer.ensureDirectory(path.join(dirPath as string, 'Instantiation'));
       } else if (key === 'common' && this.hasEnums(model)) {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Enums'));
       }

@@ -39,6 +39,18 @@ global using {{namespace}}.Domain;
 global using Xunit;
 global using FluentAssertions;
 global using Moq;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using {{baseNamespace}}.Base.Abstractions;
+global using {{baseNamespace}}.Base.DataAccess;
+global using {{baseNamespace}}.Base.Services;
+global using {{baseNamespace}}.Base.ADTs;
 global using {{namespace}}.Domain;
 global using {{namespace}}.DTO;
+global using {{namespace}}.Common.Enums;
+{{/if}}
+
+{{#if (eq projectType 'di')}}
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.DependencyInjection;
 {{/if}}
