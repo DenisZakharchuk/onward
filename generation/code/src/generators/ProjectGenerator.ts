@@ -7,14 +7,13 @@ import path from 'path';
 interface ProjectContext {
   projectName: string;
   baseNamespace: string;
-  contextName: string;
   itemGroup: string;
   targetFramework: string;
 }
 
 interface GlobalUsingsContext {
   baseNamespace: string;
-  contextName: string;
+  namespace: string; // Full BoundedContext namespace (e.g., "Inventorization.Goods" or "CompanyX.Goods")
   projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests';
 }
 
@@ -75,7 +74,7 @@ export class ProjectGenerator extends BaseGenerator {
     projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests',
     contextName: string,
     template: HandlebarsTemplateDelegate,
-    _model: DataModel
+    model: DataModel
   ): Promise<void> {
     const projectSuffix = this.getProjectSuffix(projectType);
     const projectName = `${this.metadata!.baseNamespace}.${contextName}.${projectSuffix}`;
@@ -85,7 +84,7 @@ export class ProjectGenerator extends BaseGenerator {
     const csprojContext = this.buildProjectContext(
       projectName,
       this.metadata!.baseNamespace,
-      contextName,
+      model.boundedContext.namespace, // Use namespace from model
       projectType
     );
     const csprojContent = template(csprojContext);
@@ -98,7 +97,7 @@ export class ProjectGenerator extends BaseGenerator {
     // Generate GlobalUsings.cs
     const globalUsingsContext: GlobalUsingsContext = {
       baseNamespace: this.metadata!.baseNamespace,
-      contextName,
+      namespace: model.boundedContext.namespace,
       projectType
     };
     const globalUsingsContent = this.globalUsingsTemplate(globalUsingsContext);
@@ -124,47 +123,46 @@ export class ProjectGenerator extends BaseGenerator {
   private buildProjectContext(
     projectName: string,
     baseNamespace: string,
-    contextName: string,
+    namespace: string, // Full namespace from BoundedContext (e.g., "Inventorization.Goods" or "CompanyX.Goods")
     projectType: string
   ): ProjectContext {
     return {
       projectName,
       baseNamespace,
-      contextName,
-      itemGroup: this.buildItemGroup(projectType, contextName),
+      itemGroup: this.buildItemGroup(projectType, namespace, baseNamespace),
       targetFramework: 'net8.0'
     };
   }
 
-  private buildItemGroup(projectType: string, contextName: string): string {
+  private buildItemGroup(projectType: string, namespace: string, baseNamespace: string): string {
     switch (projectType) {
       case 'meta':
         return `
   <ItemGroup>
-    <ProjectReference Include="../Inventorization.Base/Inventorization.Base.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
   </ItemGroup>`;
       
       case 'common':
         return `
   <ItemGroup>
-    <ProjectReference Include="../Inventorization.Base/Inventorization.Base.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
   </ItemGroup>`;
       
       case 'dto':
         return `
   <ItemGroup>
-    <ProjectReference Include="../Inventorization.Base/Inventorization.Base.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Meta/Inventorization.${contextName}.Meta.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Common/Inventorization.${contextName}.Common.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
+    <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
   </ItemGroup>`;
       
       case 'domain':
         return `
   <ItemGroup>
-    <ProjectReference Include="../Inventorization.Base/Inventorization.Base.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Meta/Inventorization.${contextName}.Meta.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Common/Inventorization.${contextName}.Common.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.DTO/Inventorization.${contextName}.DTO.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
+    <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
+    <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -175,11 +173,11 @@ export class ProjectGenerator extends BaseGenerator {
       case 'api':
         return `
   <ItemGroup>
-    <ProjectReference Include="../Inventorization.Base/Inventorization.Base.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Meta/Inventorization.${contextName}.Meta.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Common/Inventorization.${contextName}.Common.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.DTO/Inventorization.${contextName}.DTO.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Domain/Inventorization.${contextName}.Domain.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
+    <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
+    <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
+    <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -190,8 +188,8 @@ export class ProjectGenerator extends BaseGenerator {
       case 'tests':
         return `
   <ItemGroup>
-    <ProjectReference Include="../Inventorization.${contextName}.API/Inventorization.${contextName}.API.csproj" />
-    <ProjectReference Include="../Inventorization.${contextName}.Domain/Inventorization.${contextName}.Domain.csproj" />
+    <ProjectReference Include="../${namespace}.API/${namespace}.API.csproj" />
+    <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

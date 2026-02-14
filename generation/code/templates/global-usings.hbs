@@ -15,14 +15,14 @@ global using {{baseNamespace}}.Base.Models;
 
 {{#if (eq projectType 'dto')}}
 global using {{baseNamespace}}.Base.DTOs;
-global using {{baseNamespace}}.{{contextName}}.Meta;
+global using {{namespace}}.Meta;
 {{/if}}
 
 {{#if (eq projectType 'domain')}}
 global using {{baseNamespace}}.Base.DataAccess;
 global using {{baseNamespace}}.Base.Abstractions;
-global using {{baseNamespace}}.{{contextName}}.Meta;
-global using {{baseNamespace}}.{{contextName}}.DTO;
+global using {{namespace}}.Meta;
+global using {{namespace}}.DTO;
 global using Microsoft.EntityFrameworkCore;
 {{/if}}
 
@@ -30,15 +30,15 @@ global using Microsoft.EntityFrameworkCore;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.Authorization;
 global using {{baseNamespace}}.Base.DTOs;
-global using {{baseNamespace}}.{{contextName}}.Meta;
-global using {{baseNamespace}}.{{contextName}}.DTO;
-global using {{baseNamespace}}.{{contextName}}.Domain;
+global using {{namespace}}.Meta;
+global using {{namespace}}.DTO;
+global using {{namespace}}.Domain;
 {{/if}}
 
 {{#if (eq projectType 'tests')}}
 global using Xunit;
 global using FluentAssertions;
 global using Moq;
-global using {{baseNamespace}}.{{contextName}}.Domain;
-global using {{baseNamespace}}.{{contextName}}.DTO;
+global using {{namespace}}.Domain;
+global using {{namespace}}.DTO;
 {{/if}}
