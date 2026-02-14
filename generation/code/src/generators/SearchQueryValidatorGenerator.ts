@@ -1,10 +1,10 @@
 /**
  * SearchQueryValidatorGenerator - generates search query validators
+ * Now generates simple derived classes from BaseSearchQueryValidator
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property } from '../models/DataModel';
-import { TypeMapper } from '../utils/TypeMapper';
+import { DataModel, Entity } from '../models/DataModel';
 import * as path from 'path';
 
 export class SearchQueryValidatorGenerator extends BaseGenerator {
@@ -31,14 +31,11 @@ export class SearchQueryValidatorGenerator extends BaseGenerator {
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
-    const properties = entity.properties.filter((p) => !p.isCollection);
-
     const context = {
       namespace,
       baseNamespace,
       entityName: entity.name,
       description: entity.description || entity.name,
-      properties: this.buildPropertyValidationContext(properties),
     };
 
     const filePath = path.join(validatorsDir, `${entity.name}SearchQueryValidator.cs`);
@@ -48,35 +45,5 @@ export class SearchQueryValidatorGenerator extends BaseGenerator {
       filePath,
       true // Overwrite allowed
     );
-  }
-
-  private buildPropertyValidationContext(properties: Property[]): Array<{
-    name: string;
-    csharpType: string;
-    isString: boolean;
-    isNumeric: boolean;
-    isDateTime: boolean;
-    isBoolean: boolean;
-    isGuid: boolean;
-    isEnum: boolean;
-    enumType: string | null;
-    nullable: boolean;
-  }> {
-    return properties.map((p) => {
-      const csharpType = TypeMapper.toCSharpType(p.type, false);
-      
-      return {
-        name: p.name,
-        csharpType,
-        isString: csharpType === 'string',
-        isNumeric: ['int', 'long', 'decimal', 'double', 'float'].includes(csharpType),
-        isDateTime: csharpType === 'DateTime',
-        isBoolean: csharpType === 'bool',
-        isGuid: csharpType === 'Guid',
-        isEnum: !!p.enumType,
-        enumType: p.enumType || null,
-        nullable: !p.required,
-      };
-    });
   }
 }

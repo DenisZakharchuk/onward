@@ -1,0 +1,282 @@
+using Inventorization.Base.Abstractions;
+using Inventorization.Base.ADTs;
+using Inventorization.Base.DTOs;
+using Inventorization.Base.Models;
+
+namespace Inventorization.Base.Validators;
+
+/// <summary>
+/// Base validator for SearchQuery DTOs.
+/// Validates SearchQuery against entity metadata, ensuring field names, operators, and types are valid before query execution.
+/// </summary>
+/// <typeparam name="TEntity">The entity type being queried</typeparam>
+public abstract class BaseSearchQueryValidator<TEntity> : IValidator<SearchQuery>
+    where TEntity : class
+{
+    /// <summary>
+    /// Entity metadata for validation. Must be provided by derived classes.
+    /// </summary>
+    protected abstract EntityMetadata Metadata { get; }
+    
+    /// <summary>
+    /// Entity name for error messages. Defaults to typeof(TEntity).Name, can be overridden.
+    /// </summary>
+    protected virtual string EntityName => typeof(TEntity).Name;
+    
+    /// <summary>
+    /// Validates a SearchQuery against the entity's metadata.
+    /// </summary>
+    public Task<ValidationResult> ValidateAsync(SearchQuery dto, CancellationToken cancellationToken = default)
+    {
+        if (dto == null)
+            return Task.FromResult(ValidationResult.WithErrors("SearchQuery cannot be null"));
+        
+        var errors = new List<string>(5);
+        
+        // Validate pagination
+        if (dto.Pagination.PageNumber < 1)
+            errors.Add("Page number must be at least 1");
+        
+        if (dto.Pagination.PageSize < 1 || dto.Pagination.PageSize > 100)
+            errors.Add("Page size must be between 1 and 100");
+        
+        // Validate filter expression
+        if (dto.Filter != null)
+        {
+            ValidateFilterExpression(dto.Filter, errors);
+        }
+        
+        // Validate projection fields
+        if (dto.Projection != null)
+        {
+            ValidateProjection(dto.Projection, errors);
+        }
+        
+        // Validate sort fields
+        if (dto.Sort != null)
+        {
+            ValidateSort(dto.Sort, errors);
+        }
+        
+        return Task.FromResult(errors.Any() 
+            ? ValidationResult.WithErrors(errors.ToArray()) 
+            : ValidationResult.Ok());
+    }
+    
+    /// <summary>
+    /// Recursively validates filter expressions (LeafFilter, AndFilter, OrFilter).
+    /// </summary>
+    protected virtual void ValidateFilterExpression(FilterExpression expression, List<string> errors)
+    {
+        switch (expression)
+        {
+            case LeafFilter leaf:
+                ValidateFilterCondition(leaf.Condition, errors);
+                break;
+            
+            case AndFilter and:
+                if (and.Expressions.Count == 0)
+                    errors.Add("AND filter must have at least one expression");
+                foreach (var expr in and.Expressions)
+                    ValidateFilterExpression(expr, errors);
+                break;
+            
+            case OrFilter or:
+                if (or.Expressions.Count == 0)
+                    errors.Add("OR filter must have at least one expression");
+                foreach (var expr in or.Expressions)
+                    ValidateFilterExpression(expr, errors);
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Validates a single filter condition against entity metadata.
+    /// </summary>
+    protected virtual void ValidateFilterCondition(FilterCondition condition, List<string> errors)
+    {
+        // Check if field exists in metadata
+        var propertyMetadata = Metadata.Properties.FirstOrDefault(p => p.PropertyName == condition.FieldName);
+        if (propertyMetadata == null)
+        {
+            errors.Add($"Field '{condition.FieldName}' does not exist in {EntityName} entity");
+            return;
+        }
+        
+        // Validate condition type compatibility with field type
+        switch (condition)
+        {
+            case EqualsCondition eq:
+                ValidateValueType(eq.Value, propertyMetadata, "Equals", errors);
+                break;
+            
+            case GreaterThanCondition gt:
+                ValidateComparableType(propertyMetadata, "GreaterThan", errors);
+                ValidateValueType(gt.Value, propertyMetadata, "GreaterThan", errors);
+                break;
+            
+            case LessThanCondition lt:
+                ValidateComparableType(propertyMetadata, "LessThan", errors);
+                ValidateValueType(lt.Value, propertyMetadata, "LessThan", errors);
+                break;
+            
+            case GreaterThanOrEqualCondition gte:
+                ValidateComparableType(propertyMetadata, "GreaterThanOrEqual", errors);
+                ValidateValueType(gte.Value, propertyMetadata, "GreaterThanOrEqual", errors);
+                break;
+            
+            case LessThanOrEqualCondition lte:
+                ValidateComparableType(propertyMetadata, "LessThanOrEqual", errors);
+                ValidateValueType(lte.Value, propertyMetadata, "LessThanOrEqual", errors);
+                break;
+            
+            case ContainsCondition:
+                ValidateStringType(propertyMetadata, "Contains", errors);
+                break;
+            
+            case StartsWithCondition:
+                ValidateStringType(propertyMetadata, "StartsWith", errors);
+                break;
+            
+            case InCondition inCondition:
+                if (inCondition.Values.Count == 0)
+                    errors.Add($"IN condition for field '{condition.FieldName}' must have at least one value");
+                break;
+            
+            case IsNullCondition:
+            case IsNotNullCondition:
+                // Always valid
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Validates projection field requests against entity metadata.
+    /// </summary>
+    protected virtual void ValidateProjection(ProjectionRequest projection, List<string> errors)
+    {
+        foreach (var field in projection.Fields)
+        {
+            if (field.IsRelated)
+            {
+                // Skip validation for related fields - they will be validated against relationship metadata
+                continue;
+            }
+            
+            var fieldName = field.FieldName.Contains('.') 
+                ? field.FieldName.Split('.')[0] 
+                : field.FieldName;
+            
+            if (!Metadata.Properties.Any(p => p.PropertyName == fieldName))
+            {
+                errors.Add($"Field '{fieldName}' does not exist in {EntityName} entity");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Validates sort field requests against entity metadata.
+    /// </summary>
+    protected virtual void ValidateSort(SortRequest sort, List<string> errors)
+    {
+        foreach (var field in sort.Fields)
+        {
+            if (!Metadata.Properties.Any(p => p.PropertyName == field.FieldName))
+            {
+                errors.Add($"Sort field '{field.FieldName}' does not exist in {EntityName} entity");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Validates that a value's type matches the expected property type.
+    /// </summary>
+    protected virtual void ValidateValueType(object value, PropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        if (value == null)
+            return;
+        
+        var valueType = value.GetType();
+        var propertyTypeName = propertyMetadata.PropertyType;
+        
+        // Basic type name validation - PropertyType is a string like "string", "int", "Guid", etc.
+        var expectedTypeName = GetSimpleTypeName(valueType);
+        
+        if (!string.Equals(propertyTypeName, expectedTypeName, StringComparison.OrdinalIgnoreCase) &&
+            !IsCompatibleType(propertyTypeName, expectedTypeName))
+        {
+            errors.Add($"{operatorName} operator on field '{propertyMetadata.PropertyName}' expects type {propertyTypeName} but got {valueType.Name}");
+        }
+    }
+    
+    /// <summary>
+    /// Validates that a property type supports comparison operators (>, <, >=, <=).
+    /// </summary>
+    protected virtual void ValidateComparableType(PropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        var typeName = propertyMetadata.PropertyType.ToLowerInvariant();
+        
+        if (!IsComparableTypeName(typeName))
+        {
+            errors.Add($"{operatorName} operator cannot be used on field '{propertyMetadata.PropertyName}' of type {propertyMetadata.PropertyType}");
+        }
+    }
+    
+    /// <summary>
+    /// Validates that a property is a string type (for Contains, StartsWith operators).
+    /// </summary>
+    protected virtual void ValidateStringType(PropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        var typeName = propertyMetadata.PropertyType.ToLowerInvariant();
+        
+        if (typeName != "string")
+        {
+            errors.Add($"{operatorName} operator can only be used on string fields, but '{propertyMetadata.PropertyName}' is {propertyMetadata.PropertyType}");
+        }
+    }
+    
+    /// <summary>
+    /// Checks if a type name represents a comparable type.
+    /// </summary>
+    protected virtual bool IsComparableTypeName(string typeName)
+    {
+        return typeName switch
+        {
+            "int" or "long" or "short" or "byte" or "sbyte" => true,
+            "decimal" or "double" or "float" => true,
+            "datetime" or "datetimeoffset" or "date" or "timespan" => true,
+            "guid" => true,
+            "string" => true,
+            _ => false
+        };
+    }
+    
+    /// <summary>
+    /// Gets the simple type name for a .NET Type (for comparison with PropertyMetadata.PropertyType string).
+    /// </summary>
+    protected virtual string GetSimpleTypeName(Type type)
+    {
+        if (type == typeof(string)) return "string";
+        if (type == typeof(int)) return "int";
+        if (type == typeof(long)) return "long";
+        if (type == typeof(decimal)) return "decimal";
+        if (type == typeof(double)) return "double";
+        if (type == typeof(float)) return "float";
+        if (type == typeof(bool)) return "bool";
+        if (type == typeof(DateTime)) return "DateTime";
+        if (type == typeof(DateTimeOffset)) return "DateTimeOffset";
+        if (type == typeof(Guid)) return "Guid";
+        return type.Name;
+    }
+    
+    /// <summary>
+    /// Checks if two type names are compatible (e.g., numeric type conversions).
+    /// </summary>
+    protected virtual bool IsCompatibleType(string propertyTypeName, string valueTypeName)
+    {
+        // Allow numeric type conversions
+        var numericTypes = new[] { "int", "long", "short", "byte", "decimal", "double", "float" };
+        return numericTypes.Contains(propertyTypeName.ToLowerInvariant()) && 
+               numericTypes.Contains(valueTypeName.ToLowerInvariant());
+    }
+}
