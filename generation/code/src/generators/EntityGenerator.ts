@@ -41,9 +41,11 @@ export class EntityGenerator extends BaseGenerator {
 
     const context = {
       namespace,
+      baseNamespace: this.metadata?.baseNamespace || 'Inventorization',
       entityName: entity.name,
       description: entity.description || entity.name,
       auditable: entity.auditable !== false,
+      hasEnums: this.hasEnumProperties(properties),
       constructorParams: this.getConstructorParams(properties),
       validations: this.getValidations(properties),
       propertyAssignments: this.getPropertyAssignments(properties),
@@ -104,7 +106,7 @@ export class EntityGenerator extends BaseGenerator {
     return properties
       .filter((p) => !p.isForeignKey || p.required)
       .map((p) => ({
-        type: TypeMapper.toCSharpType(p.type, !p.required),
+        type: TypeMapper.toCSharpType(p.enumType || p.type, !p.required),
         paramName: NamingConventions.toCamelCase(p.name),
         paramDescription: p.description || p.name,
       }));
@@ -148,14 +150,28 @@ export class EntityGenerator extends BaseGenerator {
     name: string;
     type: string;
     description?: string;
-    defaultValue: unknown;
+    defaultValue: string | null;
+    isEnumType: boolean;
   }> {
     return properties.map((p) => ({
       name: p.name,
-      type: TypeMapper.toCSharpType(p.type, !p.required),
+      type: TypeMapper.toCSharpType(p.enumType || p.type, !p.required),
       description: p.description,
-      defaultValue: p.defaultValue || null,
+      defaultValue: this.formatDefaultValue(p),
+      isEnumType: !!p.enumType,
     }));
+  }
+
+  private formatDefaultValue(property: Property): string | null {
+    if (!property.defaultValue) {
+      return null;
+    }
+
+    const value = String(property.defaultValue);
+
+    // For Smart Enums, return the value directly (e.g., "ProductStatus.Draft")
+    // No int casting needed since they're reference types
+    return value;
   }
 
   /**
@@ -220,5 +236,9 @@ export class EntityGenerator extends BaseGenerator {
     }
 
     return navProps;
+  }
+
+  private hasEnumProperties(properties: Property[]): boolean {
+    return properties.some((p) => p.enumType !== undefined);
   }
 }

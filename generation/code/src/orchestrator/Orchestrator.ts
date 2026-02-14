@@ -16,6 +16,7 @@ import { DataAccessGenerator } from '../generators/DataAccessGenerator';
 import { ControllerGenerator } from '../generators/ControllerGenerator';
 import { MetadataGenerator } from '../generators/MetadataGenerator';
 import { ProjectGenerator } from '../generators/ProjectGenerator';
+import { EnumGenerator } from '../generators/EnumGenerator';
 import { QueryBuilderGenerator } from '../generators/QueryBuilderGenerator';
 import { SearchServiceGenerator } from '../generators/SearchServiceGenerator';
 import { QueryControllerGenerator } from '../generators/QueryControllerGenerator';
@@ -115,7 +116,7 @@ export class Orchestrator {
       new MetadataGenerator(),
 
       // Phase 2: Enums and base types
-      // new EnumGenerator(),
+      new EnumGenerator(),
 
       // Phase 3: Entities
       new EntityGenerator(),

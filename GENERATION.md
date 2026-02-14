@@ -1748,6 +1748,231 @@ try {
 
 ---
 
+## Smart Enum Generation
+
+The generator creates **Smart Enum classes** instead of traditional C# enums to provide type-safe enumerations with string JSON serialization and integer database storage.
+
+### Data Model Specification
+
+Define enums in the `enums` array with numeric values:
+
+```json
+{
+  "enums": [
+    {
+      "name": "ProductStatus",
+      "description": "Product availability status",
+      "values": [
+        { "name": "Draft", "value": 0, "description": "Product is being prepared" },
+        { "name": "Active", "value": 1, "description": "Product is available for sale" },
+        { "name": "OutOfStock", "value": 2, "description": "Temporarily unavailable" },
+        { "name": "Discontinued", "value": 3, "description": "No longer available" }
+      ]
+    }
+  ]
+}
+```
+
+### Generated Smart Enum Class
+
+**Output**: `Inventorization.{Context}.Common/Enums/ProductStatus.cs`
+
+```csharp
+[JsonConverter(typeof(EnumerationJsonConverter<ProductStatus>))]
+public sealed class ProductStatus : Enumeration
+{
+    public static readonly ProductStatus Draft = new(nameof(Draft), 0);
+    public static readonly ProductStatus Active = new(nameof(Active), 1);
+    public static readonly ProductStatus OutOfStock = new(nameof(OutOfStock), 2);
+    public static readonly ProductStatus Discontinued = new(nameof(Discontinued), 3);
+
+    private ProductStatus(string name, int value) : base(name, value) { }
+
+    public static ProductStatus FromName(string name) => FromNameOrThrow<ProductStatus>(name);
+    public static ProductStatus FromValue(int value) => FromValueOrThrow<ProductStatus>(value);
+    public static IEnumerable<ProductStatus> GetAll() => Enumeration.GetAll<ProductStatus>();
+}
+```
+
+### Using Smart Enums in Entities
+
+Reference enum type in property metadata:
+
+```json
+{
+  "properties": [
+    {
+      "name": "Status",
+      "type": "int",
+      "enumType": "ProductStatus",
+      "required": true,
+      "description": "Product status",
+      "defaultValue": "ProductStatus.Draft"
+    }
+  ]
+}
+```
+
+**Generated Entity**:
+
+```csharp
+public class Product : BaseEntity
+{
+    public Product(
+        string name,
+        ProductStatus status  // ← Smart Enum type
+    )
+    {
+        Status = status;
+    }
+
+    public ProductStatus Status { get; private set; } = ProductStatus.Draft;
+}
+```
+
+**Generated Entity Configuration**:
+
+```csharp
+public class ProductConfiguration : BaseEntityConfiguration<Product>
+{
+    protected override void ConfigureEntity(EntityTypeBuilder<Product> builder)
+    {
+        builder.Property(e => e.Status)
+            .IsRequired()
+            .HasDefaultValue(ProductStatus.Draft)
+            .HasConversion(new EnumerationConverter<ProductStatus>());  // ← Stores as int
+    }
+}
+```
+
+**Generated Creator**:
+
+```csharp
+public class ProductCreator : IEntityCreator<Product, CreateProductDTO>
+{
+    public Task<Product> CreateAsync(CreateProductDTO dto, CancellationToken ct)
+    {
+        return Task.FromResult(new Product(
+            dto.Name,
+            dto.Status  // ← Direct pass-through (no int casting)
+        ));
+    }
+}
+```
+
+### Template Implementation
+
+**enum.cs.hbs**:
+```handlebars
+[JsonConverter(typeof(EnumerationJsonConverter<{{name}}>))]
+public sealed class {{name}} : Enumeration
+{
+    {{#each values}}
+    /// <summary>
+    /// {{description}}
+    /// </summary>
+    public static readonly {{../name}} {{name}} = new(nameof({{name}}), {{value}});
+
+    {{/each}}
+    private {{name}}(string name, int value) : base(name, value) { }
+
+    public static {{name}} FromName(string name) => FromNameOrThrow<{{name}}>(name);
+    public static {{name}} FromValue(int value) => FromValueOrThrow<{{name}}>(value);
+    public static IEnumerable<{{name}}> GetAll() => Enumeration.GetAll<{{name}}>();
+}
+```
+
+### Generator Logic
+
+**ConfigurationGenerator.ts** - Detects enum properties and adds converter:
+
+```typescript
+private getPropertyConfigurations(properties: Property[]): string[] {
+  for (const prop of properties) {
+    if (prop.enumType) {
+      lines.push(`    .HasConversion(new EnumerationConverter<${prop.enumType}>())`);
+    }
+  }
+}
+```
+
+**EntityGenerator.ts** - Uses enum type for constructor parameters:
+
+```typescript
+private getConstructorParams(properties: Property[]): Array<{type: string}> {
+  return properties.map((p) => ({
+    type: TypeMapper.toCSharpType(p.enumType || p.type, !p.required),  // ← enumType priority
+  }));
+}
+```
+
+**AbstractionGenerator.ts** - No int casting in creators:
+
+```typescript
+private getConstructorArgs(entity: Entity): Array<{argValue: string}> {
+  return constructorProps.map((p) => ({
+    argValue: `dto.${p.name}`,  // ← Direct pass-through (Smart Enums are reference types)
+  }));
+}
+```
+
+### API Behavior
+
+**Request** (accepts both string and int):
+```json
+POST /api/products
+{
+  "name": "Widget",
+  "status": "Active"  // ← or "status": 1
+}
+```
+
+**Response** (always string):
+```json
+{
+  "id": "guid",
+  "name": "Widget",
+  "status": "Active"  // ← Never numeric
+}
+```
+
+**Database** (stores as integer):
+```sql
+CREATE TABLE Products (
+  Status INT NOT NULL DEFAULT 0  -- 0 = Draft, 1 = Active, etc.
+);
+```
+
+### Benefits
+
+1. **API Readability** - `"Active"` instead of `1` in JSON
+2. **Database Efficiency** - Integer storage and indexing
+3. **Type Safety** - Compile-time checking
+4. **Backward Compatible** - Accepts both string and int in requests
+5. **Extensible** - Can add methods/properties to enum classes
+6. **Descriptive** - XML doc comments on each value
+
+### Limitations
+
+**Cannot use in switch statements** - Use if-else chains:
+
+```csharp
+// ❌ Won't compile (Smart Enums are not compile-time constants)
+switch (product.Status)
+{
+    case ProductStatus.Draft:
+        break;
+}
+
+// ✅ Correct approach
+if (product.Status == ProductStatus.Draft)
+{
+    // ...
+}
+```
+
+---
+
 ## Future Enhancements
 
 ### Planned Features

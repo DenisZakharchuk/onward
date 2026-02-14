@@ -18,13 +18,13 @@ namespace {{namespace}}.DTO.ADTs;
 public class {{entityName}}Projection
 {
     {{#each properties}}
-    [JsonPropertyName("{{camelName}}")]
-    public {{csharpType}}? {{name}} { get; set; }
+    [JsonPropertyName("{{jsonPropertyName}}")]
+    public {{type}} {{name}} { get; set; }
 
     {{/each}}
     {{#if hasRelationships}}
     {{#each relationships}}
-    [JsonPropertyName("{{camelName}}")]
+    [JsonPropertyName("{{jsonPropertyName}}")]
     public {{targetProjection}}? {{name}} { get; set; }
 
     {{/each}}

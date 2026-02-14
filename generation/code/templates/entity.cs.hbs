@@ -8,7 +8,10 @@
 //     Custom business logic should be added to separate domain services.
 // </auto-generated>
 
-using {{namespace}}.Base;
+using {{baseNamespace}}.Base.Models;
+{{#if hasEnums}}
+using {{namespace}}.Common.Enums;
+{{/if}}
 
 namespace {{namespace}}.Domain.Entities;
 
@@ -71,4 +74,16 @@ public class {{entityName}} : BaseEntity
     {{/if}}
 
     {{/each}}
+    /// <summary>
+    /// Timestamp when the entity was created
+    /// </summary>
+    public DateTime CreatedAt { get; private set; }
+
+    {{#if auditable}}
+    /// <summary>
+    /// Timestamp when the entity was last updated
+    /// </summary>
+    public DateTime? UpdatedAt { get; private set; }
+
+    {{/if}}
 }

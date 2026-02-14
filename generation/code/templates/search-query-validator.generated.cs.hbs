@@ -7,163 +7,217 @@
 //     Changes to this file will be lost when regenerated.
 // </auto-generated>
 
-using FluentValidation;
+using {{baseNamespace}}.Base.Abstractions;
 using {{baseNamespace}}.Base.ADTs;
-using {{baseNamespace}}.Base.Metadata;
-using {{namespace}}.Domain.Constants;
+using {{baseNamespace}}.Base.DTOs;
+using {{namespace}}.Domain.Entities;
 
 namespace {{namespace}}.Domain.Validators;
 
 /// <summary>
-/// Validates SearchQuery objects for {{entityName}} entity.
-/// Uses metadata-driven validation for field types and operators.
+/// Validates SearchQuery against {{entityName}} entity metadata.
+/// Ensures field names, operators, and types are valid before query execution.
 /// </summary>
-public class {{entityName}}SearchQueryValidator : AbstractValidator<SearchQuery>
+public class {{entityName}}SearchQueryValidator : IValidator<SearchQuery>
 {
-    private static readonly DataModelMetadata Metadata = DataModelMetadata.Instance;
-    private const string EntityName = "{{entityName}}";
-
-    public {{entityName}}SearchQueryValidator()
+    private static readonly IDataModelMetadata<{{entityName}}> Metadata = DataModelMetadata.{{entityName}};
+    
+    public Task<ValidationResult> ValidateAsync(SearchQuery dto, CancellationToken cancellationToken = default)
     {
-        RuleFor(x => x.Filters)
-            .Must(BeValidFilters)
-            .WithMessage("Invalid filter configuration");
-
-        RuleFor(x => x.Projection)
-            .Must(BeValidProjection)
-            .When(x => x.Projection != null)
-            .WithMessage("Invalid projection configuration");
-
-        RuleFor(x => x.Sorts)
-            .Must(BeValidSorts)
-            .When(x => x.Sorts != null && x.Sorts.Any())
-            .WithMessage("Invalid sort configuration");
-
-        RuleFor(x => x.Pagination)
-            .Must(BeValidPagination)
-            .When(x => x.Pagination != null)
-            .WithMessage("Invalid pagination configuration");
-    }
-
-    private bool BeValidFilters(FilterExpression? filter)
-    {
-        if (filter == null) return true;
-
-        return filter.Type switch
+        if (dto == null)
+            return Task.FromResult(ValidationResult.WithErrors("SearchQuery cannot be null"));
+        
+        var errors = new List<string>();
+        
+        // Validate pagination
+        if (dto.Pagination.PageNumber < 1)
+            errors.Add("Page number must be at least 1");
+        
+        if (dto.Pagination.PageSize < 1 || dto.Pagination.PageSize > 100)
+            errors.Add("Page size must be between 1 and 100");
+        
+        // Validate filter expression
+        if (dto.Filter != null)
         {
-            FilterType.Comparison => ValidateComparisonFilter(filter),
-            FilterType.Logical => ValidateLogicalFilter(filter),
-            FilterType.In => ValidateInFilter(filter),
-            FilterType.Between => ValidateBetweenFilter(filter),
-            _ => false
-        };
-    }
-
-    private bool ValidateComparisonFilter(FilterExpression filter)
-    {
-        if (string.IsNullOrWhiteSpace(filter.Field))
-            return false;
-
-        if (!{{entityName}}SearchFields.IsValidField(filter.Field))
-            return false;
-
-        var fieldMetadata = Metadata.GetPropertyMetadata(EntityName, filter.Field);
-        if (fieldMetadata == null)
-            return false;
-
-        return ValidateOperatorForType(filter.Operator, fieldMetadata);
-    }
-
-    private bool ValidateLogicalFilter(FilterExpression filter)
-    {
-        if (filter.Filters == null || !filter.Filters.Any())
-            return false;
-
-        return filter.Filters.All(BeValidFilters);
-    }
-
-    private bool ValidateInFilter(FilterExpression filter)
-    {
-        if (string.IsNullOrWhiteSpace(filter.Field))
-            return false;
-
-        if (!{{entityName}}SearchFields.IsValidField(filter.Field))
-            return false;
-
-        if (filter.Values == null || !filter.Values.Any())
-            return false;
-
-        return true;
-    }
-
-    private bool ValidateBetweenFilter(FilterExpression filter)
-    {
-        if (string.IsNullOrWhiteSpace(filter.Field))
-            return false;
-
-        if (!{{entityName}}SearchFields.IsValidField(filter.Field))
-            return false;
-
-        if (filter.Value == null || filter.MaxValue == null)
-            return false;
-
-        var fieldMetadata = Metadata.GetPropertyMetadata(EntityName, filter.Field);
-        if (fieldMetadata == null)
-            return false;
-
-        return {{#each validationTypes}}fieldMetadata.{{checkProperty}}{{#unless @last}} || {{/unless}}{{/each}};
-    }
-
-    private bool ValidateOperatorForType(ComparisonOperator op, PropertyMetadata metadata)
-    {
-        return op switch
+            ValidateFilterExpression(dto.Filter, errors);
+        }
+        
+        // Validate projection fields
+        if (dto.Projection != null)
         {
-            ComparisonOperator.Equal or ComparisonOperator.NotEqual
-                => true, // Valid for all types
-
-            ComparisonOperator.GreaterThan or
-            ComparisonOperator.GreaterThanOrEqual or
-            ComparisonOperator.LessThan or
-            ComparisonOperator.LessThanOrEqual
-                => metadata.IsNumeric || metadata.IsDateTime,
-
-            ComparisonOperator.Contains or
-            ComparisonOperator.StartsWith or
-            ComparisonOperator.EndsWith
-                => metadata.IsString,
-
-            _ => false
-        };
+            ValidateProjection(dto.Projection, errors);
+        }
+        
+        // Validate sort fields
+        if (dto.Sort != null)
+        {
+            ValidateSort(dto.Sort, errors);
+        }
+        
+        return Task.FromResult(errors.Any() 
+            ? ValidationResult.WithErrors(errors.ToArray()) 
+            : ValidationResult.Ok());
     }
-
-    private bool BeValidProjection(ProjectionRequest? projection)
+    
+    private void ValidateFilterExpression(FilterExpression expression, List<string> errors)
     {
-        if (projection == null) return true;
-
-        if (projection.Fields == null || !projection.Fields.Any())
-            return true; // Empty projection means all fields
-
-        return projection.Fields.All(f =>
-            !string.IsNullOrWhiteSpace(f.FieldName) &&
-            {{entityName}}SearchFields.IsValidField(f.FieldName));
+        switch (expression)
+        {
+            case LeafFilter leaf:
+                ValidateFilterCondition(leaf.Condition, errors);
+                break;
+            
+            case AndFilter and:
+                if (and.Expressions.Count == 0)
+                    errors.Add("AND filter must have at least one expression");
+                foreach (var expr in and.Expressions)
+                    ValidateFilterExpression(expr, errors);
+                break;
+            
+            case OrFilter or:
+                if (or.Expressions.Count == 0)
+                    errors.Add("OR filter must have at least one expression");
+                foreach (var expr in or.Expressions)
+                    ValidateFilterExpression(expr, errors);
+                break;
+        }
     }
-
-    private bool BeValidSorts(List<SortField>? sorts)
+    
+    private void ValidateFilterCondition(FilterCondition condition, List<string> errors)
     {
-        if (sorts == null || !sorts.Any())
-            return true;
-
-        return sorts.All(s =>
-            !string.IsNullOrWhiteSpace(s.Field) &&
-            {{entityName}}SearchFields.IsValidField(s.Field));
+        // Check if field exists in metadata
+        if (!Metadata.Properties.ContainsKey(condition.FieldName))
+        {
+            errors.Add($"Field '{condition.FieldName}' does not exist in {{entityName}} entity");
+            return;
+        }
+        
+        var propertyMetadata = Metadata.Properties[condition.FieldName];
+        
+        // Validate condition type compatibility with field type
+        switch (condition)
+        {
+            case EqualsCondition eq:
+                ValidateValueType(eq.Value, propertyMetadata, "Equals", errors);
+                break;
+            
+            case GreaterThanCondition gt:
+                ValidateComparableType(propertyMetadata, "GreaterThan", errors);
+                ValidateValueType(gt.Value, propertyMetadata, "GreaterThan", errors);
+                break;
+            
+            case LessThanCondition lt:
+                ValidateComparableType(propertyMetadata, "LessThan", errors);
+                ValidateValueType(lt.Value, propertyMetadata, "LessThan", errors);
+                break;
+            
+            case GreaterThanOrEqualCondition gte:
+                ValidateComparableType(propertyMetadata, "GreaterThanOrEqual", errors);
+                ValidateValueType(gte.Value, propertyMetadata, "GreaterThanOrEqual", errors);
+                break;
+            
+            case LessThanOrEqualCondition lte:
+                ValidateComparableType(propertyMetadata, "LessThanOrEqual", errors);
+                ValidateValueType(lte.Value, propertyMetadata, "LessThanOrEqual", errors);
+                break;
+            
+            case ContainsCondition contains:
+                ValidateStringType(propertyMetadata, "Contains", errors);
+                break;
+            
+            case StartsWithCondition startsWith:
+                ValidateStringType(propertyMetadata, "StartsWith", errors);
+                break;
+            
+            case InCondition inCondition:
+                if (inCondition.Values.Count == 0)
+                    errors.Add($"IN condition for field '{condition.FieldName}' must have at least one value");
+                break;
+            
+            case IsNullCondition:
+            case IsNotNullCondition:
+                // Always valid
+                break;
+        }
     }
-
-    private bool BeValidPagination(PaginationRequest? pagination)
+    
+    private void ValidateProjection(ProjectionRequest projection, List<string> errors)
     {
-        if (pagination == null) return true;
-
-        return pagination.Page > 0 &&
-               pagination.PageSize > 0 &&
-               pagination.PageSize <= 1000; // Max page size limit
+        foreach (var field in projection.Fields)
+        {
+            if (field.IsRelated)
+            {
+                // Skip validation for related fields - they will be validated against relationship metadata
+                continue;
+            }
+            
+            var fieldName = field.FieldName.Contains('.') 
+                ? field.FieldName.Split('.')[0] 
+                : field.FieldName;
+            
+            if (!Metadata.Properties.ContainsKey(fieldName))
+            {
+                errors.Add($"Field '{fieldName}' does not exist in {{entityName}} entity");
+            }
+        }
+    }
+    
+    private void ValidateSort(SortRequest sort, List<string> errors)
+    {
+        foreach (var field in sort.Fields)
+        {
+            if (!Metadata.Properties.ContainsKey(field.FieldName))
+            {
+                errors.Add($"Sort field '{field.FieldName}' does not exist in {{entityName}} entity");
+            }
+        }
+    }
+    
+    private void ValidateValueType(object value, IDataPropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        if (value == null)
+            return;
+        
+        var valueType = value.GetType();
+        var propertyType = Nullable.GetUnderlyingType(propertyMetadata.PropertyType) ?? propertyMetadata.PropertyType;
+        
+        // Check if types are compatible
+        if (!propertyType.IsAssignableFrom(valueType))
+        {
+            // Try to convert
+            try
+            {
+                Convert.ChangeType(value, propertyType);
+            }
+            catch
+            {
+                errors.Add($"{operatorName} operator on field '{propertyMetadata.PropertyName}' expects type {propertyType.Name} but got {valueType.Name}");
+            }
+        }
+    }
+    
+    private void ValidateComparableType(IDataPropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        var type = Nullable.GetUnderlyingType(propertyMetadata.PropertyType) ?? propertyMetadata.PropertyType;
+        
+        if (!IsComparableType(type))
+        {
+            errors.Add($"{operatorName} operator cannot be used on field '{propertyMetadata.PropertyName}' of type {type.Name}");
+        }
+    }
+    
+    private void ValidateStringType(IDataPropertyMetadata propertyMetadata, string operatorName, List<string> errors)
+    {
+        var type = Nullable.GetUnderlyingType(propertyMetadata.PropertyType) ?? propertyMetadata.PropertyType;
+        
+        if (type != typeof(string))
+        {
+            errors.Add($"{operatorName} operator can only be used on string fields, but '{propertyMetadata.PropertyName}' is {type.Name}");
+        }
+    }
+    
+    private bool IsComparableType(Type type)
+    {
+        return type.IsValueType || type == typeof(string) || type == typeof(DateTime);
     }
 }

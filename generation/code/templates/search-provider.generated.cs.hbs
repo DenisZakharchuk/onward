@@ -26,7 +26,7 @@ public class {{entityName}}SearchProvider : ISearchQueryProvider<{{entityName}},
 
         return entity =>
             {{#each searchConditions}}
-            {{condition}}{{#unless @last}} &&{{/unless}}
+            {{{condition}}}{{#unless @last}} &&{{/unless}}
             {{/each}};
     }
 }

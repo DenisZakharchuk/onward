@@ -166,12 +166,26 @@ export class TypeMapper {
     }
 
     if (property.validation?.min !== undefined || property.validation?.max !== undefined) {
+      const isDecimal = property.type.toLowerCase() === 'decimal';
+      
       if (property.validation.min !== undefined && property.validation.max !== undefined) {
-        attributes.push(`[Range(${property.validation.min}, ${property.validation.max})]`);
+        if (isDecimal) {
+          attributes.push(`[Range(typeof(decimal), "${property.validation.min}", "${property.validation.max}")]`);
+        } else {
+          attributes.push(`[Range(${property.validation.min}, ${property.validation.max})]`);
+        }
       } else if (property.validation.min !== undefined) {
-        attributes.push(`[Range(${property.validation.min}, ${this.getMaxValueForType(property.type)})]`);
+        if (isDecimal) {
+          attributes.push(`[Range(typeof(decimal), "${property.validation.min}", "${this.getMaxValueForType(property.type)}")]`);
+        } else {
+          attributes.push(`[Range(${property.validation.min}, ${this.getMaxValueForType(property.type)})]`);
+        }
       } else if (property.validation.max !== undefined) {
-        attributes.push(`[Range(${this.getMinValueForType(property.type)}, ${property.validation.max})]`);
+        if (isDecimal) {
+          attributes.push(`[Range(typeof(decimal), "${this.getMinValueForType(property.type)}", "${property.validation.max}")]`);
+        } else {
+          attributes.push(`[Range(${this.getMinValueForType(property.type)}, ${property.validation.max})]`);
+        }
       }
     }
 

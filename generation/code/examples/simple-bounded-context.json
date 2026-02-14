@@ -1,10 +1,10 @@
 {
   "boundedContext": {
-    "name": "Products",
-    "namespace": "Inventorization.Products",
-    "description": "Product catalog management bounded context",
-    "databaseName": "products_db",
-    "apiPort": 5032
+    "name": "Commerce",
+    "namespace": "Inventorization.Commerce",
+    "description": "E-commerce and order management bounded context",
+    "databaseName": "commerce_db",
+    "apiPort": 5042
   },
   "enums": [
     {
@@ -13,11 +13,68 @@
       "values": [
         { "name": "Draft", "value": 0, "description": "Product is being prepared" },
         { "name": "Active", "value": 1, "description": "Product is available for sale" },
-        { "name": "Discontinued", "value": 2, "description": "Product is no longer available" }
+        { "name": "OutOfStock", "value": 2, "description": "Product is temporarily unavailable" },
+        { "name": "Discontinued", "value": 3, "description": "Product is no longer available" }
+      ]
+    },
+    {
+      "name": "OrderStatus",
+      "description": "Order processing status",
+      "values": [
+        { "name": "Pending", "value": 0, "description": "Order is awaiting payment" },
+        { "name": "Processing", "value": 1, "description": "Order is being prepared" },
+        { "name": "Shipped", "value": 2, "description": "Order has been shipped" },
+        { "name": "Delivered", "value": 3, "description": "Order has been delivered" },
+        { "name": "Cancelled", "value": 4, "description": "Order has been cancelled" }
+      ]
+    },
+    {
+      "name": "AddressType",
+      "description": "Address type classification",
+      "values": [
+        { "name": "Shipping", "value": 0, "description": "Shipping address" },
+        { "name": "Billing", "value": 1, "description": "Billing address" }
       ]
     }
   ],
   "entities": [
+    {
+      "name": "Category",
+      "tableName": "Categories",
+      "description": "Product category",
+      "auditable": true,
+      "properties": [
+        {
+          "name": "Name",
+          "type": "string",
+          "required": true,
+          "maxLength": 100,
+          "description": "Category name",
+          "displayName": "Category Name"
+        },
+        {
+          "name": "Description",
+          "type": "string",
+          "required": false,
+          "maxLength": 500,
+          "description": "Category description"
+        },
+        {
+          "name": "IsActive",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the category is active",
+          "defaultValue": "true"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": ["Name"],
+          "isUnique": true,
+          "name": "IX_Categories_Name"
+        }
+      ]
+    },
     {
       "name": "Product",
       "tableName": "Products",
@@ -62,6 +119,16 @@
           }
         },
         {
+          "name": "StockQuantity",
+          "type": "int",
+          "required": true,
+          "description": "Available stock quantity",
+          "defaultValue": "0",
+          "validation": {
+            "min": 0
+          }
+        },
+        {
           "name": "CategoryId",
           "type": "Guid",
           "required": true,
@@ -82,7 +149,8 @@
           "name": "IsActive",
           "type": "bool",
           "required": true,
-          "description": "Whether the product is active"
+          "description": "Whether the product is active",
+          "defaultValue": "true"
         }
       ],
       "indexes": [
@@ -94,34 +162,281 @@
         {
           "columns": ["Name"],
           "isUnique": false
+        },
+        {
+          "columns": ["CategoryId"],
+          "isUnique": false
         }
       ]
     },
     {
-      "name": "Category",
-      "tableName": "Categories",
-      "description": "Product category",
+      "name": "Customer",
+      "tableName": "Customers",
+      "description": "Customer account",
       "auditable": true,
       "properties": [
         {
-          "name": "Name",
+          "name": "FirstName",
           "type": "string",
           "required": true,
           "maxLength": 100,
-          "description": "Category name"
+          "description": "Customer first name",
+          "displayName": "First Name"
         },
         {
-          "name": "Description",
+          "name": "LastName",
+          "type": "string",
+          "required": true,
+          "maxLength": 100,
+          "description": "Customer last name",
+          "displayName": "Last Name"
+        },
+        {
+          "name": "Email",
+          "type": "string",
+          "required": true,
+          "maxLength": 255,
+          "description": "Customer email address",
+          "validation": {
+            "email": true
+          }
+        },
+        {
+          "name": "Phone",
           "type": "string",
           "required": false,
-          "maxLength": 500,
-          "description": "Category description"
+          "maxLength": 20,
+          "description": "Customer phone number"
+        },
+        {
+          "name": "IsActive",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the customer account is active",
+          "defaultValue": "true"
         }
       ],
       "indexes": [
         {
-          "columns": ["Name"],
-          "isUnique": true
+          "columns": ["Email"],
+          "isUnique": true,
+          "name": "IX_Customers_Email"
+        }
+      ]
+    },
+    {
+      "name": "Address",
+      "tableName": "Addresses",
+      "description": "Customer address",
+      "auditable": false,
+      "properties": [
+        {
+          "name": "CustomerId",
+          "type": "Guid",
+          "required": true,
+          "isForeignKey": true,
+          "referencedEntity": "Customer",
+          "navigationProperty": "Customer",
+          "description": "Customer ID"
+        },
+        {
+          "name": "AddressType",
+          "type": "int",
+          "enumType": "AddressType",
+          "required": true,
+          "description": "Address type (Shipping or Billing)",
+          "defaultValue": "AddressType.Shipping"
+        },
+        {
+          "name": "Street",
+          "type": "string",
+          "required": true,
+          "maxLength": 200,
+          "description": "Street address"
+        },
+        {
+          "name": "City",
+          "type": "string",
+          "required": true,
+          "maxLength": 100,
+          "description": "City"
+        },
+        {
+          "name": "State",
+          "type": "string",
+          "required": true,
+          "maxLength": 100,
+          "description": "State or province"
+        },
+        {
+          "name": "PostalCode",
+          "type": "string",
+          "required": true,
+          "maxLength": 20,
+          "description": "Postal or ZIP code"
+        },
+        {
+          "name": "Country",
+          "type": "string",
+          "required": true,
+          "maxLength": 100,
+          "description": "Country"
+        },
+        {
+          "name": "IsDefault",
+          "type": "bool",
+          "required": true,
+          "description": "Whether this is the default address",
+          "defaultValue": "false"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": ["CustomerId"],
+          "isUnique": false
+        }
+      ]
+    },
+    {
+      "name": "Order",
+      "tableName": "Orders",
+      "description": "Customer order",
+      "auditable": true,
+      "properties": [
+        {
+          "name": "CustomerId",
+          "type": "Guid",
+          "required": true,
+          "isForeignKey": true,
+          "referencedEntity": "Customer",
+          "navigationProperty": "Customer",
+          "description": "Customer ID"
+        },
+        {
+          "name": "OrderNumber",
+          "type": "string",
+          "required": true,
+          "maxLength": 50,
+          "description": "Unique order number",
+          "validation": {
+            "regex": "^ORD-[0-9]{8}$"
+          }
+        },
+        {
+          "name": "OrderDate",
+          "type": "DateTime",
+          "required": true,
+          "description": "Order date and time"
+        },
+        {
+          "name": "TotalAmount",
+          "type": "decimal",
+          "required": true,
+          "precision": 18,
+          "scale": 2,
+          "description": "Total order amount",
+          "validation": {
+            "min": 0
+          }
+        },
+        {
+          "name": "Status",
+          "type": "int",
+          "enumType": "OrderStatus",
+          "required": true,
+          "description": "Order status",
+          "defaultValue": "OrderStatus.Pending"
+        },
+        {
+          "name": "ShippingAddressId",
+          "type": "Guid",
+          "required": true,
+          "isForeignKey": true,
+          "referencedEntity": "Address",
+          "navigationProperty": "ShippingAddress",
+          "description": "Shipping address ID"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": ["OrderNumber"],
+          "isUnique": true,
+          "name": "IX_Orders_OrderNumber"
+        },
+        {
+          "columns": ["CustomerId"],
+          "isUnique": false
+        },
+        {
+          "columns": ["OrderDate"],
+          "isUnique": false
+        }
+      ]
+    },
+    {
+      "name": "OrderItem",
+      "tableName": "OrderItems",
+      "description": "Order line item",
+      "auditable": false,
+      "properties": [
+        {
+          "name": "OrderId",
+          "type": "Guid",
+          "required": true,
+          "isForeignKey": true,
+          "referencedEntity": "Order",
+          "navigationProperty": "Order",
+          "description": "Order ID"
+        },
+        {
+          "name": "ProductId",
+          "type": "Guid",
+          "required": true,
+          "isForeignKey": true,
+          "referencedEntity": "Product",
+          "navigationProperty": "Product",
+          "description": "Product ID"
+        },
+        {
+          "name": "Quantity",
+          "type": "int",
+          "required": true,
+          "description": "Quantity ordered",
+          "validation": {
+            "min": 1
+          }
+        },
+        {
+          "name": "UnitPrice",
+          "type": "decimal",
+          "required": true,
+          "precision": 18,
+          "scale": 2,
+          "description": "Price per unit at time of order",
+          "validation": {
+            "min": 0
+          }
+        },
+        {
+          "name": "TotalPrice",
+          "type": "decimal",
+          "required": true,
+          "precision": 18,
+          "scale": 2,
+          "description": "Total price for this line item",
+          "validation": {
+            "min": 0
+          }
+        }
+      ],
+      "indexes": [
+        {
+          "columns": ["OrderId"],
+          "isUnique": false
+        },
+        {
+          "columns": ["ProductId"],
+          "isUnique": false
         }
       ]
     }
@@ -138,6 +453,66 @@
       "onDelete": "Restrict",
       "displayName": "Category Products",
       "description": "One-to-many relationship between Category and Product"
+    },
+    {
+      "type": "OneToMany",
+      "leftEntity": "Customer",
+      "rightEntity": "Order",
+      "cardinality": "Required",
+      "leftNavigationProperty": "Orders",
+      "rightNavigationProperty": "Customer",
+      "foreignKeyProperty": "CustomerId",
+      "onDelete": "Restrict",
+      "displayName": "Customer Orders",
+      "description": "One-to-many relationship between Customer and Order"
+    },
+    {
+      "type": "OneToMany",
+      "leftEntity": "Customer",
+      "rightEntity": "Address",
+      "cardinality": "Required",
+      "leftNavigationProperty": "Addresses",
+      "rightNavigationProperty": "Customer",
+      "foreignKeyProperty": "CustomerId",
+      "onDelete": "Cascade",
+      "displayName": "Customer Addresses",
+      "description": "One-to-many relationship between Customer and Address"
+    },
+    {
+      "type": "OneToMany",
+      "leftEntity": "Order",
+      "rightEntity": "OrderItem",
+      "cardinality": "Required",
+      "leftNavigationProperty": "OrderItems",
+      "rightNavigationProperty": "Order",
+      "foreignKeyProperty": "OrderId",
+      "onDelete": "Cascade",
+      "displayName": "Order Items",
+      "description": "One-to-many relationship between Order and OrderItem"
+    },
+    {
+      "type": "OneToMany",
+      "leftEntity": "Product",
+      "rightEntity": "OrderItem",
+      "cardinality": "Required",
+      "leftNavigationProperty": "OrderItems",
+      "rightNavigationProperty": "Product",
+      "foreignKeyProperty": "ProductId",
+      "onDelete": "Restrict",
+      "displayName": "Product Order Items",
+      "description": "One-to-many relationship between Product and OrderItem"
+    },
+    {
+      "type": "OneToMany",
+      "leftEntity": "Address",
+      "rightEntity": "Order",
+      "cardinality": "Required",
+      "leftNavigationProperty": "OrdersShippedTo",
+      "rightNavigationProperty": "ShippingAddress",
+      "foreignKeyProperty": "ShippingAddressId",
+      "onDelete": "Restrict",
+      "displayName": "Orders Shipped To Address",
+      "description": "One-to-many relationship between Address and Order for shipping"
     }
   ]
 }

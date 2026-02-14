@@ -41,7 +41,7 @@ public class {{entityName}}Creator : IEntityCreator<{{entityName}}, Create{{enti
             throw new ArgumentNullException(nameof(dto));
 
         {{#each transformations}}
-        {{this}}
+        {{{this}}}
         {{/each}}
 
         return new {{entityName}}(

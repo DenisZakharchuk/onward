@@ -33,7 +33,7 @@ public class {{entityName}}Modifier : IEntityModifier<{{entityName}}, Update{{en
         );
 
         {{#each conditionalUpdates}}
-        {{this}}
+        {{{this}}}
         {{/each}}
     }
 }

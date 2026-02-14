@@ -57,6 +57,7 @@ export class DtoGenerator extends BaseGenerator {
       namespace,
       entityName: entity.name,
       properties: properties.map((p) => this.propertyToDto(p, 'create')),
+      hasEnums: this.hasEnumProperties(entity, 'create'),
     };
 
     const filePath = path.join(entityDir, `Create${entity.name}DTO.cs`);
@@ -76,6 +77,7 @@ export class DtoGenerator extends BaseGenerator {
       namespace,
       entityName: entity.name,
       properties: properties.map((p) => this.propertyToDto(p, 'update')),
+      hasEnums: this.hasEnumProperties(entity, 'update'),
     };
 
     const filePath = path.join(entityDir, `Update${entity.name}DTO.cs`);
@@ -111,6 +113,7 @@ export class DtoGenerator extends BaseGenerator {
       namespace,
       entityName: entity.name,
       properties: properties.map((p) => this.propertyToDto(p, 'details')),
+      hasEnums: this.hasEnumProperties(entity, 'details'),
       navigationProperties: [],
       nestedDtos: [],
     };
@@ -132,6 +135,7 @@ export class DtoGenerator extends BaseGenerator {
       namespace,
       entityName: entity.name,
       properties: properties.map((p) => this.propertyToDto(p, 'search', true)), // All nullable for search
+      hasEnums: this.hasEnumProperties(entity, 'search'),
     };
 
     const filePath = path.join(entityDir, `${entity.name}SearchDTO.cs`);
@@ -143,8 +147,14 @@ export class DtoGenerator extends BaseGenerator {
     dtoType: 'create' | 'update' | 'details' | 'search'
   ): Property[] {
     return entity.properties.filter((p) => {
-      // Exclude collections and navigation properties from Create/Update
-      if ((dtoType === 'create' || dtoType === 'update') && (p.isCollection || p.navigationProperty)) {
+      // Exclude collection navigation properties from Create/Update
+      if ((dtoType === 'create' || dtoType === 'update') && p.isCollection) {
+        return false;
+      }
+
+      // Exclude single navigation properties (non-FK) from Create/Update
+      // But keep FK properties even if they have navigationProperty defined
+      if ((dtoType === 'create' || dtoType === 'update') && p.navigationProperty && !p.isForeignKey) {
         return false;
       }
 
@@ -192,5 +202,10 @@ export class DtoGenerator extends BaseGenerator {
     }
 
     return null;
+  }
+
+  private hasEnumProperties(entity: Entity, dtoType: 'create' | 'update' | 'details' | 'search'): boolean {
+    const properties = this.getDtoProperties(entity, dtoType);
+    return properties.some((p) => p.enumType !== undefined);
   }
 }

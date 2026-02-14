@@ -111,7 +111,7 @@ public class {{entityName}}ProjectionMapper : ProjectionMapperBase<{{entityName}
         {{#if hasRelationships}}
         // Map related entities with depth control
         {{#each relationships}}
-        if (deep && current Depth < maxDepth && entity.{{name}} != null)
+        if (deep && currentDepth < maxDepth && entity.{{name}} != null)
         {
             var {{camelName}}Projection = ProjectionRequest.AllDeep(maxDepth - currentDepth - 1);
             result.{{name}} = _{{camelTargetEntity}}Mapper.Map(
@@ -127,11 +127,12 @@ public class {{entityName}}ProjectionMapper : ProjectionMapperBase<{{entityName}
     protected override void MapField(
         {{entityName}} entity,
         {{projectionName}} result,
-        string fieldName,
-        int maxDepth,
+        FieldProjection field,
         int currentDepth)
     {
-        switch (fieldName.ToLower())
+        var fieldName = field.FieldName.ToLower();
+        
+        switch (fieldName)
         {
             {{#each properties}}
             case "{{camelName}}":

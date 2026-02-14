@@ -106,7 +106,7 @@ export class AbstractionGenerator extends BaseGenerator {
       propertyMappings: mappableProps.map(
         (p) => ({
           dtoProperty: p.name,
-          entityProperty: p.name,
+          entityProperty: `entity.${p.name}`,
         })
       ),
     };
@@ -132,18 +132,29 @@ export class AbstractionGenerator extends BaseGenerator {
         p.name === 'IsActive'
     );
 
+    // Build search conditions from searchable properties
+    const searchConditions = searchableProps.map((p) => {
+      const propName = p.name;
+      const isString = TypeMapper.isStringType(p.type);
+      const isDateTime = p.type === 'DateTime';
+      const isBoolean = p.type === 'bool';
+
+      if (isString) {
+        return { condition: `(searchDto.${propName} == null || entity.${propName}.Contains(searchDto.${propName}))` };
+      } else if (isDateTime) {
+        return { condition: `(searchDto.${propName} == null || entity.${propName} == searchDto.${propName})` };
+      } else if (isBoolean) {
+        return { condition: `(searchDto.${propName} == null || entity.${propName} == searchDto.${propName})` };
+      } else {
+        return { condition: `(searchDto.${propName} == null || entity.${propName} == searchDto.${propName})` };
+      }
+    });
+
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
-      hasSearchableProps: searchableProps.length > 0,
-      searchableProps: searchableProps.map((p) => ({
-        name: p.name,
-        type: p.type,
-        isString: TypeMapper.isStringType(p.type),
-        isDateTime: p.type === 'DateTime',
-        isBoolean: p.type === 'bool',
-      })),
+      searchConditions: searchConditions.length > 0 ? searchConditions : [{ condition: 'true' }],
     };
 
     const filePath = path.join(searchProvidersDir, `${entity.name}SearchProvider.cs`);
@@ -155,14 +166,16 @@ export class AbstractionGenerator extends BaseGenerator {
     argValue: string;
   }> {
     // Get properties that go into entity constructor
+    // This filter must match EntityGenerator.getConstructorParams logic:
+    // Include all non-FK properties + required FK properties
+    // Exclude: Id, CreatedAt, UpdatedAt, and collection navigation properties
     const constructorProps = entity.properties.filter(
       (p) =>
         p.name !== 'Id' &&
         p.name !== 'CreatedAt' &&
         p.name !== 'UpdatedAt' &&
         !p.isCollection &&
-        !p.navigationProperty &&
-        (p.required || p.isForeignKey)
+        (!p.isForeignKey || p.required)
     );
 
     return constructorProps.map((p) => ({

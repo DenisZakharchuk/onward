@@ -17,13 +17,13 @@ public static class {{entityName}}SearchFields
 {
     // Direct properties
     {{#each directFields}}
-    public const string {{pascalName}} = "{{fieldName}}";
+    public const string {{constantName}} = "{{value}}";
     {{/each}}
 
     {{#if hasNestedFields}}
     // Nested relationship fields
     {{#each nestedFields}}
-    public const string {{pascalName}} = "{{fieldName}}";
+    public const string {{constantName}} = "{{value}}";
     {{/each}}
     {{/if}}
 
@@ -33,11 +33,11 @@ public static class {{entityName}}SearchFields
     public static readonly HashSet<string> AllFields = new(StringComparer.OrdinalIgnoreCase)
     {
         {{#each directFields}}
-        {{pascalName}},
+        {{constantName}},
         {{/each}}
         {{#if hasNestedFields}}
         {{#each nestedFields}}
-        {{pascalName}},
+        {{constantName}},
         {{/each}}
         {{/if}}
     };

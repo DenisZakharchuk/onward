@@ -7,6 +7,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using {{namespace}}.Domain.Entities;
+{{#if hasEnums}}
+using {{namespace}}.Common.Enums;
+{{/if}}
 using {{baseNamespace}}.Base.DataAccess;
 
 namespace {{namespace}}.Domain.EntityConfigurations;
@@ -21,15 +24,15 @@ public class {{entityName}}Configuration : BaseEntityConfiguration<{{entityName}
         builder.ToTable("{{tableName}}"{{#if schema}}, "{{schema}}"{{/if}});
 
         {{#each propertyConfigurations}}
-        {{this}}
+        {{{this}}}
 
         {{/each}}
         {{#each indexes}}
-        {{this}}
+        {{{this}}}
 
         {{/each}}
         {{#each relationships}}
-        {{this}}
+        {{{this}}}
 
         {{/each}}
     }

@@ -71,6 +71,14 @@ export class ValidatorGenerator extends BaseGenerator {
   private getValidationRules(entity: Entity, dtoType: 'create' | 'update'): string[] {
     const rules: string[] = [];
 
+    // For Update DTOs, validate the Id field first
+    if (dtoType === 'update') {
+      rules.push(
+        `if (dto.Id == Guid.Empty)\n` +
+          `    errors.Add("Id is required");`
+      );
+    }
+
     // Get properties to validate based on DTO type
     const properties = this.getPropertiesToValidate(entity, dtoType);
 

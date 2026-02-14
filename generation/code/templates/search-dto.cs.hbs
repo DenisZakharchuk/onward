@@ -8,6 +8,9 @@
 // </auto-generated>
 
 using {{baseNamespace}}.Base.DTOs;
+{{#if hasEnums}}
+using {{namespace}}.Common.Enums;
+{{/if}}
 
 namespace {{namespace}}.DTO.{{entityName}};
 
@@ -22,7 +25,7 @@ public class {{entityName}}SearchDTO : SearchDTO
     /// {{description}}
     /// </summary>
     {{/if}}
-    public {{type}}? {{name}} { get; set; }
+    public {{type}} {{name}} { get; set; }
 
     {{/each}}
 }

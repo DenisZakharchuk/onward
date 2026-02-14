@@ -1500,6 +1500,90 @@ public class [Junction]Configuration : JunctionEntityConfiguration<[Junction], [
 
 ---
 
+## Smart Enum Pattern
+
+The system uses **Smart Enums** (type-safe enumeration classes) instead of traditional C# enums to provide:
+- **String serialization** in JSON API responses (e.g., `"Active"` instead of `1`)
+- **Integer storage** in the database (efficient storage and indexing)
+- **Type safety** with compile-time checking
+- **Extensibility** with methods and properties
+
+### Implementation
+
+All Smart Enums inherit from `Enumeration` base class in `Inventorization.Base.Models`:
+
+```csharp
+[JsonConverter(typeof(EnumerationJsonConverter<ProductStatus>))]
+public sealed class ProductStatus : Enumeration
+{
+    public static readonly ProductStatus Draft = new(nameof(Draft), 0);
+    public static readonly ProductStatus Active = new(nameof(Active), 1);
+    public static readonly ProductStatus OutOfStock = new(nameof(OutOfStock), 2);
+    public static readonly ProductStatus Discontinued = new(nameof(Discontinued), 3);
+
+    private ProductStatus(string name, int value) : base(name, value) { }
+
+    public static ProductStatus FromName(string name) => FromNameOrThrow<ProductStatus>(name);
+    public static ProductStatus FromValue(int value) => FromValueOrThrow<ProductStatus>(value);
+    public static IEnumerable<ProductStatus> GetAll() => Enumeration.GetAll<ProductStatus>();
+}
+```
+
+### Entity Configuration
+
+Smart Enums require EF Core value converters in entity configurations:
+
+```csharp
+public class ProductConfiguration : BaseEntityConfiguration<Product>
+{
+    protected override void ConfigureEntity(EntityTypeBuilder<Product> builder)
+    {
+        builder.Property(e => e.Status)
+            .IsRequired()
+            .HasConversion(new EnumerationConverter<ProductStatus>());
+    }
+}
+```
+
+### JSON Serialization
+
+JSON converter handles string serialization:
+- **Request (accepts both)**: `{"status": "Active"}` or `{"status": 1}`
+- **Response (always string)**: `{"status": "Active"}`
+
+### Limitations
+
+**Cannot use in switch statements** - Smart Enums are reference types, not compile-time constants:
+
+```csharp
+// ❌ INCORRECT - Won't compile
+switch (product.Status)
+{
+    case ProductStatus.Draft:
+        // ...
+        break;
+}
+
+// ✅ CORRECT - Use if-else
+if (product.Status == ProductStatus.Draft)
+{
+    // ...
+}
+else if (product.Status == ProductStatus.Active)
+{
+    // ...
+}
+```
+
+### Location
+
+- **Base Class**: `Inventorization.Base/Models/Enumeration.cs`
+- **EF Converter**: `Inventorization.Base/DataAccess/EnumerationConverter.cs`
+- **JSON Converter**: `Inventorization.Base/Models/EnumerationJsonConverter.cs`
+- **Bounded Context Enums**: `Inventorization.[BoundedContext].Common/Enums/`
+
+---
+
 ## Domain Service Abstractions
 
 All bounded contexts should use the **generic `DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>`** class located in `Inventorization.Base.Services` for implementing data services. This eliminates boilerplate CRUD code while enforcing consistent patterns across all contexts.

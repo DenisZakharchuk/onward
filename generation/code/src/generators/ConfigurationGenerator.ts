@@ -32,6 +32,9 @@ export class ConfigurationGenerator extends BaseGenerator {
     baseNamespace: string,
     model: DataModel
   ): Promise<void> {
+    // Detect if entity has any enum properties
+    const hasEnums = entity.properties.some((p) => p.enumType);
+
     const context = {
       baseNamespace,
       namespace,
@@ -41,6 +44,7 @@ export class ConfigurationGenerator extends BaseGenerator {
       propertyConfigurations: this.getPropertyConfigurations(entity.properties),
       indexes: this.getIndexConfigurations(entity),
       relationships: this.getRelationshipConfigurations(entity, model),
+      hasEnums,
     };
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);
@@ -59,6 +63,11 @@ export class ConfigurationGenerator extends BaseGenerator {
     }
 
     // For junction entities, we use JunctionEntityConfiguration base class
+    const relevantProperties = entity.properties.filter(
+      (p) => !p.isForeignKey && p.name !== 'Id'
+    );
+    const hasEnums = relevantProperties.some((p) => p.enumType);
+
     const context = {
       baseNamespace,
       namespace,
@@ -67,10 +76,9 @@ export class ConfigurationGenerator extends BaseGenerator {
       rightEntity: entity.junctionMetadata.rightEntity,
       tableName: entity.tableName || this.pluralize(entity.name),
       schema: entity.schema,
-      propertyConfigurations: this.getPropertyConfigurations(
-        entity.properties.filter((p) => !p.isForeignKey && p.name !== 'Id')
-      ),
+      propertyConfigurations: this.getPropertyConfigurations(relevantProperties),
       hasRelationships: true,
+      hasEnums,
     };
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);
@@ -113,6 +121,11 @@ export class ConfigurationGenerator extends BaseGenerator {
           ? `"${prop.defaultValue}"`
           : prop.defaultValue.toString();
         lines.push(`    .HasDefaultValue(${defaultVal})`);
+      }
+
+      // Enum converter
+      if (prop.enumType) {
+        lines.push(`    .HasConversion(new EnumerationConverter<${prop.enumType}>())`);
       }
 
       // Note: columnName property not in DataModel interface yet
