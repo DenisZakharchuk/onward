@@ -1,5 +1,5 @@
 /**
- * DTO generator - creates all 5 DTO types per entity
+ * DTO generator - creates all 6 DTO types per entity
  */
 
 import { BaseGenerator } from './BaseGenerator';
@@ -36,6 +36,9 @@ export class DtoGenerator extends BaseGenerator {
 
     // Generate Delete DTO
     await this.generateDeleteDto(entity, entityDir, namespace, baseNamespace);
+
+    // Generate Init DTO
+    await this.generateInitDto(entity, entityDir, namespace, baseNamespace);
 
     // Generate Details DTO
     await this.generateDetailsDto(entity, entityDir, namespace, baseNamespace);
@@ -98,6 +101,56 @@ export class DtoGenerator extends BaseGenerator {
 
     const filePath = path.join(entityDir, `Delete${entity.name}DTO.cs`);
     await this.writeRenderedTemplate('delete-dto.cs.hbs', context, filePath, true);
+  }
+
+  private async generateInitDto(
+    entity: Entity,
+    entityDir: string,
+    namespace: string,
+    baseNamespace: string
+  ): Promise<void> {
+    const properties = this.getInitDtoProperties(entity);
+
+    const context = {
+      baseNamespace,
+      namespace,
+      entityName: entity.name,
+      properties: properties.map((p) => ({
+        name: p.name,
+        type: TypeMapper.toCSharpType(p.enumType || p.type, false),
+        description: p.description,
+      })),
+      hasEnums: properties.some((p) => p.enumType !== undefined),
+    };
+
+    const filePath = path.join(entityDir, `Init${entity.name}DTO.cs`);
+    await this.writeRenderedTemplate('init-dto.cs.hbs', context, filePath, true);
+  }
+
+  private getInitDtoProperties(entity: Entity): Property[] {
+    return entity.properties.filter((p) => {
+      if (!p.required) {
+        return false;
+      }
+
+      if (p.name === 'Id' || p.name === 'CreatedAt' || p.name === 'UpdatedAt') {
+        return false;
+      }
+
+      if (p.isCollection) {
+        return false;
+      }
+
+      if (p.navigationProperty && !p.isForeignKey) {
+        return false;
+      }
+
+      if (p.includeInDto && p.includeInDto.create === false) {
+        return false;
+      }
+
+      return true;
+    });
   }
 
   private async generateDetailsDto(

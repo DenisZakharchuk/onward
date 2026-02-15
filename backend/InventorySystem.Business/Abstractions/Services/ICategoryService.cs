@@ -7,12 +7,6 @@ namespace InventorySystem.Business.Abstractions.Services;
 /// <summary>
 /// Category data service interface
 /// </summary>
-public interface ICategoryService : IDataService<
-    Category,
-    CreateCategoryDTO,
-    UpdateCategoryDTO,
-    Inventorization.Base.DTOs.DeleteDTO,
-    CategoryDetailsDTO,
-    CategorySearchDTO>
+public interface ICategoryService : IDataService<Category, CreateCategoryDTO, UpdateCategoryDTO, Inventorization.Base.DTOs.DeleteDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>
 {
 }

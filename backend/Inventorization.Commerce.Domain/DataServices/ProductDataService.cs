@@ -16,14 +16,14 @@ namespace Inventorization.Commerce.Domain.DataServices;
 /// <summary>
 /// Data service interface for Product
 /// </summary>
-public interface IProductDataService : IDataService<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, ProductDetailsDTO, ProductSearchDTO>
+public interface IProductDataService : IDataService<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, InitProductDTO, ProductDetailsDTO, ProductSearchDTO>
 {
 }
 
 /// <summary>
 /// Data service implementation for Product
 /// </summary>
-public class ProductDataService : DataServiceBase<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, ProductDetailsDTO, ProductSearchDTO>, IProductDataService
+public class ProductDataService : DataServiceBase<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, InitProductDTO, ProductDetailsDTO, ProductSearchDTO>, IProductDataService
 {
     public ProductDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,

@@ -13,7 +13,7 @@ namespace InventorySystem.API.Controllers.Data;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class StockController : DataController<StockMovement, CreateStockMovementDTO, UpdateDTO, DeleteDTO, StockMovementDetailsDTO, StockMovementSearchDTO, IStockMovementService>
+public class StockController : DataController<StockMovement, CreateStockMovementDTO, UpdateDTO, DeleteDTO, InitStockMovementDTO, StockMovementDetailsDTO, StockMovementSearchDTO, IStockMovementService>
 {
     public StockController(
         IStockMovementService stocking,

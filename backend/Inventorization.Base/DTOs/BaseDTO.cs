@@ -18,17 +18,22 @@ public abstract class CreateDTO
 /// <summary>
 /// Base class for Update DTOs
 /// </summary>
-public abstract class UpdateDTO
+public abstract class UpdateDTO : BaseDTO
 {
-    public Guid Id { get; set; }
 }
 
 /// <summary>
 /// Base class for Delete DTOs
 /// </summary>
-public abstract class DeleteDTO
+public abstract class DeleteDTO : BaseDTO
 {
-    public Guid Id { get; set; }
+}
+
+/// <summary>
+/// Base record for init operations
+/// </summary>
+public record InitDTO(Guid Id)
+{
 }
 
 /// <summary>

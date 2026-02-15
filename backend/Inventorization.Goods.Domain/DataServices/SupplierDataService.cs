@@ -6,7 +6,7 @@ namespace Inventorization.Goods.Domain.DataServices;
 /// <summary>
 /// Data service interface for Supplier entity
 /// </summary>
-public interface ISupplierDataService : IDataService<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>
+public interface ISupplierDataService : IDataService<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, InitSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>
 {
 }
 
@@ -14,13 +14,13 @@ public interface ISupplierDataService : IDataService<Supplier, CreateSupplierDTO
 /// Data service implementation for Supplier entity
 /// Inherits all CRUD operations from DataServiceBase
 /// </summary>
-public class SupplierDataService : DataServiceBase<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>, ISupplierDataService
+public class SupplierDataService : DataServiceBase<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, InitSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>, ISupplierDataService
 {
     public SupplierDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Supplier> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>> logger)
+        ILogger<DataServiceBase<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, InitSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>> logger)
         : base(unitOfWork, repository, serviceProvider, logger)
     {
     }

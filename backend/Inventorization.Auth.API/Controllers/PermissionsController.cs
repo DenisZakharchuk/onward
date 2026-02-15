@@ -15,7 +15,7 @@ namespace Inventorization.Auth.API.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 public class PermissionsController 
-    : DataController<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, PermissionDetailsDTO, PermissionSearchDTO, IPermissionDataService>
+    : DataController<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, InitPermissionDTO, PermissionDetailsDTO, PermissionSearchDTO, IPermissionDataService>
 {
     public PermissionsController(IPermissionDataService service, ILogger<ServiceController> logger) 
         : base(service, logger)

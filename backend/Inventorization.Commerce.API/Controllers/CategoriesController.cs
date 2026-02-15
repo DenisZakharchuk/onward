@@ -19,7 +19,7 @@ namespace Inventorization.Commerce.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public partial class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryDataService>
+public partial class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryDataService>
 {
     public CategoriesController(
         ICategoryDataService service,

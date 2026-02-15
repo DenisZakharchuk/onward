@@ -14,7 +14,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class StockItemsController : DataController<StockItem, CreateStockItemDTO, UpdateStockItemDTO, DeleteStockItemDTO, StockItemDetailsDTO, StockItemSearchDTO, IStockItemDataService>
+public class StockItemsController : DataController<StockItem, CreateStockItemDTO, UpdateStockItemDTO, DeleteStockItemDTO, InitStockItemDTO, StockItemDetailsDTO, StockItemSearchDTO, IStockItemDataService>
 {
     public StockItemsController(IStockItemDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
         : base(service, logger)

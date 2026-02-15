@@ -6,7 +6,7 @@ namespace Inventorization.Goods.Domain.DataServices;
 /// <summary>
 /// Data service interface for Category entity
 /// </summary>
-public interface ICategoryDataService : IDataService<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>
+public interface ICategoryDataService : IDataService<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>
 {
 }
 
@@ -14,13 +14,13 @@ public interface ICategoryDataService : IDataService<Category, CreateCategoryDTO
 /// Data service implementation for Category entity
 /// Inherits all CRUD operations from DataServiceBase
 /// </summary>
-public class CategoryDataService : DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>, ICategoryDataService
+public class CategoryDataService : DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>, ICategoryDataService
 {
     public CategoryDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Category> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>> logger)
+        ILogger<DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>> logger)
         : base(unitOfWork, repository, serviceProvider, logger)
     {
     }

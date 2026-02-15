@@ -20,19 +20,20 @@ using IUnitOfWorkInterface = Inventorization.Base.DataAccess.IUnitOfWork;
 /// 
 /// This is a reusable service abstraction for all bounded contexts.
 /// </remarks>
-public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>
-    : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>
+public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
     where TEntity : class
     where TCreateDTO : class
     where TUpdateDTO : UpdateDTO
     where TDeleteDTO : DeleteDTO
+    where TInitDTO : InitDTO
     where TDetailsDTO : class
     where TSearchDTO : class
 {
     protected readonly IUnitOfWorkInterface UnitOfWork;
     protected readonly IRepository<TEntity> Repository;
     protected readonly IServiceProvider ServiceProvider;
-    protected readonly ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>> Logger;
+    protected readonly ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> Logger;
 
     protected string EntityName => typeof(TEntity).Name;
 
@@ -40,7 +41,7 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
         IUnitOfWorkInterface unitOfWork,
         IRepository<TEntity> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>> logger)
+        ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> logger)
     {
         UnitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         Repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -164,6 +165,18 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
             Logger.LogError(ex, "Error deleting {EntityName}", EntityName);
             return ServiceResult<bool>.Failure($"Failed to delete {EntityName.ToLower()}");
         }
+    }
+
+    /// <summary>
+    /// Initializes entity details for CRUD scenarios using minimal init payload.
+    /// Default implementation loads details by ID.
+    /// </summary>
+    public virtual async Task<ServiceResult<TDetailsDTO>> InitAsync(TInitDTO initDto, CancellationToken cancellationToken = default)
+    {
+        if (initDto == null)
+            return ServiceResult<TDetailsDTO>.Failure($"{EntityName} init data is required");
+
+        return await GetByIdAsync(initDto.Id, cancellationToken);
     }
 
     /// <summary>

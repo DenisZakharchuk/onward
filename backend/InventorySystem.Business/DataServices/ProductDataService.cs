@@ -150,6 +150,14 @@ public class ProductDataService : IProductService
         }
     }
 
+    public async Task<ServiceResult<ProductDetailsDTO>> InitAsync(InitProductDTO initDto, CancellationToken cancellationToken = default)
+    {
+        if (initDto == null)
+            return ServiceResult<ProductDetailsDTO>.Failure("Product init data is required");
+
+        return await GetByIdAsync(initDto.Id, cancellationToken);
+    }
+
     public async Task<ServiceResult<PagedResult<ProductDetailsDTO>>> SearchAsync(ProductSearchDTO searchDto, CancellationToken cancellationToken = default)
     {
         try

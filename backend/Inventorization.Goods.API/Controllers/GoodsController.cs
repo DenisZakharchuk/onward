@@ -15,7 +15,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [AllowAnonymous]
-public class GoodsController : DataController<Good, CreateGoodDTO, UpdateGoodDTO, DeleteGoodDTO, GoodDetailsDTO, GoodSearchDTO, IGoodDataService>
+public class GoodsController : DataController<Good, CreateGoodDTO, UpdateGoodDTO, DeleteGoodDTO, InitGoodDTO, GoodDetailsDTO, GoodSearchDTO, IGoodDataService>
 {
     public GoodsController(
         IGoodDataService service,

@@ -19,7 +19,7 @@ namespace {{namespace}}.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public partial class {{pluralEntityName}}Controller : DataController<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, I{{entityName}}DataService>
+public partial class {{pluralEntityName}}Controller : DataController<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, I{{entityName}}DataService>
 {
     public {{pluralEntityName}}Controller(
         I{{entityName}}DataService service,

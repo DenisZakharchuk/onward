@@ -17,7 +17,7 @@ namespace Inventorization.Auth.API.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 public class UsersController 
-    : DataController<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, UserDetailsDTO, UserSearchDTO, IUserDataService>,
+    : DataController<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, InitUserDTO, UserDetailsDTO, UserSearchDTO, IUserDataService>,
       IRelationController<Role>
 {
     private readonly UserRoleRelationHandler _roleHandler;

@@ -10,20 +10,20 @@ namespace Inventorization.Auth.Domain.DataServices;
 /// <summary>
 /// Data service interface for User CRUD and search operations
 /// </summary>
-public interface IUserDataService : IDataService<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, UserDetailsDTO, UserSearchDTO>
+public interface IUserDataService : IDataService<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, InitUserDTO, UserDetailsDTO, UserSearchDTO>
 {
 }
 
 /// <summary>
 /// Data service for User entities with full CRUD, search, and validation support
 /// </summary>
-public class UserDataService : DataServiceBase<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, UserDetailsDTO, UserSearchDTO>, IUserDataService
+public class UserDataService : DataServiceBase<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, InitUserDTO, UserDetailsDTO, UserSearchDTO>, IUserDataService
 {
     public UserDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<User> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, UserDetailsDTO, UserSearchDTO>> logger)
+        ILogger<DataServiceBase<User, CreateUserDTO, UpdateUserDTO, DeleteUserDTO, InitUserDTO, UserDetailsDTO, UserSearchDTO>> logger)
         : base(unitOfWork, repository, serviceProvider, logger)
     {
     }

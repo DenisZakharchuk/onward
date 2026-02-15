@@ -14,7 +14,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class WarehousesController : DataController<Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO, DeleteWarehouseDTO, WarehouseDetailsDTO, WarehouseSearchDTO, IWarehouseDataService>
+public class WarehousesController : DataController<Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO, DeleteWarehouseDTO, InitWarehouseDTO, WarehouseDetailsDTO, WarehouseSearchDTO, IWarehouseDataService>
 {
     public WarehousesController(IWarehouseDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
         : base(service, logger)

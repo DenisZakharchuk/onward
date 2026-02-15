@@ -6,7 +6,7 @@ namespace Inventorization.Goods.Domain.DataServices;
 /// <summary>
 /// Data service interface for PurchaseOrder entity
 /// </summary>
-public interface IPurchaseOrderDataService : IDataService<PurchaseOrder, CreatePurchaseOrderDTO, UpdatePurchaseOrderDTO, DeletePurchaseOrderDTO, PurchaseOrderDetailsDTO, PurchaseOrderSearchDTO>
+public interface IPurchaseOrderDataService : IDataService<PurchaseOrder, CreatePurchaseOrderDTO, UpdatePurchaseOrderDTO, DeletePurchaseOrderDTO, InitPurchaseOrderDTO, PurchaseOrderDetailsDTO, PurchaseOrderSearchDTO>
 {
 }
 
@@ -14,13 +14,13 @@ public interface IPurchaseOrderDataService : IDataService<PurchaseOrder, CreateP
 /// Data service implementation for PurchaseOrder entity
 /// Inherits all CRUD operations from DataServiceBase
 /// </summary>
-public class PurchaseOrderDataService : DataServiceBase<PurchaseOrder, CreatePurchaseOrderDTO, UpdatePurchaseOrderDTO, DeletePurchaseOrderDTO, PurchaseOrderDetailsDTO, PurchaseOrderSearchDTO>, IPurchaseOrderDataService
+public class PurchaseOrderDataService : DataServiceBase<PurchaseOrder, CreatePurchaseOrderDTO, UpdatePurchaseOrderDTO, DeletePurchaseOrderDTO, InitPurchaseOrderDTO, PurchaseOrderDetailsDTO, PurchaseOrderSearchDTO>, IPurchaseOrderDataService
 {
     public PurchaseOrderDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<PurchaseOrder> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<PurchaseOrder, CreatePurchaseOrderDTO, UpdatePurchaseOrderDTO, DeletePurchaseOrderDTO, PurchaseOrderDetailsDTO, PurchaseOrderSearchDTO>> logger)
+        ILogger<DataServiceBase<PurchaseOrder, CreatePurchaseOrderDTO, UpdatePurchaseOrderDTO, DeletePurchaseOrderDTO, InitPurchaseOrderDTO, PurchaseOrderDetailsDTO, PurchaseOrderSearchDTO>> logger)
         : base(unitOfWork, repository, serviceProvider, logger)
     {
     }

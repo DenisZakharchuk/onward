@@ -19,7 +19,7 @@ namespace Inventorization.Commerce.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public partial class AddressesController : DataController<Address, CreateAddressDTO, UpdateAddressDTO, DeleteAddressDTO, AddressDetailsDTO, AddressSearchDTO, IAddressDataService>
+public partial class AddressesController : DataController<Address, CreateAddressDTO, UpdateAddressDTO, DeleteAddressDTO, InitAddressDTO, AddressDetailsDTO, AddressSearchDTO, IAddressDataService>
 {
     public AddressesController(
         IAddressDataService service,

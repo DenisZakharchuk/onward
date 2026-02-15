@@ -188,6 +188,7 @@ Inventorization.{Context}.DTO/
 │   ├── Create{Entity}DTO.cs
 │   ├── Update{Entity}DTO.cs
 │   ├── Delete{Entity}DTO.cs
+│   ├── Init{Entity}DTO.cs
 │   ├── {Entity}DetailsDTO.cs
 │   └── {Entity}SearchDTO.cs
 
@@ -223,6 +224,8 @@ Inventorization.{Context}.API/
 Inventorization.{Context}.API.Tests/
 └── (planned - test scaffolds)
 ```
+
+**Init DTO Rule**: `Init{Entity}DTO` is generated as a record and includes entity properties that are non-nullable in metadata (`required: true`), excluding infrastructure fields (`Id`, `CreatedAt`, `UpdatedAt`) and collection/non-FK navigation properties.
 
 **Note**: Currently only Entity and DTO generators are implemented. All files are fully regeneratable - metadata is the source of truth.
 

@@ -7,12 +7,6 @@ namespace InventorySystem.Business.Abstractions.Services;
 /// <summary>
 /// Product data service interface
 /// </summary>
-public interface IProductService : IDataService<
-    Product,
-    CreateProductDTO,
-    UpdateProductDTO,
-    Inventorization.Base.DTOs.DeleteDTO,
-    ProductDetailsDTO,
-    ProductSearchDTO>
+public interface IProductService : IDataService<Product, CreateProductDTO, UpdateProductDTO, Inventorization.Base.DTOs.DeleteDTO, InitProductDTO, ProductDetailsDTO, ProductSearchDTO>
 {
 }

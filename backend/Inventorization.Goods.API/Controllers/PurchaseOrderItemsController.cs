@@ -14,7 +14,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class PurchaseOrderItemsController : DataController<PurchaseOrderItem, CreatePurchaseOrderItemDTO, UpdatePurchaseOrderItemDTO, DeletePurchaseOrderItemDTO, PurchaseOrderItemDetailsDTO, PurchaseOrderItemSearchDTO, IPurchaseOrderItemDataService>
+public class PurchaseOrderItemsController : DataController<PurchaseOrderItem, CreatePurchaseOrderItemDTO, UpdatePurchaseOrderItemDTO, DeletePurchaseOrderItemDTO, InitPurchaseOrderItemDTO, PurchaseOrderItemDetailsDTO, PurchaseOrderItemSearchDTO, IPurchaseOrderItemDataService>
 {
     public PurchaseOrderItemsController(IPurchaseOrderItemDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
         : base(service, logger)

@@ -3475,13 +3475,13 @@ All API controllers must follow an abstract generic base class pattern to elimin
 - **Inventorization.[BoundedContextName].API.Base** - Shared abstract controllers (non-generic and generic)
   - `Controllers/ServiceController.cs` - Non-generic base extending `ControllerBase`
   - `Controllers/DataController.cs` - Generic CRUD base extending `ServiceController`
-  - `Controllers/SearchController.cs` - Generic search base extending `ServiceController`
+    - `Controllers/BaseQueryController.cs` - Generic ADT query base for complex search/projections
 - **Inventorization.[BoundedContextName].API** - Concrete controllers
   - References `...API.Base` project
   - All controllers inherit from generic base classes
   - Folder structure mirrors base controller types:
     - `Controllers/Data/` - Concrete controllers extending `DataController<...>`
-    - `Controllers/Search/` - Concrete controllers extending `SearchController<...>`
+        - `Controllers/` - `{Entity}sQueryController` extending `BaseQueryController<...>` for complex search
     - `Controllers/[CustomType]/` - Other specialized controllers as needed
 
 ### ServiceController
@@ -3503,7 +3503,7 @@ Abstract generic base class extending `ServiceController` providing all CRUD ope
 - `GET /{id}` → `GetByIdAsync(id)` - Returns `ServiceResult<TDetailsDTO>`
 - `POST /` → `CreateAsync(dto)` - Returns `ServiceResult<TDetailsDTO>` with 201 Created
 - `PUT /{id}` → `UpdateAsync(id, dto)` - Returns `ServiceResult<TDetailsDTO>`
-- `DELETE /{id}` → `DeleteAsync(id, dto)` - Returns `ServiceResult<TDetailsDTO>`
+- `DELETE /{id}` → `DeleteAsync(id)` - Returns `ServiceResult<bool>`
 
 Generic constraints:
 - `TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>`
@@ -3519,12 +3519,12 @@ public class ProductsController : DataController<Product, CreateProductDTO, Upda
 }
 ```
 
-### SearchController<TEntity, TDetailsDTO, TSearchDTO, TService>
-Abstract base class for complex search, filtering, and pagination:
-- `POST /search` → `SearchAsync(dto)` - Returns paginated results with `ServiceResult<PageDTO<TDetailsDTO>>`
-- Supports custom filters, projections, and sorting via `SearchDTO`
+### BaseQueryController<TEntity, TProjection>
+Abstract base class for complex ADT-based search, filtering, projection, and transformations:
+- `POST /api/{entity}/query` → `Query(SearchQuery)` - Returns paginated projection results
+- `POST /api/{entity}/query/transform` → `QueryWithTransformations(SearchQuery)` - Returns computed transformation results
 
-Used when search complexity exceeds simple `GetByIdAsync` queries. Inherited alongside or instead of `DataController` depending on entity requirements.
+Used for complex search scenarios through dedicated `{Entity}sQueryController` classes.
 
 ### Controller Design Principles
 1. **DRY (Don't Repeat Yourself)**: Eliminate repeated HTTP verb handling and response mapping
@@ -3534,7 +3534,7 @@ Used when search complexity exceeds simple `GetByIdAsync` queries. Inherited alo
 5. **Minimal Concrete Code**: Concrete controllers should be 3-5 lines (declaration + constructor only)
 
 ### HTTP Status Code Mapping
-- `200 OK`: `GetByIdAsync`, `UpdateAsync`, `SearchAsync` success
+- `200 OK`: `GetByIdAsync`, `UpdateAsync`, `DeleteAsync`, query endpoints success
 - `201 Created`: `CreateAsync` success
 - `400 Bad Request`: DTO validation failure or domain logic error
 - `404 Not Found`: Entity not found during Get/Update/Delete
@@ -3544,7 +3544,7 @@ Used when search complexity exceeds simple `GetByIdAsync` queries. Inherited alo
 1. Verify entity has corresponding DTOs in the DTO project (DetailsDTO, CreateDTO, UpdateDTO, DeleteDTO, SearchDTO)
 2. Verify `IDataService<...>` interface exists for the entity
 3. Register service in `Program.cs` dependency injection
-4. Create concrete controller class inheriting from `DataController<...>` or `SearchController<...>`
+4. Create concrete data controller inheriting from `DataController<...>` and (if needed) a separate `{Entity}sQueryController` inheriting from `BaseQueryController<...>`
 5. Define only the route attribute and constructor; inherit all HTTP methods
 6. Add controller tests covering inherited methods with mocked service
 7. Update Swagger documentation if custom attributes needed

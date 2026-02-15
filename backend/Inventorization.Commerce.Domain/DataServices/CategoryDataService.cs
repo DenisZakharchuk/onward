@@ -16,14 +16,14 @@ namespace Inventorization.Commerce.Domain.DataServices;
 /// <summary>
 /// Data service interface for Category
 /// </summary>
-public interface ICategoryDataService : IDataService<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>
+public interface ICategoryDataService : IDataService<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>
 {
 }
 
 /// <summary>
 /// Data service implementation for Category
 /// </summary>
-public class CategoryDataService : DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>, ICategoryDataService
+public class CategoryDataService : DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>, ICategoryDataService
 {
     public CategoryDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,

@@ -40,7 +40,7 @@ public interface IEntityCreator<TEntity, in TCreateDTO>
 /// </summary>
 public interface IEntityModifier<TEntity, in TUpdateDTO>
     where TEntity : class
-    where TUpdateDTO : class
+    where TUpdateDTO : BaseDTO
 {
     /// <summary>
     /// Updates entity with data from DTO
@@ -64,11 +64,12 @@ public interface ISearchQueryProvider<TEntity, in TSearchDTO>
 /// <summary>
 /// Generic data service interface
 /// </summary>
-public interface IDataService<TEntity, in TCreateDTO, in TUpdateDTO, in TDeleteDTO, TDetailsDTO, in TSearchDTO>
+public interface IDataService<TEntity, in TCreateDTO, in TUpdateDTO, in TDeleteDTO, in TInitDTO, TDetailsDTO, in TSearchDTO>
     where TEntity : class
     where TCreateDTO : class
-    where TUpdateDTO : class
-    where TDeleteDTO : class
+    where TUpdateDTO : BaseDTO
+    where TDeleteDTO : BaseDTO
+    where TInitDTO : InitDTO
     where TDetailsDTO : class
     where TSearchDTO : class
 {
@@ -76,6 +77,7 @@ public interface IDataService<TEntity, in TCreateDTO, in TUpdateDTO, in TDeleteD
     Task<ServiceResult<TDetailsDTO>> AddAsync(TCreateDTO createDto, CancellationToken cancellationToken = default);
     Task<ServiceResult<TDetailsDTO>> UpdateAsync(TUpdateDTO updateDto, CancellationToken cancellationToken = default);
     Task<ServiceResult<bool>> DeleteAsync(TDeleteDTO deleteDto, CancellationToken cancellationToken = default);
+    Task<ServiceResult<TDetailsDTO>> InitAsync(TInitDTO initDto, CancellationToken cancellationToken = default);
     Task<ServiceResult<PagedResult<TDetailsDTO>>> SearchAsync(TSearchDTO searchDto, CancellationToken cancellationToken = default);
 }
 

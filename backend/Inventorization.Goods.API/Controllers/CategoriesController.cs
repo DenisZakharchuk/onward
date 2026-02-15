@@ -15,7 +15,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [AllowAnonymous]
-public class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryDataService>
+public class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryDataService>
 {
     public CategoriesController(
         ICategoryDataService service,

@@ -15,7 +15,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class GoodSuppliersController : DataController<GoodSupplier, CreateGoodSupplierDTO, UpdateGoodSupplierDTO, DeleteGoodSupplierDTO, GoodSupplierDetailsDTO, GoodSupplierSearchDTO, IGoodSupplierDataService>
+public class GoodSuppliersController : DataController<GoodSupplier, CreateGoodSupplierDTO, UpdateGoodSupplierDTO, DeleteGoodSupplierDTO, InitGoodSupplierDTO, GoodSupplierDetailsDTO, GoodSupplierSearchDTO, IGoodSupplierDataService>
 {
     public GoodSuppliersController(IGoodSupplierDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
         : base(service, logger)

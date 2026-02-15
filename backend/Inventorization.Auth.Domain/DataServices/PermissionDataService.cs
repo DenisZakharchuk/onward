@@ -10,20 +10,20 @@ namespace Inventorization.Auth.Domain.DataServices;
 /// <summary>
 /// Data service interface for Permission CRUD and search operations
 /// </summary>
-public interface IPermissionDataService : IDataService<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, PermissionDetailsDTO, PermissionSearchDTO>
+public interface IPermissionDataService : IDataService<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, InitPermissionDTO, PermissionDetailsDTO, PermissionSearchDTO>
 {
 }
 
 /// <summary>
 /// Data service for Permission entities with full CRUD, search, and validation support
 /// </summary>
-public class PermissionDataService : DataServiceBase<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, PermissionDetailsDTO, PermissionSearchDTO>, IPermissionDataService
+public class PermissionDataService : DataServiceBase<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, InitPermissionDTO, PermissionDetailsDTO, PermissionSearchDTO>, IPermissionDataService
 {
     public PermissionDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Permission> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, PermissionDetailsDTO, PermissionSearchDTO>> logger)
+        ILogger<DataServiceBase<Permission, CreatePermissionDTO, UpdatePermissionDTO, DeletePermissionDTO, InitPermissionDTO, PermissionDetailsDTO, PermissionSearchDTO>> logger)
         : base(unitOfWork, repository, serviceProvider, logger)
     {
     }

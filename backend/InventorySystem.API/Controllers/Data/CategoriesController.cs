@@ -13,7 +13,7 @@ namespace InventorySystem.API.Controllers.Data;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryService>
+public class CategoriesController : DataController<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO, ICategoryService>
 {
     public CategoriesController(
         ICategoryService categoryService,

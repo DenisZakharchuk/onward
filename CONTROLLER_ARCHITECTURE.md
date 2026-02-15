@@ -9,8 +9,8 @@ Controllers must be built using a multi-level abstract base class hierarchy to m
 1. **ServiceController** - Non-generic abstract base (extends `ControllerBase`)
 2. **Generic Controllers** - Abstract generic classes (extend `ServiceController`)
    - `DataController<...>` - CRUD operations
-   - `SearchController<...>` - Complex search/filtering
-3. **Concrete Controllers** - Specific entity controllers (extend generic classes)
+3. **Query Controllers** - Dedicated controllers extending `BaseQueryController<TEntity, TProjection>` for complex ADT-based search
+4. **Concrete Controllers** - Specific entity controllers (extend generic classes)
 
 All abstract controllers are defined in `Inventorization.[BoundedContextName].API.Base` project. Concrete controllers are in `Inventorization.[BoundedContextName].API` project.
 
@@ -61,7 +61,7 @@ public abstract class ServiceController : ControllerBase
 
 **Purpose:** Provide standard Create, Read, Update, Delete operations for all entities.
 
-**Location:** `Inventorization.Base/Controllers/DataController.cs`
+**Location:** `InventorySystem.API.Base/Controllers/DataController.cs`
 
 **Class Signature:**
 ```csharp
@@ -69,9 +69,9 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
     : ServiceController
     where TEntity : class
     where TCreateDTO : class
-    where TUpdateDTO : class
-    where TDeleteDTO : class
-    where TDetailsDTO : class
+    where TUpdateDTO : BaseDTO
+    where TDeleteDTO : BaseDTO
+    where TDetailsDTO : BaseDTO
     where TSearchDTO : class
     where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>
 {
@@ -137,50 +137,30 @@ protected DataController(TService dataService, ILogger<ServiceController> logger
 - Error handling and logging
 - Request validation
 
-## SearchController: Abstract Generic Search Base Class
+## BaseQueryController: Query/Search Base Class
 
-**Purpose:** Provide advanced searching, filtering, pagination, and complex query capabilities.
+**Purpose:** Provide ADT-based querying with filtering, projection, sorting, pagination, and transformations.
 
-**Location:** `Inventorization.[BoundedContextName].API.Base/Controllers/SearchController.cs`
-
-**Class Signature:**
-```csharp
-public abstract class SearchController<TEntity, TDetailsDTO, TSearchDTO, TService>
-    : ServiceController
-    where TEntity : class
-    where TDetailsDTO : class
-    where TSearchDTO : class
-    where TService : IDataService<TEntity, ..., TSearchDTO>
-```
+**Location:** `InventorySystem.API.Base/Controllers/BaseQueryController.cs`
 
 **Class Signature:**
 ```csharp
-public abstract class SearchController<TEntity, TDetailsDTO, TSearchDTO, TService>
-    : ControllerBase
+public abstract class BaseQueryController<TEntity, TProjection> : ControllerBase
     where TEntity : class
-    where TDetailsDTO : class
-    where TSearchDTO : class
-    where TService : IDataService<TEntity, ?, ?, ?, TDetailsDTO, TSearchDTO>
+    where TProjection : class, new()
 ```
 
-**Public Virtual Methods to Implement:**
+**Public Virtual Methods:**
 
-1. **SearchAsync(TSearchDTO searchDto)** - Complex search with filtering and pagination
+1. **Query(SearchQuery query)**
    - HTTP Method: POST
-   - Route: `/{controller}/search`
-   - Body: TSearchDTO containing filters, sorting, and pagination parameters
-   - Returns: `ActionResult<ServiceResult<PagedResult<TDetailsDTO>>>`
-   - Success Status: 200 OK
-   - Error Statuses: 400 Bad Request, 500 Internal Server Error
+   - Route: `/api/{entity}/query`
+   - Returns: `ActionResult<ServiceResult<SearchResult<TProjection>>>`
 
-**Future Extensions:**
-- Export endpoints (CSV, Excel, PDF)
-- Advanced filtering with multiple criteria and operators
-- Custom multi-field sorting
-- Saved search queries and templates
-- Full-text search capabilities
-- Faceted search results
-- Aggregation queries
+2. **QueryWithTransformations(SearchQuery query)**
+   - HTTP Method: POST
+   - Route: `/api/{entity}/query/transform`
+   - Returns: `ActionResult<ServiceResult<SearchResult<TransformationResult>>>`
 
 ## Future Controller Base Classes (Roadmap)
 
@@ -206,22 +186,17 @@ All concrete controllers are located in `Inventorization.[BoundedContextName].AP
 ```
 Inventorization.[BoundedContextName].API/
 ├── Controllers/
-│   ├── Data/
-│   │   ├── ProductsController.cs          (extends DataController<...>)
-│   │   ├── CategoriesController.cs        (extends DataController<...>)
-│   │   └── ...
-│   ├── Search/
-│   │   ├── ProductsSearchController.cs    (extends SearchController<...>)
-│   │   ├── CategoriesSearchController.cs  (extends SearchController<...>)
-│   │   └── ...
-│   └── [OtherType]/
-│       └── ...
+│   ├── ProductsController.cs              (extends DataController<...>)
+│   ├── CategoriesController.cs            (extends DataController<...>)
+│   ├── ProductsQueryController.cs         (extends BaseQueryController<...>)
+│   ├── CategoriesQueryController.cs       (extends BaseQueryController<...>)
+│   └── ...
 ```
 
 **Naming Convention:**
-- **Data folder:** `[Entity]Controller.cs` for CRUD operations
-- **Search folder:** `[Entity]SearchController.cs` for complex search/filtering
-- **Other folders:** `[Entity][ControllerType]Controller.cs` for specialized controllers
+- `[Entity]sController.cs` for CRUD operations via `DataController<...>`
+- `[Entity]sQueryController.cs` for complex ADT query/search via `BaseQueryController<...>`
+- `[Entity][ControllerType]Controller.cs` for specialized controllers
 
 **Minimal DataController Implementation:**
 ```csharp
@@ -248,22 +223,18 @@ public class ProductsController : DataController<
 }
 ```
 
-**With Search Capabilities:**
+**With Query Capabilities (separate controller):**
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
-public class ProductsController : 
-    DataController<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, ProductDetailsDTO, ProductSearchDTO, IProductService>,
-    SearchController<Product, ProductDetailsDTO, ProductSearchDTO, IProductService>
+[Route("api/products/query")]
+public class ProductsQueryController : BaseQueryController<Product, ProductProjection>
 {
-    public ProductsController(
-        IProductService dataService,
-        ILogger<ProductsController> logger)
-        : base(dataService, logger)
+    public ProductsQueryController(
+        ISearchService<Product, ProductProjection> searchService,
+        ILogger<ProductsQueryController> logger)
+        : base(searchService, logger)
     {
     }
-    
-    // Both CRUD and Search methods automatically inherited!
 }
 ```
 
@@ -277,9 +248,10 @@ PUT    /api/{entity}/{id}              - Update entity
 DELETE /api/{entity}/{id}              - Delete entity
 ```
 
-**SearchController Endpoints:**
+**BaseQueryController Endpoints:**
 ```
-POST   /api/{entity}/search            - Search with filters and pagination
+POST   /api/{entity}/query             - ADT query with filters/projection/sort/pagination
+POST   /api/{entity}/query/transform   - Query with computed field transformations
 ```
 
 ## Response Format
@@ -341,7 +313,7 @@ POST   /api/{entity}/search            - Search with filters and pagination
 | Create    | 201     | 400              | -         | 500             |
 | Update    | 200     | 400              | 404       | 500             |
 | Delete    | 200     | -                | 404       | 500             |
-| Search    | 200     | 400              | -         | 500             |
+| Query     | 200     | 400              | -         | 500             |
 
 ## Adding New Entity Controllers
 

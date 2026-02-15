@@ -13,7 +13,7 @@ namespace InventorySystem.API.Controllers.Data;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ProductsController : DataController<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, ProductDetailsDTO, ProductSearchDTO, IProductService>
+public class ProductsController : DataController<Product, CreateProductDTO, UpdateProductDTO, DeleteProductDTO, InitProductDTO, ProductDetailsDTO, ProductSearchDTO, IProductService>
 {
     public ProductsController(
         IProductService productService,

@@ -14,7 +14,7 @@ namespace Inventorization.Goods.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class StockLocationsController : DataController<StockLocation, CreateStockLocationDTO, UpdateStockLocationDTO, DeleteStockLocationDTO, StockLocationDetailsDTO, StockLocationSearchDTO, IStockLocationDataService>
+public class StockLocationsController : DataController<StockLocation, CreateStockLocationDTO, UpdateStockLocationDTO, DeleteStockLocationDTO, InitStockLocationDTO, StockLocationDetailsDTO, StockLocationSearchDTO, IStockLocationDataService>
 {
     public StockLocationsController(IStockLocationDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
         : base(service, logger)

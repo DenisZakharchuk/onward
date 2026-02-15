@@ -106,6 +106,14 @@ public class StockMovementDataService : IStockMovementService
         }
     }
 
+    public async Task<ServiceResult<StockMovementDetailsDTO>> InitAsync(InitStockMovementDTO initDto, CancellationToken cancellationToken = default)
+    {
+        if (initDto == null)
+            return ServiceResult<StockMovementDetailsDTO>.Failure("Stock movement init data is required");
+
+        return await GetByIdAsync(initDto.Id, cancellationToken);
+    }
+
     public async Task<ServiceResult<PagedResult<StockMovementDetailsDTO>>> SearchAsync(StockMovementSearchDTO searchDto, CancellationToken cancellationToken = default)
     {
         try

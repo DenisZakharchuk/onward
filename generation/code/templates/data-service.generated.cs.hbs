@@ -16,14 +16,14 @@ namespace {{namespace}}.Domain.DataServices;
 /// <summary>
 /// Data service interface for {{entityName}}
 /// </summary>
-public interface I{{entityName}}DataService : IDataService<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO>
+public interface I{{entityName}}DataService : IDataService<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO>
 {
 }
 
 /// <summary>
 /// Data service implementation for {{entityName}}
 /// </summary>
-public class {{entityName}}DataService : DataServiceBase<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO>, I{{entityName}}DataService
+public class {{entityName}}DataService : DataServiceBase<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO>, I{{entityName}}DataService
 {
     public {{entityName}}DataService(
         {{baseNamespace}}.Base.DataAccess.IUnitOfWork unitOfWork,

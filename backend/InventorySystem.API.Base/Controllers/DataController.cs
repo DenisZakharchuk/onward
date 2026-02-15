@@ -13,18 +13,20 @@ namespace InventorySystem.API.Base.Controllers;
 /// <typeparam name="TCreateDTO">DTO for create operations</typeparam>
 /// <typeparam name="TUpdateDTO">DTO for update operations</typeparam>
 /// <typeparam name="TDeleteDTO">DTO for delete operations</typeparam>
+/// <typeparam name="TInitDTO">DTO for init operations</typeparam>
 /// <typeparam name="TDetailsDTO">DTO for responses</typeparam>
 /// <typeparam name="TSearchDTO">DTO for search/filtering operations</typeparam>
 /// <typeparam name="TService">Data service implementation</typeparam>
-public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO, TService>
+public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TService>
     : ServiceController
     where TEntity : class
     where TCreateDTO : class
-    where TUpdateDTO : class
-    where TDeleteDTO : class
+    where TUpdateDTO : BaseDTO
+    where TDeleteDTO : BaseDTO
+    where TInitDTO : InitDTO
     where TDetailsDTO : BaseDTO
     where TSearchDTO : class
-    where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>
+    where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
 {
     protected readonly TService DataService;
 
@@ -32,6 +34,42 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
         : base(logger)
     {
         DataService = dataService;
+    }
+
+    /// <summary>
+    /// Initialize entity data using minimal init payload.
+    /// HTTP POST /{controller}/init
+    /// </summary>
+    [HttpPost("init")]
+    public virtual async Task<ActionResult<ServiceResult<TDetailsDTO>>> InitAsync(
+        [FromBody] TInitDTO dto,
+        CancellationToken cancellationToken = default)
+    {
+        LogOperationStart(nameof(InitAsync), new { dto });
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ServiceResult<TDetailsDTO>.Failure("Invalid model state"));
+        }
+
+        try
+        {
+            var result = await DataService.InitAsync(dto, cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                LogOperationError(nameof(InitAsync), new Exception(result.Message));
+                return NotFound(result);
+            }
+
+            LogOperationSuccess(nameof(InitAsync));
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            LogOperationError(nameof(InitAsync), ex);
+            return StatusCode(500, ServiceResult<TDetailsDTO>.Failure($"Internal server error: {ex.Message}"));
+        }
     }
 
     /// <summary>
@@ -120,14 +158,9 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
         try
         {
             // Validate that the ID in the route matches the DTO
-            var dtoIdProperty = dto.GetType().GetProperty("Id");
-            if (dtoIdProperty != null)
+            if (dto.Id != id)
             {
-                var dtoId = (Guid?)dtoIdProperty.GetValue(dto);
-                if (dtoId != id)
-                {
-                    return BadRequest(ServiceResult<TDetailsDTO>.Failure("ID mismatch between route and DTO"));
-                }
+                return BadRequest(ServiceResult<TDetailsDTO>.Failure("ID mismatch between route and DTO"));
             }
 
             var result = await DataService.UpdateAsync(dto, cancellationToken);

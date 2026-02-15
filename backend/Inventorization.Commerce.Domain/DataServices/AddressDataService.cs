@@ -16,14 +16,14 @@ namespace Inventorization.Commerce.Domain.DataServices;
 /// <summary>
 /// Data service interface for Address
 /// </summary>
-public interface IAddressDataService : IDataService<Address, CreateAddressDTO, UpdateAddressDTO, DeleteAddressDTO, AddressDetailsDTO, AddressSearchDTO>
+public interface IAddressDataService : IDataService<Address, CreateAddressDTO, UpdateAddressDTO, DeleteAddressDTO, InitAddressDTO, AddressDetailsDTO, AddressSearchDTO>
 {
 }
 
 /// <summary>
 /// Data service implementation for Address
 /// </summary>
-public class AddressDataService : DataServiceBase<Address, CreateAddressDTO, UpdateAddressDTO, DeleteAddressDTO, AddressDetailsDTO, AddressSearchDTO>, IAddressDataService
+public class AddressDataService : DataServiceBase<Address, CreateAddressDTO, UpdateAddressDTO, DeleteAddressDTO, InitAddressDTO, AddressDetailsDTO, AddressSearchDTO>, IAddressDataService
 {
     public AddressDataService(
         Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,

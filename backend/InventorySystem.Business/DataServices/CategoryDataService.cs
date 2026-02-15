@@ -133,6 +133,14 @@ public class CategoryDataService : ICategoryService
         }
     }
 
+    public async Task<ServiceResult<CategoryDetailsDTO>> InitAsync(InitCategoryDTO initDto, CancellationToken cancellationToken = default)
+    {
+        if (initDto == null)
+            return ServiceResult<CategoryDetailsDTO>.Failure("Category init data is required");
+
+        return await GetByIdAsync(initDto.Id, cancellationToken);
+    }
+
     public async Task<ServiceResult<PagedResult<CategoryDetailsDTO>>> SearchAsync(CategorySearchDTO searchDto, CancellationToken cancellationToken = default)
     {
         try

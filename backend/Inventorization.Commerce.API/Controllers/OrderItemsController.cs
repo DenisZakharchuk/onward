@@ -19,7 +19,7 @@ namespace Inventorization.Commerce.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public partial class OrderItemsController : DataController<OrderItem, CreateOrderItemDTO, UpdateOrderItemDTO, DeleteOrderItemDTO, OrderItemDetailsDTO, OrderItemSearchDTO, IOrderItemDataService>
+public partial class OrderItemsController : DataController<OrderItem, CreateOrderItemDTO, UpdateOrderItemDTO, DeleteOrderItemDTO, InitOrderItemDTO, OrderItemDetailsDTO, OrderItemSearchDTO, IOrderItemDataService>
 {
     public OrderItemsController(
         IOrderItemDataService service,

@@ -7,12 +7,6 @@ namespace InventorySystem.Business.Abstractions.Services;
 /// <summary>
 /// Stock Movement data service interface
 /// </summary>
-public interface IStockMovementService : IDataService<
-    StockMovement,
-    CreateStockMovementDTO,
-    Inventorization.Base.DTOs.UpdateDTO,
-    Inventorization.Base.DTOs.DeleteDTO,
-    StockMovementDetailsDTO,
-    StockMovementSearchDTO>
+public interface IStockMovementService : IDataService<StockMovement, CreateStockMovementDTO, Inventorization.Base.DTOs.UpdateDTO, Inventorization.Base.DTOs.DeleteDTO, InitStockMovementDTO, StockMovementDetailsDTO, StockMovementSearchDTO>
 {
 }

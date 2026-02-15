@@ -15,7 +15,7 @@ namespace Inventorization.Auth.API.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 public class RolesController 
-    : DataController<Role, CreateRoleDTO, UpdateRoleDTO, DeleteRoleDTO, RoleDetailsDTO, RoleSearchDTO, IRoleDataService>
+    : DataController<Role, CreateRoleDTO, UpdateRoleDTO, DeleteRoleDTO, InitRoleDTO, RoleDetailsDTO, RoleSearchDTO, IRoleDataService>
 {
     public RolesController(IRoleDataService service, ILogger<ServiceController> logger) 
         : base(service, logger)
