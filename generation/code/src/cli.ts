@@ -10,6 +10,8 @@ import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
 import ora from 'ora';
 import { FileModelProvider } from './providers/FileModelProvider';
+import { FileBlueprintProvider } from './providers/FileBlueprintProvider';
+import { Blueprint } from './models/Blueprint';
 import { FileResultWriter } from './writers/FileResultWriter';
 import { Orchestrator } from './orchestrator/Orchestrator';
 import * as path from 'path';
@@ -18,9 +20,35 @@ interface GenerateOptions {
   outputDir: string;
   namespace?: string;
   baseNamespace?: string;
+  blueprint?: string;
   skipTests: boolean;
   dryRun: boolean;
   force: boolean;
+}
+
+function resolveBlueprintDtoLayout(blueprint: Blueprint): 'class' | 'record' {
+  return blueprint.boundedContext.dataService.dto;
+}
+
+function validateBlueprintCompatibility(
+  modelDtoLayout: 'class' | 'record' | undefined,
+  blueprint?: Blueprint
+): 'class' | 'record' | undefined {
+  if (!blueprint) {
+    return modelDtoLayout;
+  }
+
+  const blueprintDtoLayout = resolveBlueprintDtoLayout(blueprint);
+
+  if (modelDtoLayout && modelDtoLayout !== blueprintDtoLayout) {
+    throw new Error(
+      `Conflict detected for DTO layout: data model has '${modelDtoLayout}', ` +
+      `but blueprint requires '${blueprintDtoLayout}'.` +
+      `\nConflict policy is fail-on-conflict.`
+    );
+  }
+
+  return blueprintDtoLayout;
 }
 
 async function generateCommand(dataModelPath: string, options: GenerateOptions) {
@@ -29,12 +57,20 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
   try {
     // Create dependencies (composition root)
     const modelProvider = new FileModelProvider();
+    const blueprintProvider = new FileBlueprintProvider();
     const outputDir = path.resolve(options.outputDir);
     const resultWriter = new FileResultWriter(outputDir);
 
     // Load and validate data model
     spinner.text = 'Validating data model...';
     const model = await modelProvider.load(dataModelPath);
+
+    let blueprint: Blueprint | undefined;
+    if (options.blueprint) {
+      spinner.text = 'Validating blueprint...';
+      blueprint = await blueprintProvider.load(options.blueprint);
+      model.boundedContext.dtoLayout = validateBlueprintCompatibility(model.boundedContext.dtoLayout, blueprint);
+    }
 
     spinner.succeed(`Data model validated: ${chalk.green(model.boundedContext.name)}`);
 
@@ -50,6 +86,12 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
     console.log(`  BoundedContext: ${chalk.yellow(model.boundedContext.name)}`);
     console.log(`  Namespace: ${chalk.yellow(model.boundedContext.namespace)}`);
     console.log(`  Base Namespace: ${chalk.yellow(options.baseNamespace || 'Inventorization')}`);
+    if (options.blueprint) {
+      console.log(`  Blueprint: ${chalk.yellow(path.resolve(options.blueprint))}`);
+      console.log(`  DTO Layout (resolved): ${chalk.yellow(model.boundedContext.dtoLayout || 'class')}`);
+      console.log(`  Presentation Kind: ${chalk.yellow(blueprint?.boundedContext.presentation.kind || 'controllers')}`);
+      console.log(`  Data Layer: ${chalk.yellow(blueprint?.boundedContext.dataService.uow.dataLayer.kind || 'ef-core')}`);
+    }
     console.log(`  Output Directory: ${chalk.yellow(outputDir)}`);
     console.log(`  Skip Tests: ${chalk.yellow(options.skipTests)}`);
     console.log(`  Dry Run: ${chalk.yellow(options.dryRun)}`);
@@ -67,6 +109,7 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
       force: options.force,
       sourceFile: path.basename(dataModelPath),
       baseNamespace: options.baseNamespace,
+      blueprint,
     });
 
     await orchestrator.generate(model);
@@ -92,12 +135,13 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
   }
 }
 
-async function validateCommand(dataModelPath: string) {
+async function validateCommand(dataModelPath: string, blueprintPath?: string) {
   const spinner = ora('Validating data model...').start();
 
   try {
     // Create model provider (composition root)
     const modelProvider = new FileModelProvider();
+    const blueprintProvider = new FileBlueprintProvider();
 
     // Validate
     const result = await modelProvider.validate(dataModelPath);
@@ -109,6 +153,22 @@ async function validateCommand(dataModelPath: string) {
       process.exit(1);
     }
 
+    let blueprint: Blueprint | undefined;
+    if (blueprintPath) {
+      spinner.text = 'Validating blueprint...';
+      const blueprintResult = await blueprintProvider.validate(blueprintPath);
+
+      if (!blueprintResult.valid) {
+        spinner.fail('Validation failed');
+        console.error(chalk.red('\n❌ Errors:'));
+        blueprintResult.errors.forEach((error) => console.error(chalk.red(`  - ${error}`)));
+        process.exit(1);
+      }
+
+      blueprint = blueprintResult.blueprint;
+      validateBlueprintCompatibility(result.model?.boundedContext.dtoLayout, blueprint);
+    }
+
     const model = result.model!;
     spinner.succeed(chalk.green('✅ Data model is valid!'));
 
@@ -118,6 +178,12 @@ async function validateCommand(dataModelPath: string) {
     console.log(`  Entities: ${chalk.yellow(model.entities.length)}`);
     console.log(`  Relationships: ${chalk.yellow(model.relationships?.length || 0)}`);
     console.log(`  Enums: ${chalk.yellow(model.enums?.length || 0)}`);
+    if (blueprintPath && blueprint) {
+      console.log(`  Blueprint: ${chalk.yellow(path.resolve(blueprintPath))}`);
+      console.log(`  DTO Layout (resolved): ${chalk.yellow(resolveBlueprintDtoLayout(blueprint))}`);
+      console.log(`  Presentation: ${chalk.yellow(blueprint.boundedContext.presentation.kind)}`);
+      console.log(`  Data Layer: ${chalk.yellow(blueprint.boundedContext.dataService.uow.dataLayer.kind)}`);
+    }
 
     console.log(chalk.blue('\nEntities:'));
     model.entities.forEach((entity) => {
@@ -169,6 +235,10 @@ yargs(hideBin(process.argv))
           describe: 'Base namespace prefix (default: Inventorization)',
           type: 'string',
         })
+        .option('blueprint', {
+          describe: 'Path to blueprint JSON file for architecture/layout strategy',
+          type: 'string',
+        })
         .option('skip-tests', {
           describe: 'Skip test project generation',
           type: 'boolean',
@@ -198,10 +268,13 @@ yargs(hideBin(process.argv))
         describe: 'Path to data model JSON file',
         type: 'string',
         demandOption: true,
+      }).option('blueprint', {
+        describe: 'Path to blueprint JSON file for architecture/layout strategy',
+        type: 'string',
       });
     },
     (argv) => {
-      validateCommand(argv['data-model'] as string);
+      validateCommand(argv['data-model'] as string, argv.blueprint as string | undefined);
     }
   )
   .demandCommand(1, 'You must specify a command')

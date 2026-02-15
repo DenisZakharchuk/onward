@@ -39,28 +39,28 @@ export class ProjectGenerator extends BaseGenerator {
     const templateDir = path.join(__dirname, '../../templates');
     
     this.metaCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'meta.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/meta.hbs', 'meta.csproj.hbs'])
     );
     this.commonCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'common.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/common.hbs', 'common.csproj.hbs'])
     );
     this.dtoCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'dto.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/dto.hbs', 'dto.csproj.hbs'])
     );
     this.domainCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'domain.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/domain.hbs', 'domain.csproj.hbs'])
     );
     this.apiCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'api.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/api.hbs', 'api.csproj.hbs'])
     );
     this.testsCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'tests.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/tests.hbs', 'tests.csproj.hbs'])
     );
     this.diCsprojTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'di.csproj.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/di.hbs', 'di.csproj.hbs'])
     );
     this.globalUsingsTemplate = Handlebars.compile(
-      await FileManager.readFile(path.join(templateDir, 'global-usings.hbs'))
+      await this.loadTemplateWithFallback(templateDir, ['project/global-usings.hbs', 'global-usings.hbs'])
     );
 
     // Generate all projects
@@ -229,5 +229,19 @@ export class ProjectGenerator extends BaseGenerator {
       default:
         return '';
     }
+  }
+
+  private async loadTemplateWithFallback(
+    templateDir: string,
+    candidates: readonly string[]
+  ): Promise<string> {
+    for (const candidate of candidates) {
+      const fullPath = path.join(templateDir, candidate);
+      if (await FileManager.fileExists(fullPath)) {
+        return FileManager.readFile(fullPath);
+      }
+    }
+
+    throw new Error(`Template not found. Tried: ${candidates.join(', ')}`);
   }
 }

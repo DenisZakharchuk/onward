@@ -15,6 +15,7 @@ export interface BoundedContext {
   description?: string;
   databaseName?: string;
   apiPort?: number;
+  dtoLayout?: 'class' | 'record';
 }
 
 export interface EnumDefinition {

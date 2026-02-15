@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "boundedContext": {
+    "common": {
+      "enums": "SmartEnums"
+    },
+    "presentation": {
+      "kind": "controllers"
+    },
+    "dataService": {
+      "dto": "class",
+      "uow": {
+        "dataLayer": {
+          "kind": "ado-net",
+          "provider": "npgsql",
+          "dialect": "pgsql"
+        },
+        "entities": "immutable"
+      },
+      "domain": "default"
+    }
+  }
+}

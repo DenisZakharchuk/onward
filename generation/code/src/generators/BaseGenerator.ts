@@ -82,24 +82,46 @@ export abstract class BaseGenerator implements IGenerator {
   /**
    * Load a template file
    */
-  protected async loadTemplate(templateName: string): Promise<HandlebarsTemplateDelegate> {
-    if (this.templates.has(templateName)) {
-      return this.templates.get(templateName)!;
+  protected async loadTemplate(templateName: string | readonly string[]): Promise<HandlebarsTemplateDelegate> {
+    const resolvedTemplateName = await this.resolveTemplateName(templateName);
+
+    if (this.templates.has(resolvedTemplateName)) {
+      return this.templates.get(resolvedTemplateName)!;
     }
 
-    const templatePath = path.join(this.templateDir, templateName);
+    const templatePath = path.join(this.templateDir, resolvedTemplateName);
     const templateContent = await FileManager.readFile(templatePath);
     const template = Handlebars.compile(templateContent);
 
-    this.templates.set(templateName, template);
+    this.templates.set(resolvedTemplateName, template);
     return template;
+  }
+
+  /**
+   * Resolve a template name from one or more candidates.
+   * Useful during migration from flat templates to subdirectory templates.
+   */
+  protected async resolveTemplateName(templateName: string | readonly string[]): Promise<string> {
+    const candidates = Array.isArray(templateName) ? [...templateName] : [templateName];
+
+    for (const candidate of candidates) {
+      const candidatePath = path.join(this.templateDir, candidate);
+      const exists = await FileManager.fileExists(candidatePath);
+      if (exists) {
+        return candidate;
+      }
+    }
+
+    throw new Error(
+      `Template not found. Tried: ${candidates.join(', ')}`
+    );
   }
 
   /**
    * Render a template with context (automatically injects generation metadata)
    */
   protected async renderTemplate(
-    templateName: string,
+    templateName: string | readonly string[],
     context: unknown
   ): Promise<string> {
     const template = await this.loadTemplate(templateName);
@@ -120,7 +142,7 @@ export abstract class BaseGenerator implements IGenerator {
    * Write rendered template to file
    */
   protected async writeRenderedTemplate(
-    templateName: string,
+    templateName: string | readonly string[],
     context: unknown,
     outputPath: string,
     overwrite: boolean = false

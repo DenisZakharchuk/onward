@@ -44,7 +44,12 @@ export class ValidatorGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(validatorsDir, `Create${entity.name}Validator.cs`);
-    await this.writeRenderedTemplate('create-validator.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/validator/create.generated.cs.hbs', 'create-validator.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateUpdateValidator(
@@ -65,7 +70,12 @@ export class ValidatorGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(validatorsDir, `Update${entity.name}Validator.cs`);
-    await this.writeRenderedTemplate('update-validator.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/validator/update.generated.cs.hbs', 'update-validator.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private getValidationRules(entity: Entity, dtoType: 'create' | 'update'): string[] {

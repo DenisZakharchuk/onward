@@ -40,7 +40,7 @@ export class SearchQueryValidatorGenerator extends BaseGenerator {
 
     const filePath = path.join(validatorsDir, `${entity.name}SearchQueryValidator.cs`);
     await this.writeRenderedTemplate(
-      'search-query-validator.generated.cs.hbs',
+      ['query/search/query-validator.generated.cs.hbs', 'search-query-validator.generated.cs.hbs'],
       context,
       filePath,
       true // Overwrite allowed

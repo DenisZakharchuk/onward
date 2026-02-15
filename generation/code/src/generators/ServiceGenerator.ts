@@ -37,6 +37,11 @@ export class ServiceGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(servicesDir, `${entity.name}DataService.cs`);
-    await this.writeRenderedTemplate('data-service.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/data-service/generated.cs.hbs', 'data-service.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 }

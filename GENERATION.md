@@ -32,13 +32,42 @@ const orchestrator = new Orchestrator(resultWriter, options);
 
 // Dependencies flow down
 const model = await modelProvider.load(source);
-await orchestrator.generate(model, outputDir);
+await orchestrator.generate(model);
 ```
 
 **Key Abstractions**:
 - `IModelProvider` - Loads and validates data models (currently from files, future: API, DB)
 - `IResultWriter` - Writes generated output (currently file system, future: HTTP, memory)
-- `IGenerator` - Generates specific code type (entities, DTOs, etc.)
+- `IGenerator` - Transitional legacy generator contract
+- `GeneratorADT` contracts - ADT-oriented generator taxonomy (`deterministic | variant | composite | optional`)
+
+### Implementation Status (Feb 2026)
+
+Current implementation uses ADT-compatible orchestration with legacy compatibility:
+
+- Orchestrator executes through `GeneratorRegistry` using explicit phase/dependency descriptors
+- Existing generators run via `LegacyGeneratorAdapter`
+- `IGenerator` remains supported but is transitional for new design work
+
+DTO generation supports bounded layout variants:
+
+- `boundedContext.dtoLayout = "class" | "record"`
+- Default layout is `"class"`
+- Selection is performed by `DtoVariantSelector`
+
+Blueprint-driven architecture selection is implemented end-to-end:
+
+- CLI supports `--blueprint` for `validate` and `generate`
+- Blueprint schema is validated via `blueprint.schema.json`
+- Execution slots are resolved from blueprint (`presentation`, `dataLayer`, `dto`)
+- Conflict policy is **fail-on-conflict** (for example, `data-model.dtoLayout` vs blueprint DTO style)
+- `grpc` presentation is currently defined in schema but intentionally **not implemented** (fail-fast)
+
+Template migration status:
+
+- Generators now use **subdirectory-first template lookup**
+- Legacy flat template names remain as fallback compatibility path
+- New structure is active across DTO, API, DI, Domain, Query, Metadata, Project, and Tests
 
 ## Philosophy
 
@@ -71,6 +100,131 @@ Metadata (JSON) → Template Context → Handlebars → Generated Code (.cs)
 - Clear separation of logic and templates
 - Readable by non-developers
 - Supports custom helpers for complex transformations
+
+### Template Subdirectory Convention
+
+Blueprint variants are organized by **concern + variant**. Current canonical structure under `generation/code/templates/`:
+
+```text
+templates/
+  api/
+    controllers/
+      crud.generated.cs.hbs
+      query.generated.cs.hbs
+    endpoints/
+      minimal.generated.cs.hbs
+    program/
+      controllers.generated.cs.hbs
+      controllers.ado-net.generated.cs.hbs
+      minimal.generated.cs.hbs
+      minimal.ado-net.generated.cs.hbs
+
+  common/
+    enum.hbs
+
+  di/
+    service-collection/
+      ef-core.generated.cs.hbs
+      ado-net.generated.cs.hbs
+
+  domain/
+    abstractions/
+      creator.generated.cs.hbs
+      modifier.generated.cs.hbs
+      mapper.generated.cs.hbs
+      search-provider.generated.cs.hbs
+    configuration/
+      entity.generated.cs.hbs
+      junction.generated.cs.hbs
+    data-service/
+      generated.cs.hbs
+    db-context/
+      ef-core.generated.cs.hbs
+    entity/
+      regular.hbs
+      junction.hbs
+    repository/
+      ado-net.generated.cs.hbs
+    unit-of-work/
+      ef-core.generated.cs.hbs
+      ado-net.generated.cs.hbs
+    validator/
+      create.generated.cs.hbs
+      update.generated.cs.hbs
+
+  dto/
+    class/
+      create-dto.hbs
+      update-dto.hbs
+      delete-dto.hbs
+      init-dto.hbs
+      details-dto.hbs
+      search-dto.hbs
+    record/
+      create-dto.hbs
+      update-dto.hbs
+      delete-dto.hbs
+      init-dto.hbs
+      details-dto.hbs
+      search-dto.hbs
+    projection.generated.cs.hbs
+
+  metadata/
+    data-model.generated.cs.hbs
+    relationships.generated.cs.hbs
+
+  project/
+    csproj/
+      api.hbs
+      common.hbs
+      di.hbs
+      domain.hbs
+      dto.hbs
+      meta.hbs
+      tests.hbs
+    global-usings.hbs
+
+  query/
+    projection/
+      mapper-interface.generated.cs.hbs
+      mapper.generated.cs.hbs
+    search/
+      fields.generated.cs.hbs
+      query-validator.generated.cs.hbs
+      service.generated.cs.hbs
+    query-builder.generated.cs.hbs
+
+  tests/
+    data-service.generated.cs.hbs
+    validator.generated.cs.hbs
+    mapper.generated.cs.hbs
+    search-service.generated.cs.hbs
+    instantiation.generated.cs.hbs
+```
+
+Rules:
+
+- First level = bounded concern (`dto`, `domain`, `api`, `di`, `project`, `tests`, `metadata`, `common`, `query`).
+- Second level = variant slot where applicable (`class|record`, `ef-core|ado-net`, `controllers|minimal-api`).
+- Keep filenames stable across variants where semantics match (for example both DTO styles use `create-dto.hbs`).
+- Use `.generated` in template filename only when output file is generation-owned and expected to be overwritten.
+
+Migration guidance:
+
+- Move templates incrementally by concern.
+- Use new path first, legacy flat filename second during transition.
+- Once migration is complete and old files are removed, keep fallback only if backward compatibility is required.
+
+Example fallback call pattern:
+
+```typescript
+await this.writeRenderedTemplate(
+  ['domain/validator/create.generated.cs.hbs', 'create-validator.generated.cs.hbs'],
+  context,
+  filePath,
+  true
+);
+```
 
 ### Generation Stamp
 
@@ -209,21 +363,22 @@ export abstract class BaseGenerator {
   protected templateDir: string;
   
   // Template loading and caching
-  protected async loadTemplate(name: string): Promise<HandlebarsTemplateDelegate>;
+  protected async loadTemplate(name: string | readonly string[]): Promise<HandlebarsTemplateDelegate>;
+  protected async resolveTemplateName(name: string | readonly string[]): Promise<string>;
   
   // Rendering
-  protected async renderTemplate(name: string, context: unknown): Promise<string>;
+  protected async renderTemplate(name: string | readonly string[], context: unknown): Promise<string>;
   
   // Write to file
   protected async writeRenderedTemplate(
-    templateName: string,
+    templateName: string | readonly string[],
     context: unknown,
     outputPath: string,
     overwrite: boolean
   ): Promise<void>;
   
   // Each generator implements this
-  abstract generate(model: DataModel, outputDir: string): Promise<void>;
+  abstract generate(model: DataModel): Promise<void>;
 }
 ```
 
@@ -231,7 +386,7 @@ export abstract class BaseGenerator {
 
 ```typescript
 export class EntityGenerator extends BaseGenerator {
-  async generate(model: DataModel, outputDir: string): Promise<void> {
+  async generate(model: DataModel): Promise<void> {
     // 1. Extract context-specific info
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
@@ -247,7 +402,12 @@ export class EntityGenerator extends BaseGenerator {
       
       // 5. Render and write (overwrite allowed)
       const filePath = path.join(entitiesDir, `${entity.name}.cs`);
-      await this.writeRenderedTemplate('entity.cs.hbs', context, filePath, true);
+      await this.writeRenderedTemplate(
+        ['domain/entity/regular.hbs', 'entity.cs.hbs'],
+        context,
+        filePath,
+        true
+      );
     }
   }
   
@@ -1438,7 +1598,7 @@ Generators must run in dependency order to avoid missing references:
 ```
 Phase 1: Metadata (DataModelMetadata, DataModelRelationships)
    ↓
-Phase 2: Common Project (Enums, Value Objects)
+Phase 2: Common Project (Enums)
    ↓
 Phase 3: Entities (Domain Models)
    ↓
@@ -1448,7 +1608,7 @@ Phase 5: EntityConfigurations (EF Core mappings)
    ↓
 Phase 6: DbContext + UnitOfWork
    ↓
-Phase 7: Abstractions (Creators, Modifiers, Mappers, SearchProviders)
+Phase 7: Abstractions + ADT Query Infrastructure
    ↓
 Phase 8: Validators
    ↓
@@ -1456,27 +1616,32 @@ Phase 9: DataServices
    ↓
 Phase 10: Controllers
    ↓
-Phase 11: Tests
+Phase 11: DI + API Program
    ↓
-Phase 12: Project files + DI registrations
+Phase 12: Tests (optional via `skipTests`)
+  ↓
+Phase 13: Project files
 ```
 
 ### Orchestrator Pattern
 
 ```typescript
 export class Orchestrator {
-  async generate(model: DataModel, outputDir: string): Promise<void> {
-    // Initialize generators in order
-    const generators = [
-      new EntityGenerator(),
-      new DtoGenerator(),
-      new ConfigurationGenerator(),
-      // ... etc in dependency order
-    ];
-    
-    // Run each generator sequentially
-    for (const generator of generators) {
-      await generator.generate(model, outputDir);
+  async generate(model: DataModel): Promise<void> {
+    const enabledSlots = new Set<string>(['core']);
+    enabledSlots.add(this.resolvePresentationKind());
+    enabledSlots.add(this.resolveDataLayerKind());
+    if (!this.options.skipTests) enabledSlots.add('tests');
+
+    if (this.resolvePresentationKind() === 'grpc') {
+      throw new Error('Blueprint presentation kind "grpc" is not implemented yet.');
+    }
+
+    // Resolve validated execution plan (phase + dependency order)
+    const executionPlan = this.registry.resolveExecutionPlan(model, context, enabledSlots);
+
+    for (const registration of executionPlan) {
+      await registration.generator.generate(model, context);
     }
   }
 }
@@ -1484,7 +1649,84 @@ export class Orchestrator {
 
 ---
 
+## Blueprint Schema (Comprehensive)
+
+Blueprint defines architecture/layout strategy independently from `data-model` business shape.
+
+### CLI Integration
+
+- `generate <data-model> --blueprint <path>`
+- `validate <data-model> --blueprint <path>`
+
+### Ownership & Conflict Policy
+
+- Blueprint is authoritative for architecture slots (`presentation`, `dataService.uow.dataLayer`, `dataService.dto`).
+- If `data-model` sets `boundedContext.dtoLayout` and blueprint sets different DTO style, generation fails (fail-on-conflict).
+
+### Blueprint Shape (v1)
+
+```json
+{
+  "version": "1",
+  "boundedContext": {
+    "common": { "enums": "SmartEnums" },
+    "presentation": { "kind": "controllers" },
+    "dataService": {
+      "dto": "class",
+      "uow": {
+        "dataLayer": {
+          "kind": "ef-core",
+          "provider": "npgsql"
+        },
+        "entities": "immutable"
+      },
+      "domain": "default"
+    }
+  }
+}
+```
+
+### Supported Values
+
+- `presentation.kind`: `controllers | minimal-api | grpc`
+  - `grpc` is schema-valid but currently fail-fast in orchestrator.
+- `dataService.dto`: `class | record`
+- `dataService.uow.dataLayer.kind`: `ef-core | ado-net`
+- `dataService.uow.dataLayer.provider`: `npgsql`
+- `dataService.uow.dataLayer.dialect`: `pgsql` (ADO.NET path)
+- `dataService.domain`: `default`
+
+### Execution Slot Resolution
+
+Orchestrator maps blueprint to slot activation:
+
+- Presentation slot: `controllers` or `minimal-api`
+- Data layer slot: `ef-core` or `ado-net`
+- Tests slot: enabled unless `skipTests`
+
+Selected slots determine which generators are included in execution plan via registry filtering.
+
+---
+
 ## Metadata Schema Patterns
+
+### BoundedContext Definition (DTO Layout Variant)
+
+```json
+{
+  "boundedContext": {
+    "name": "Commerce",
+    "namespace": "Inventorization.Commerce",
+    "apiPort": 5042,
+    "dtoLayout": "class"
+  }
+}
+```
+
+`dtoLayout` is optional. Supported values:
+
+- `"class"` (default)
+- `"record"`
 
 ### Entity Definition
 
@@ -1546,16 +1788,16 @@ private validateBusinessRules(model: DataModel): void {
 ### Adding a New Generator
 
 1. **Create generator class** extending `BaseGenerator`
-2. **Create Handlebars template(s)** in `templates/`
-3. **Add to Orchestrator** in dependency order
-4. **Update types** if new context structure needed
+2. **Create Handlebars template(s)** under the appropriate concern/variant subdirectory in `templates/`
+3. **Use fallback template arrays** (`new-path`, then optional `legacy-flat`) during migration windows
+4. **Register in Orchestrator registry** with phase/dependencies/optionalSlot
+5. **Update types** if new context structure needed
 
 ```typescript
 // src/generators/ValidatorGenerator.ts
 export class ValidatorGenerator extends BaseGenerator {
-  async generate(model: DataModel, outputDir: string): Promise<void> {
+  async generate(model: DataModel): Promise<void> {
     const validatorsDir = path.join(
-      outputDir, 
       `Inventorization.${model.boundedContext.name}.Domain/Validators`
     );
     
@@ -1573,7 +1815,7 @@ export class ValidatorGenerator extends BaseGenerator {
     };
     
     await this.writeRenderedTemplate(
-      'create-validator.generated.cs.hbs',
+      ['domain/validator/create.generated.cs.hbs', 'create-validator.generated.cs.hbs'],
       context,
       path.join(dir, `Create${entity.name}Validator.generated.cs`),
       true
@@ -1656,10 +1898,9 @@ Test each generator independently:
 describe('EntityGenerator', () => {
   it('should generate immutable entity with validation', async () => {
     const model: DataModel = { /* test data */ };
-    const outputDir = '/tmp/test';
     
     const generator = new EntityGenerator();
-    await generator.generate(model, outputDir);
+    await generator.generate(model);
     
     const content = await fs.readFile('/tmp/test/.../Product.generated.cs', 'utf-8');
     expect(content).toContain('public partial class Product');
@@ -1684,14 +1925,15 @@ dotnet build /tmp/test/Inventorization.Test.Domain
 
 ### Template Caching
 
-Templates are cached after first load:
+Templates are cached by **resolved template name** after first load:
 
 ```typescript
-protected async loadTemplate(name: string): Promise<HandlebarsTemplateDelegate> {
-  if (this.templates.has(name)) {
-    return this.templates.get(name)!;  // Cache hit
+protected async loadTemplate(name: string | readonly string[]): Promise<HandlebarsTemplateDelegate> {
+  const resolved = await this.resolveTemplateName(name);
+  if (this.templates.has(resolved)) {
+    return this.templates.get(resolved)!;  // Cache hit
   }
-  // Load and cache
+  // Load resolved template and cache by resolved key
 }
 ```
 
@@ -1702,8 +1944,8 @@ Currently sequential; could parallelize independent generators:
 ```typescript
 // Future optimization
 await Promise.all([
-  entityGenerator.generate(model, outputDir),
-  dtoGenerator.generate(model, outputDir),
+  entityGenerator.generate(model),
+  dtoGenerator.generate(model),
   // Only if no dependencies between them
 ]);
 ```
@@ -1739,7 +1981,7 @@ if (!entityExists) {
 
 ```typescript
 try {
-  await generator.generate(model, outputDir);
+  await generator.generate(model);
 } catch (error) {
   console.error(chalk.red('Generation failed:'), error.message);
   process.exit(1);

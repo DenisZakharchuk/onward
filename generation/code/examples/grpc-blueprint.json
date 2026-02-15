@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "boundedContext": {
+    "common": {
+      "enums": "SmartEnums"
+    },
+    "presentation": {
+      "kind": "grpc"
+    },
+    "dataService": {
+      "dto": "class",
+      "uow": {
+        "dataLayer": {
+          "kind": "ef-core",
+          "provider": "npgsql"
+        },
+        "entities": "immutable"
+      },
+      "domain": "default"
+    }
+  }
+}

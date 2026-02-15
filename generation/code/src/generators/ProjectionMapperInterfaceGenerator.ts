@@ -29,7 +29,7 @@ export class ProjectionMapperInterfaceGenerator extends BaseGenerator {
 
       const filePath = path.join(mappersDir, `I${entity.name}ProjectionMapper.cs`);
       await this.writeRenderedTemplate(
-        'projection-mapper-interface.generated.cs.hbs',
+        ['query/projection/mapper-interface.generated.cs.hbs', 'projection-mapper-interface.generated.cs.hbs'],
         context,
         filePath,
         true // Overwrite allowed

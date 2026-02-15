@@ -1,264 +1,40 @@
 /**
- * DTO generator - creates all 6 DTO types per entity
+ * DTO generator - ADT variant orchestrator (class/record)
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property } from '../models/DataModel';
-import { TypeMapper } from '../utils/TypeMapper';
-import * as path from 'path';
+import { DataModel } from '../models/DataModel';
+import { ClassDtoVariantGenerator } from './dto/ClassDtoVariantGenerator';
+import { DtoVariantSelector } from './dto/DtoVariantSelector';
+import { IDTOVariantGenerator } from './dto/DtoVariantContracts';
+import { RecordDtoVariantGenerator } from './dto/RecordDtoVariantGenerator';
 
 export class DtoGenerator extends BaseGenerator {
+  private readonly selector: DtoVariantSelector;
+  private readonly variants: readonly IDTOVariantGenerator[];
+
+  constructor() {
+    super();
+    this.selector = new DtoVariantSelector();
+    this.variants = [
+      new ClassDtoVariantGenerator(),
+      new RecordDtoVariantGenerator(),
+    ];
+    this.selector.init(this.variants);
+  }
+
   async generate(model: DataModel): Promise<void> {
-    const contextName = model.boundedContext.name;
-    const namespace = model.boundedContext.namespace;
-    const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
-
-    const dtoProjectPath = `${baseNamespace}.${contextName}.DTO`;
-
-    for (const entity of model.entities) {
-      await this.generateEntityDtos(entity, dtoProjectPath, namespace, baseNamespace);
-    }
-  }
-
-  private async generateEntityDtos(
-    entity: Entity,
-    dtoProjectPath: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const entityDir = path.join(dtoProjectPath, 'DTO', entity.name);
-
-    // Generate Create DTO
-    await this.generateCreateDto(entity, entityDir, namespace, baseNamespace);
-
-    // Generate Update DTO
-    await this.generateUpdateDto(entity, entityDir, namespace, baseNamespace);
-
-    // Generate Delete DTO
-    await this.generateDeleteDto(entity, entityDir, namespace, baseNamespace);
-
-    // Generate Init DTO
-    await this.generateInitDto(entity, entityDir, namespace, baseNamespace);
-
-    // Generate Details DTO
-    await this.generateDetailsDto(entity, entityDir, namespace, baseNamespace);
-
-    // Generate Search DTO
-    await this.generateSearchDto(entity, entityDir, namespace, baseNamespace);
-  }
-
-  private async generateCreateDto(
-    entity: Entity,
-    entityDir: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const properties = this.getDtoProperties(entity, 'create');
-
-    const context = {
-      baseNamespace,
-      namespace,
-      entityName: entity.name,
-      properties: properties.map((p) => this.propertyToDto(p, 'create')),
-      hasEnums: this.hasEnumProperties(entity, 'create'),
-    };
-
-    const filePath = path.join(entityDir, `Create${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('create-dto.cs.hbs', context, filePath, true);
-  }
-
-  private async generateUpdateDto(
-    entity: Entity,
-    entityDir: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const properties = this.getDtoProperties(entity, 'update');
-
-    const context = {
-      baseNamespace,
-      namespace,
-      entityName: entity.name,
-      properties: properties.map((p) => this.propertyToDto(p, 'update')),
-      hasEnums: this.hasEnumProperties(entity, 'update'),
-    };
-
-    const filePath = path.join(entityDir, `Update${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('update-dto.cs.hbs', context, filePath, true);
-  }
-
-  private async generateDeleteDto(
-    entity: Entity,
-    entityDir: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const context = {
-      baseNamespace,
-      namespace,
-      entityName: entity.name,
-    };
-
-    const filePath = path.join(entityDir, `Delete${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('delete-dto.cs.hbs', context, filePath, true);
-  }
-
-  private async generateInitDto(
-    entity: Entity,
-    entityDir: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const properties = this.getInitDtoProperties(entity);
-
-    const context = {
-      baseNamespace,
-      namespace,
-      entityName: entity.name,
-      properties: properties.map((p) => ({
-        name: p.name,
-        type: TypeMapper.toCSharpType(p.enumType || p.type, false),
-        description: p.description,
-      })),
-      hasEnums: properties.some((p) => p.enumType !== undefined),
-    };
-
-    const filePath = path.join(entityDir, `Init${entity.name}DTO.cs`);
-    await this.writeRenderedTemplate('init-dto.cs.hbs', context, filePath, true);
-  }
-
-  private getInitDtoProperties(entity: Entity): Property[] {
-    return entity.properties.filter((p) => {
-      if (!p.required) {
-        return false;
-      }
-
-      if (p.name === 'Id' || p.name === 'CreatedAt' || p.name === 'UpdatedAt') {
-        return false;
-      }
-
-      if (p.isCollection) {
-        return false;
-      }
-
-      if (p.navigationProperty && !p.isForeignKey) {
-        return false;
-      }
-
-      if (p.includeInDto && p.includeInDto.create === false) {
-        return false;
-      }
-
-      return true;
-    });
-  }
-
-  private async generateDetailsDto(
-    entity: Entity,
-    entityDir: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const properties = this.getDtoProperties(entity, 'details');
-
-    const context = {
-      baseNamespace,
-      namespace,
-      entityName: entity.name,
-      properties: properties.map((p) => this.propertyToDto(p, 'details')),
-      hasEnums: this.hasEnumProperties(entity, 'details'),
-      navigationProperties: [],
-      nestedDtos: [],
-    };
-
-    const filePath = path.join(entityDir, `${entity.name}DetailsDTO.cs`);
-    await this.writeRenderedTemplate('details-dto.cs.hbs', context, filePath, true);
-  }
-
-  private async generateSearchDto(
-    entity: Entity,
-    entityDir: string,
-    namespace: string,
-    baseNamespace: string
-  ): Promise<void> {
-    const properties = this.getDtoProperties(entity, 'search');
-
-    const context = {
-      baseNamespace,
-      namespace,
-      entityName: entity.name,
-      properties: properties.map((p) => this.propertyToDto(p, 'search', true)), // All nullable for search
-      hasEnums: this.hasEnumProperties(entity, 'search'),
-    };
-
-    const filePath = path.join(entityDir, `${entity.name}SearchDTO.cs`);
-    await this.writeRenderedTemplate('search-dto.cs.hbs', context, filePath, true);
-  }
-
-  private getDtoProperties(
-    entity: Entity,
-    dtoType: 'create' | 'update' | 'details' | 'search'
-  ): Property[] {
-    return entity.properties.filter((p) => {
-      // Exclude collection navigation properties from Create/Update
-      if ((dtoType === 'create' || dtoType === 'update') && p.isCollection) {
-        return false;
-      }
-
-      // Exclude single navigation properties (non-FK) from Create/Update
-      // But keep FK properties even if they have navigationProperty defined
-      if ((dtoType === 'create' || dtoType === 'update') && p.navigationProperty && !p.isForeignKey) {
-        return false;
-      }
-
-      // Check includeInDto settings
-      if (p.includeInDto) {
-        return p.includeInDto[dtoType] !== false;
-      }
-
-      return true;
-    });
-  }
-
-  private propertyToDto(property: Property, dtoType: string, forceNullable: boolean = false): {
-    name: string;
-    type: string;
-    description?: string;
-    defaultValue: string | null;
-    validationAttributes: string[];
-  } {
-    const isNullable = forceNullable || !property.required;
-    const type = TypeMapper.toCSharpType(property.enumType || property.type, isNullable);
-
-    return {
-      name: property.name,
-      type,
-      description: property.description,
-      defaultValue: this.getDefaultValue(property, dtoType),
-      validationAttributes: dtoType !== 'details' ? TypeMapper.getValidationAttributes(property) : [],
-    };
-  }
-
-  private getDefaultValue(property: Property, dtoType: string): string | null {
-    // Only set defaults for Create DTOs
-    if (dtoType !== 'create') {
-      return null;
+    if (!this.metadata) {
+      throw new Error('Generation metadata is not set for DtoGenerator.');
     }
 
-    if (property.defaultValue) {
-      return String(property.defaultValue);
+    if (!this.writer) {
+      throw new Error('Result writer is not set for DtoGenerator.');
     }
 
-    // String properties default to default! for non-nullable reference types
-    if (property.type === 'string' && property.required) {
-      return 'default!';
-    }
-
-    return null;
-  }
-
-  private hasEnumProperties(entity: Entity, dtoType: 'create' | 'update' | 'details' | 'search'): boolean {
-    const properties = this.getDtoProperties(entity, dtoType);
-    return properties.some((p) => p.enumType !== undefined);
+    const selected = this.selector.select(model);
+    selected.setMetadata(this.metadata);
+    selected.setWriter(this.writer);
+    await selected.generate(model);
   }
 }

@@ -40,7 +40,12 @@ export class DataAccessGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(dbContextsDir, `${contextName}DbContext.cs`);
-    await this.writeRenderedTemplate('db-context.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/db-context/ef-core.generated.cs.hbs', 'db-context.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateUnitOfWork(
@@ -59,7 +64,12 @@ export class DataAccessGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(dataAccessDir, `${contextName}UnitOfWork.cs`);
-    await this.writeRenderedTemplate('unit-of-work.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/unit-of-work/ef-core.generated.cs.hbs', 'unit-of-work.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private pluralize(word: string): string {

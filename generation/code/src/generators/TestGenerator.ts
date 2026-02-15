@@ -62,28 +62,28 @@ export class TestGenerator extends BaseGenerator {
       };
 
       await this.writeRenderedTemplate(
-        'tests-data-service.generated.cs.hbs',
+        ['tests/data-service.generated.cs.hbs', 'tests-data-service.generated.cs.hbs'],
         context,
         path.join(servicesDir, `${entity.name}DataServiceTests.cs`),
         true
       );
 
       await this.writeRenderedTemplate(
-        'tests-validator.generated.cs.hbs',
+        ['tests/validator.generated.cs.hbs', 'tests-validator.generated.cs.hbs'],
         context,
         path.join(validatorsDir, `${entity.name}ValidatorTests.cs`),
         true
       );
 
       await this.writeRenderedTemplate(
-        'tests-mapper.generated.cs.hbs',
+        ['tests/mapper.generated.cs.hbs', 'tests-mapper.generated.cs.hbs'],
         context,
         path.join(mappersDir, `${entity.name}MapperTests.cs`),
         true
       );
 
       await this.writeRenderedTemplate(
-        'tests-search-service.generated.cs.hbs',
+        ['tests/search-service.generated.cs.hbs', 'tests-search-service.generated.cs.hbs'],
         context,
         path.join(servicesDir, `${entity.name}SearchServiceTests.cs`),
         true
@@ -103,7 +103,7 @@ export class TestGenerator extends BaseGenerator {
     };
 
     await this.writeRenderedTemplate(
-      'tests-instantiation.generated.cs.hbs',
+      ['tests/instantiation.generated.cs.hbs', 'tests-instantiation.generated.cs.hbs'],
       instantiationContext,
       path.join(instantiationDir, `${contextName}InstantiationTests.cs`),
       true

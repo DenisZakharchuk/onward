@@ -7,6 +7,9 @@ import { IResultWriter } from './IResultWriter';
 
 export interface IGenerator {
   /**
+   * @deprecated Transitional lifecycle API. Prefer ADT-based generator contracts from GeneratorADT.
+   */
+  /**
    * Set generation metadata (called before generation)
    * @param metadata - Generation metadata
    */

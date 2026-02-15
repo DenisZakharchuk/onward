@@ -30,7 +30,7 @@ export class SearchServiceGenerator extends BaseGenerator {
 
       const filePath = path.join(servicesDir, `${entity.name}SearchService.cs`);
       await this.writeRenderedTemplate(
-        'search-service.generated.cs.hbs',
+        ['query/search/service.generated.cs.hbs', 'search-service.generated.cs.hbs'],
         context,
         filePath,
         true // Overwrite allowed

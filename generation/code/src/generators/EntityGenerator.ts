@@ -61,7 +61,12 @@ export class EntityGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);
-    await this.writeRenderedTemplate('entity.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/entity/regular.hbs', 'entity.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateJunctionEntity(
@@ -102,7 +107,12 @@ export class EntityGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);
-    await this.writeRenderedTemplate('junction-entity.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/entity/junction.hbs', 'junction-entity.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private getConstructorParams(properties: Property[]): Array<{

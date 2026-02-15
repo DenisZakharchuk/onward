@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://inventorization.com/schemas/blueprint.schema.json",
+  "title": "BoundedContext Blueprint",
+  "description": "Architecture/layout blueprint for bounded context generation strategies",
+  "type": "object",
+  "required": ["version", "boundedContext"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["1"]
+    },
+    "boundedContext": {
+      "type": "object",
+      "required": ["presentation", "dataService"],
+      "properties": {
+        "common": {
+          "type": "object",
+          "properties": {
+            "enums": {
+              "type": "string",
+              "enum": ["SmartEnums"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "presentation": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["controllers", "minimal-api", "grpc"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "dataService": {
+          "type": "object",
+          "required": ["dto", "uow", "domain"],
+          "properties": {
+            "dto": {
+              "type": "string",
+              "enum": ["class", "record"]
+            },
+            "domain": {
+              "type": "string",
+              "enum": ["default"]
+            },
+            "uow": {
+              "type": "object",
+              "required": ["dataLayer"],
+              "properties": {
+                "entities": {
+                  "type": "string",
+                  "enum": ["immutable"]
+                },
+                "dataLayer": {
+                  "type": "object",
+                  "required": ["kind", "provider"],
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": ["ef-core", "ado-net"]
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": ["npgsql"]
+                    },
+                    "dialect": {
+                      "type": "string",
+                      "enum": ["pgsql"]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

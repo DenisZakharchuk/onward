@@ -51,7 +51,12 @@ export class AbstractionGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(creatorsDir, `${entity.name}Creator.cs`);
-    await this.writeRenderedTemplate('creator.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/abstractions/creator.generated.cs.hbs', 'creator.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateModifier(
@@ -87,7 +92,12 @@ export class AbstractionGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(modifiersDir, `${entity.name}Modifier.cs`);
-    await this.writeRenderedTemplate('modifier.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/abstractions/modifier.generated.cs.hbs', 'modifier.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateMapper(
@@ -116,7 +126,12 @@ export class AbstractionGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(mappersDir, `${entity.name}Mapper.cs`);
-    await this.writeRenderedTemplate('mapper.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/abstractions/mapper.generated.cs.hbs', 'mapper.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateSearchProvider(
@@ -162,7 +177,12 @@ export class AbstractionGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(searchProvidersDir, `${entity.name}SearchProvider.cs`);
-    await this.writeRenderedTemplate('search-provider.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/abstractions/search-provider.generated.cs.hbs', 'search-provider.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private getConstructorArgs(entity: Entity): Array<{

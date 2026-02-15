@@ -60,7 +60,7 @@ export class SearchFieldsGenerator extends BaseGenerator {
 
     const filePath = path.join(adtsDir, `${entity.name}SearchFields.cs`);
     await this.writeRenderedTemplate(
-      'search-fields.generated.cs.hbs',
+      ['query/search/fields.generated.cs.hbs', 'search-fields.generated.cs.hbs'],
       context,
       filePath,
       true // Overwrite allowed

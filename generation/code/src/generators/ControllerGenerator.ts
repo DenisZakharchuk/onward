@@ -40,7 +40,12 @@ export class ControllerGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(controllersDir, `${pluralEntityName}Controller.cs`);
-    await this.writeRenderedTemplate('controller.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['api/controllers/crud.generated.cs.hbs', 'controller.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private pluralize(word: string): string {

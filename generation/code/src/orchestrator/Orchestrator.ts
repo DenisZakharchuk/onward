@@ -4,8 +4,9 @@
 
 import chalk from 'chalk';
 import { DataModel, GenerationMetadata } from '../models/DataModel';
-import { IGenerator } from '../abstractions/IGenerator';
+import { Blueprint } from '../models/Blueprint';
 import { IResultWriter } from '../abstractions/IResultWriter';
+import { IGeneratorExecutionContext } from '../abstractions/GeneratorADT';
 import { DtoGenerator } from '../generators/DtoGenerator';
 import { EntityGenerator } from '../generators/EntityGenerator';
 import { ConfigurationGenerator } from '../generators/ConfigurationGenerator';
@@ -30,6 +31,14 @@ import * as path from 'path';
 import { DiGenerator } from '../generators/DiGenerator';
 import { ApiProgramGenerator } from '../generators/ApiProgramGenerator';
 import { TestGenerator } from '../generators/TestGenerator';
+import { GeneratorRegistry } from './GeneratorRegistry';
+import { LegacyGeneratorAdapter, LegacyGeneratorDescriptor } from './LegacyGeneratorAdapter';
+import { MinimalApiProgramGenerator } from '../generators/MinimalApiProgramGenerator';
+import { MinimalApiEndpointsGenerator } from '../generators/MinimalApiEndpointsGenerator';
+import { AdoNetDataAccessGenerator } from '../generators/AdoNetDataAccessGenerator';
+import { AdoNetDiGenerator } from '../generators/AdoNetDiGenerator';
+import { AdoNetApiProgramGenerator } from '../generators/AdoNetApiProgramGenerator';
+import { AdoNetMinimalApiProgramGenerator } from '../generators/AdoNetMinimalApiProgramGenerator';
 
 export interface OrchestratorOptions {
   skipTests?: boolean;
@@ -37,15 +46,17 @@ export interface OrchestratorOptions {
   force?: boolean;
   sourceFile?: string;  // Name of source data model file
   baseNamespace?: string;  // Base namespace prefix (default: 'Inventorization')
+  blueprint?: Blueprint;
 }
 
 export class Orchestrator {
   private options: OrchestratorOptions;
-  private generators: IGenerator[] = [];
+  private registry: GeneratorRegistry;
   private writer: IResultWriter;
 
   constructor(writer: IResultWriter, options: OrchestratorOptions = {}) {
     this.writer = writer;
+    this.registry = new GeneratorRegistry();
     this.options = {
       ...options,
       skipTests: options.skipTests ?? false,
@@ -73,18 +84,22 @@ export class Orchestrator {
       baseNamespace: this.options.baseNamespace!,
     };
 
+    const context: IGeneratorExecutionContext = {
+      metadata,
+      writer: this.writer,
+      blueprint: this.options.blueprint,
+      options: {
+        dryRun: this.options.dryRun!,
+        force: this.options.force!,
+        skipTests: this.options.skipTests!,
+      },
+    };
+
     console.log(chalk.gray(`  Generation Stamp: ${generationStamp}`));
     console.log(chalk.gray(`  Generated At: ${generatedAt}`));
     console.log(chalk.gray(`  Source: ${sourceFile}\n`));
 
-    // Initialize generators (in dependency order)
     this.initializeGenerators();
-
-    // Inject metadata and writer into all generators
-    for (const generator of this.generators) {
-      generator.setMetadata(metadata);
-      generator.setWriter(this.writer);
-    }
 
     // Create project directories
     const projectPaths = this.getProjectPaths(model);
@@ -93,13 +108,28 @@ export class Orchestrator {
       await this.ensureDirectories(projectPaths, model);
     }
 
-    // Run generators in order
-    for (const generator of this.generators) {
-      const generatorName = generator.constructor.name;
+    const enabledSlots = new Set<string>(['core']);
+    const presentationKind = this.resolvePresentationKind();
+    const dataLayerKind = this.resolveDataLayerKind();
+    enabledSlots.add(presentationKind);
+    enabledSlots.add(dataLayerKind);
+
+    if (presentationKind === 'grpc') {
+      throw new Error('Blueprint presentation kind "grpc" is not implemented yet.');
+    }
+
+    if (!this.options.skipTests) {
+      enabledSlots.add('tests');
+    }
+
+    const executionPlan = this.registry.resolveExecutionPlan(model, context, enabledSlots);
+
+    for (const registration of executionPlan) {
+      const generatorName = registration.generator.id;
       console.log(chalk.cyan(`  ⚙️  Running ${generatorName}...`));
 
       if (!this.options.dryRun) {
-        await generator.generate(model);
+        await registration.generator.generate(model, context);
       } else {
         console.log(chalk.gray(`     (dry run - skipped)`));
       }
@@ -113,56 +143,329 @@ export class Orchestrator {
    * Initialize all generators in dependency order
    */
   private initializeGenerators(): void {
-    // Order matters - dependencies first
-    this.generators = [
-      // Phase 1: Metadata (first - needed by other generators)
-      new MetadataGenerator(),
+    this.registry = new GeneratorRegistry();
 
-      // Phase 2: Enums and base types
-      new EnumGenerator(),
+    this.registerLegacyGenerator(new MetadataGenerator(), {
+      id: 'MetadataGenerator',
+      domain: 'metadata',
+      phase: 1,
+      ambiguity: 'composite',
+      provides: ['metadata'],
+    });
 
-      // Phase 3: Entities
-      new EntityGenerator(),
+    this.registerLegacyGenerator(new EnumGenerator(), {
+      id: 'EnumGenerator',
+      domain: 'metadata',
+      phase: 2,
+      ambiguity: 'optional',
+      requires: ['metadata'],
+      provides: ['enums'],
+      applies: (model) => this.hasEnums(model),
+    });
 
-      // Phase 4: DTOs
-      new DtoGenerator(),
-      new ProjectionDtoGenerator(),
+    this.registerLegacyGenerator(new EntityGenerator(), {
+      id: 'EntityGenerator',
+      domain: 'domain',
+      phase: 3,
+      ambiguity: 'variant',
+      requires: ['metadata'],
+      provides: ['entities'],
+      dependsOn: ['MetadataGenerator'],
+    });
 
-      // Phase 5: Configurations
-      new ConfigurationGenerator(),
+    this.registerLegacyGenerator(new DtoGenerator(), {
+      id: 'DtoGenerator',
+      domain: 'dto',
+      phase: 4,
+      ambiguity: 'composite',
+      requires: ['entities'],
+      provides: ['dto'],
+      dependsOn: ['EntityGenerator'],
+    });
 
-      // Phase 6: DbContext and UnitOfWork
-      new DataAccessGenerator(),
+    this.registerLegacyGenerator(new ProjectionDtoGenerator(), {
+      id: 'ProjectionDtoGenerator',
+      domain: 'dto',
+      phase: 4,
+      ambiguity: 'variant',
+      requires: ['entities'],
+      provides: ['projection-dto'],
+      dependsOn: ['EntityGenerator'],
+    });
 
-      // Phase 7: Abstractions (Creators, Modifiers, Mappers, SearchProviders, ADT Query Infrastructure)
-      new AbstractionGenerator(),
-      new QueryBuilderGenerator(),
-      new ProjectionMapperInterfaceGenerator(),
-      new ProjectionMapperGenerator(),
-      new SearchFieldsGenerator(),
+    this.registerLegacyGenerator(new ConfigurationGenerator(), {
+      id: 'ConfigurationGenerator',
+      domain: 'domain',
+      phase: 5,
+      ambiguity: 'variant',
+      requires: ['entities'],
+      provides: ['entity-configurations'],
+      dependsOn: ['EntityGenerator'],
+      optionalSlot: 'ef-core',
+    });
 
-      // Phase 8: Validators
-      new ValidatorGenerator(),
-      new SearchQueryValidatorGenerator(),
+    this.registerLegacyGenerator(new DataAccessGenerator(), {
+      id: 'DataAccessGenerator',
+      domain: 'domain',
+      phase: 6,
+      ambiguity: 'composite',
+      requires: ['entity-configurations'],
+      provides: ['data-access'],
+      dependsOn: ['ConfigurationGenerator'],
+      optionalSlot: 'ef-core',
+    });
 
-      // Phase 9: DataServices
-      new ServiceGenerator(),
-      new SearchServiceGenerator(),
+    this.registerLegacyGenerator(new AdoNetDataAccessGenerator(), {
+      id: 'AdoNetDataAccessGenerator',
+      domain: 'domain',
+      phase: 6,
+      ambiguity: 'composite',
+      requires: ['entities'],
+      provides: ['data-access'],
+      dependsOn: ['EntityGenerator'],
+      optionalSlot: 'ado-net',
+    });
 
-      // Phase 10: Controllers
-      new ControllerGenerator(),
-      new QueryControllerGenerator(),
+    this.registerLegacyGenerator(new AbstractionGenerator(), {
+      id: 'AbstractionGenerator',
+      domain: 'domain',
+      phase: 7,
+      ambiguity: 'composite',
+      requires: ['entities'],
+      provides: ['abstractions'],
+      dependsOn: ['EntityGenerator'],
+    });
 
-      // Phase 11: DI and API Program
-      new DiGenerator(),
-      new ApiProgramGenerator(),
+    this.registerLegacyGenerator(new QueryBuilderGenerator(), {
+      id: 'QueryBuilderGenerator',
+      domain: 'query',
+      phase: 7,
+      ambiguity: 'deterministic',
+      requires: ['entities'],
+      provides: ['query-builder'],
+      dependsOn: ['EntityGenerator'],
+    });
 
-      // Phase 12: Tests (if not skipped)
-      ...(this.options.skipTests ? [] : [new TestGenerator()]),
+    this.registerLegacyGenerator(new ProjectionMapperInterfaceGenerator(), {
+      id: 'ProjectionMapperInterfaceGenerator',
+      domain: 'query',
+      phase: 7,
+      ambiguity: 'deterministic',
+      requires: ['projection-dto'],
+      provides: ['projection-mapper-interface'],
+      dependsOn: ['ProjectionDtoGenerator'],
+    });
 
-      // Phase 13: Project files, GlobalUsings.cs, and .csproj files (LAST)
-      new ProjectGenerator(),
-    ];
+    this.registerLegacyGenerator(new ProjectionMapperGenerator(), {
+      id: 'ProjectionMapperGenerator',
+      domain: 'query',
+      phase: 7,
+      ambiguity: 'variant',
+      requires: ['projection-mapper-interface'],
+      provides: ['projection-mapper'],
+      dependsOn: ['ProjectionMapperInterfaceGenerator'],
+    });
+
+    this.registerLegacyGenerator(new SearchFieldsGenerator(), {
+      id: 'SearchFieldsGenerator',
+      domain: 'query',
+      phase: 7,
+      ambiguity: 'variant',
+      requires: ['entities'],
+      provides: ['search-fields'],
+      dependsOn: ['EntityGenerator'],
+    });
+
+    this.registerLegacyGenerator(new ValidatorGenerator(), {
+      id: 'ValidatorGenerator',
+      domain: 'domain',
+      phase: 8,
+      ambiguity: 'composite',
+      requires: ['dto'],
+      provides: ['validators'],
+      dependsOn: ['DtoGenerator'],
+    });
+
+    this.registerLegacyGenerator(new SearchQueryValidatorGenerator(), {
+      id: 'SearchQueryValidatorGenerator',
+      domain: 'query',
+      phase: 8,
+      ambiguity: 'deterministic',
+      requires: ['search-fields'],
+      provides: ['search-query-validator'],
+      dependsOn: ['SearchFieldsGenerator'],
+    });
+
+    this.registerLegacyGenerator(new ServiceGenerator(), {
+      id: 'ServiceGenerator',
+      domain: 'domain',
+      phase: 9,
+      ambiguity: 'deterministic',
+      requires: ['validators'],
+      provides: ['services'],
+      dependsOn: ['ValidatorGenerator'],
+    });
+
+    this.registerLegacyGenerator(new SearchServiceGenerator(), {
+      id: 'SearchServiceGenerator',
+      domain: 'query',
+      phase: 9,
+      ambiguity: 'deterministic',
+      requires: ['query-builder', 'projection-mapper'],
+      provides: ['search-services'],
+      dependsOn: ['QueryBuilderGenerator', 'ProjectionMapperGenerator'],
+    });
+
+    this.registerLegacyGenerator(new ControllerGenerator(), {
+      id: 'ControllerGenerator',
+      domain: 'api',
+      phase: 10,
+      ambiguity: 'deterministic',
+      requires: ['services'],
+      provides: ['controllers'],
+      dependsOn: ['ServiceGenerator'],
+      optionalSlot: 'controllers',
+    });
+
+    this.registerLegacyGenerator(new QueryControllerGenerator(), {
+      id: 'QueryControllerGenerator',
+      domain: 'api',
+      phase: 10,
+      ambiguity: 'variant',
+      requires: ['search-services'],
+      provides: ['query-controllers'],
+      dependsOn: ['SearchServiceGenerator'],
+      optionalSlot: 'controllers',
+    });
+
+    this.registerLegacyGenerator(new MinimalApiEndpointsGenerator(), {
+      id: 'MinimalApiEndpointsGenerator',
+      domain: 'api',
+      phase: 10,
+      ambiguity: 'deterministic',
+      requires: ['services'],
+      provides: ['minimal-api-endpoints'],
+      dependsOn: ['ServiceGenerator'],
+      optionalSlot: 'minimal-api',
+    });
+
+    this.registerLegacyGenerator(new DiGenerator(), {
+      id: 'DiGenerator',
+      domain: 'infra',
+      phase: 11,
+      ambiguity: 'composite',
+      requires: ['services', 'search-services'],
+      provides: ['di'],
+      dependsOn: ['ServiceGenerator', 'SearchServiceGenerator'],
+      optionalSlot: 'ef-core',
+    });
+
+    this.registerLegacyGenerator(new AdoNetDiGenerator(), {
+      id: 'AdoNetDiGenerator',
+      domain: 'infra',
+      phase: 11,
+      ambiguity: 'composite',
+      requires: ['services', 'search-services', 'data-access'],
+      provides: ['di'],
+      dependsOn: ['ServiceGenerator', 'SearchServiceGenerator', 'AdoNetDataAccessGenerator'],
+      optionalSlot: 'ado-net',
+    });
+
+    this.registerLegacyGenerator(new ApiProgramGenerator(), {
+      id: 'ApiProgramGenerator',
+      domain: 'infra',
+      phase: 11,
+      ambiguity: 'deterministic',
+      requires: ['di'],
+      provides: ['api-program'],
+      dependsOn: ['DiGenerator'],
+      optionalSlot: 'controllers',
+      applies: () => this.resolveDataLayerKind() === 'ef-core',
+    });
+
+    this.registerLegacyGenerator(new AdoNetApiProgramGenerator(), {
+      id: 'AdoNetApiProgramGenerator',
+      domain: 'infra',
+      phase: 11,
+      ambiguity: 'deterministic',
+      requires: ['di'],
+      provides: ['api-program'],
+      dependsOn: ['AdoNetDiGenerator'],
+      optionalSlot: 'controllers',
+      applies: () => this.resolveDataLayerKind() === 'ado-net',
+    });
+
+    this.registerLegacyGenerator(new MinimalApiProgramGenerator(), {
+      id: 'MinimalApiProgramGenerator',
+      domain: 'infra',
+      phase: 11,
+      ambiguity: 'deterministic',
+      requires: ['di', 'minimal-api-endpoints'],
+      provides: ['api-program'],
+      dependsOn: ['DiGenerator', 'MinimalApiEndpointsGenerator'],
+      optionalSlot: 'minimal-api',
+      applies: () => this.resolveDataLayerKind() === 'ef-core',
+    });
+
+    this.registerLegacyGenerator(new AdoNetMinimalApiProgramGenerator(), {
+      id: 'AdoNetMinimalApiProgramGenerator',
+      domain: 'infra',
+      phase: 11,
+      ambiguity: 'deterministic',
+      requires: ['di', 'minimal-api-endpoints'],
+      provides: ['api-program'],
+      dependsOn: ['AdoNetDiGenerator', 'MinimalApiEndpointsGenerator'],
+      optionalSlot: 'minimal-api',
+      applies: () => this.resolveDataLayerKind() === 'ado-net',
+    });
+
+    this.registerLegacyGenerator(new TestGenerator(), {
+      id: 'TestGenerator',
+      domain: 'tests',
+      phase: 12,
+      ambiguity: 'optional',
+      requires: ['services', 'validators', 'projection-mapper'],
+      provides: ['tests'],
+      dependsOn: ['ServiceGenerator', 'ValidatorGenerator', 'ProjectionMapperGenerator'],
+      optionalSlot: 'tests',
+    });
+
+    this.registerLegacyGenerator(new ProjectGenerator(), {
+      id: 'ProjectGenerator',
+      domain: 'project',
+      phase: 13,
+      ambiguity: 'variant',
+      requires: ['di', 'api-program'],
+      provides: ['projects'],
+    });
+  }
+
+  private registerLegacyGenerator(
+    generator: {
+      setMetadata(metadata: GenerationMetadata): void;
+      setWriter(writer: IResultWriter): void;
+      generate(model: DataModel): Promise<void>;
+    },
+    descriptor: LegacyGeneratorDescriptor & {
+      dependsOn?: readonly string[];
+      optionalSlot?: string;
+    }
+  ): void {
+    const { dependsOn, optionalSlot, ...adapterDescriptor } = descriptor;
+
+    this.registry.register({
+      generator: new LegacyGeneratorAdapter(generator, adapterDescriptor),
+      dependsOn,
+      optionalSlot,
+    });
+  }
+
+  private resolvePresentationKind(): 'controllers' | 'minimal-api' | 'grpc' {
+    return this.options.blueprint?.boundedContext.presentation.kind || 'controllers';
+  }
+
+  private resolveDataLayerKind(): 'ef-core' | 'ado-net' {
+    return this.options.blueprint?.boundedContext.dataService.uow.dataLayer.kind || 'ef-core';
   }
 
   /**

@@ -33,6 +33,12 @@
           "description": "API port number (e.g., 5022)",
           "minimum": 1024,
           "maximum": 65535
+        },
+        "dtoLayout": {
+          "type": "string",
+          "description": "DTO generation layout strategy",
+          "enum": ["class", "record"],
+          "default": "class"
         }
       }
     },

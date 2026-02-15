@@ -47,6 +47,11 @@ export class DiGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(extensionsDir, `${contextName}ServiceCollectionExtensions.cs`);
-    await this.writeRenderedTemplate('di-service-collection.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['di/service-collection/ef-core.generated.cs.hbs', 'di-service-collection.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 }

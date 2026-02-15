@@ -29,7 +29,7 @@ export class QueryBuilderGenerator extends BaseGenerator {
 
       const filePath = path.join(dataAccessDir, `${entity.name}QueryBuilder.cs`);
       await this.writeRenderedTemplate(
-        'query-builder.generated.cs.hbs',
+        ['query/query-builder.generated.cs.hbs', 'query-builder.generated.cs.hbs'],
         context,
         filePath,
         true // Overwrite allowed

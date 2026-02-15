@@ -48,7 +48,12 @@ export class ConfigurationGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);
-    await this.writeRenderedTemplate('entity-configuration.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/configuration/entity.generated.cs.hbs', 'entity-configuration.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateJunctionConfiguration(
@@ -82,7 +87,12 @@ export class ConfigurationGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);
-    await this.writeRenderedTemplate('junction-configuration.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['domain/configuration/junction.generated.cs.hbs', 'junction-configuration.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private getPropertyConfigurations(properties: Property[]): string[] {

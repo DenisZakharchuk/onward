@@ -21,6 +21,11 @@ export class ApiProgramGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(apiProjectPath, 'Program.cs');
-    await this.writeRenderedTemplate('api-program.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['api/program/controllers.generated.cs.hbs', 'api-program.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 }

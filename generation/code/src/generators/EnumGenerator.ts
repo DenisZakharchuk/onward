@@ -43,6 +43,11 @@ export class EnumGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(enumsDir, `${enumDef.name}.cs`);
-    await this.writeRenderedTemplate('enum.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['common/enum.hbs', 'enum.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 }

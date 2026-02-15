@@ -36,7 +36,7 @@ export class QueryControllerGenerator extends BaseGenerator {
 
       const filePath = path.join(controllersDir, `${entityNamePlural}QueryController.cs`);
       await this.writeRenderedTemplate(
-        'query-controller.generated.cs.hbs',
+        ['api/controllers/query.generated.cs.hbs', 'query-controller.generated.cs.hbs'],
         context,
         filePath,
         true // Overwrite allowed

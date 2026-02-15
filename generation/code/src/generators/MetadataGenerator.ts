@@ -38,7 +38,12 @@ export class MetadataGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(metaProjectPath, 'DataModelMetadata.cs');
-    await this.writeRenderedTemplate('data-model-metadata.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['metadata/data-model.generated.cs.hbs', 'data-model-metadata.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private async generateDataModelRelationships(
@@ -58,7 +63,12 @@ export class MetadataGenerator extends BaseGenerator {
     };
 
     const filePath = path.join(metaProjectPath, 'DataModelRelationships.cs');
-    await this.writeRenderedTemplate('data-model-relationships.generated.cs.hbs', context, filePath, true);
+    await this.writeRenderedTemplate(
+      ['metadata/relationships.generated.cs.hbs', 'data-model-relationships.generated.cs.hbs'],
+      context,
+      filePath,
+      true
+    );
   }
 
   private buildEntityMetadataContext(entity: Entity, model: DataModel): Record<string, unknown> {

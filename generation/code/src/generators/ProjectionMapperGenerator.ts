@@ -60,7 +60,7 @@ export class ProjectionMapperGenerator extends BaseGenerator {
 
     const filePath = path.join(mappersDir, `${entity.name}ProjectionMapper.cs`);
     await this.writeRenderedTemplate(
-      'projection-mapper.generated.cs.hbs',
+      ['query/projection/mapper.generated.cs.hbs', 'projection-mapper.generated.cs.hbs'],
       context,
       filePath,
       true // Overwrite allowed

@@ -93,7 +93,7 @@ export class ProjectionDtoGenerator extends BaseGenerator {
 
     const filePath = path.join(adtsDir, `${entity.name}Projection.cs`);
     await this.writeRenderedTemplate(
-      'projection-dto.generated.cs.hbs',
+      ['dto/projection.generated.cs.hbs', 'projection-dto.generated.cs.hbs'],
       context,
       filePath,
       true // Overwrite allowed
