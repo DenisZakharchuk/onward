@@ -59,7 +59,7 @@ Blueprint-driven architecture selection is implemented end-to-end:
 
 - CLI supports `--blueprint` for `validate` and `generate`
 - Blueprint schema is validated via `blueprint.schema.json`
-- Execution slots are resolved from blueprint (`presentation`, `dataLayer`, `dto`)
+- Execution slots are resolved from blueprint (`presentation`, `dataAccess`, `dto`)
 - Conflict policy is **fail-on-conflict** (for example, `data-model.dtoLayout` vs blueprint DTO style)
 - `grpc` presentation is currently defined in schema but intentionally **not implemented** (fail-fast)
 
@@ -1660,7 +1660,7 @@ Blueprint defines architecture/layout strategy independently from `data-model` b
 
 ### Ownership & Conflict Policy
 
-- Blueprint is authoritative for architecture slots (`presentation`, `dataService.uow.dataLayer`, `dataService.dto`).
+- Blueprint is authoritative for architecture slots (`presentation`, `dataService.dataAccess`, `dataService.dto`).
 - If `data-model` sets `boundedContext.dtoLayout` and blueprint sets different DTO style, generation fails (fail-on-conflict).
 
 ### Blueprint Shape (v1)
@@ -1673,8 +1673,9 @@ Blueprint defines architecture/layout strategy independently from `data-model` b
     "presentation": { "kind": "controllers" },
     "dataService": {
       "dto": "class",
-      "uow": {
-        "dataLayer": {
+      "uow": "injected",
+      "dataAccess": {
+        "orm": {
           "kind": "ef-core",
           "provider": "npgsql"
         },
@@ -1691,9 +1692,12 @@ Blueprint defines architecture/layout strategy independently from `data-model` b
 - `presentation.kind`: `controllers | minimal-api | grpc`
   - `grpc` is schema-valid but currently fail-fast in orchestrator.
 - `dataService.dto`: `class | record`
-- `dataService.uow.dataLayer.kind`: `ef-core | ado-net`
-- `dataService.uow.dataLayer.provider`: `npgsql`
-- `dataService.uow.dataLayer.dialect`: `pgsql` (ADO.NET path)
+- `dataService.uow`: `injected`
+- `dataService.dataAccess.orm.kind`: `ef-core`
+- `dataService.dataAccess.orm.provider`: `npgsql`
+- `dataService.dataAccess.ado.provider`: `npgsql`
+- `dataService.dataAccess.ado.dialect`: `pgsql` (ADO path)
+- `dataService.dataAccess.entities`: `immutable`
 - `dataService.domain`: `default`
 
 ### Execution Slot Resolution

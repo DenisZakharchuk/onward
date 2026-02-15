@@ -128,10 +128,18 @@ export class ProjectionDtoGenerator extends BaseGenerator {
   }> {
     return properties.map((p) => ({
       name: p.name,
-      type: TypeMapper.toCSharpType(p.enumType || p.type, true), // Handle enums, always nullable
+      type: this.toNullableProjectionType(TypeMapper.toCSharpType(p.enumType || p.type, true)), // Handle enums, always nullable
       jsonPropertyName: NamingConventions.toCamelCase(p.name),
       description: p.description || p.name,
     }));
+  }
+
+  private toNullableProjectionType(type: string): string {
+    if (type.endsWith('?')) {
+      return type;
+    }
+
+    return `${type}?`;
   }
 
   private buildRelationshipContext(

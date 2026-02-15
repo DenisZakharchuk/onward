@@ -465,7 +465,13 @@ export class Orchestrator {
   }
 
   private resolveDataLayerKind(): 'ef-core' | 'ado-net' {
-    return this.options.blueprint?.boundedContext.dataService.uow.dataLayer.kind || 'ef-core';
+    const dataAccess = this.options.blueprint?.boundedContext.dataService.dataAccess;
+
+    if (dataAccess && 'ado' in dataAccess) {
+      return 'ado-net';
+    }
+
+    return 'ef-core';
   }
 
   /**

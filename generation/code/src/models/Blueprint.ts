@@ -8,6 +8,8 @@ export type DataAccessKind = 'ef-core' | 'ado-net';
 
 export type DataProviderKind = 'npgsql';
 
+export type UnitOfWorkKind = 'injected';
+
 export interface Blueprint {
   version: BlueprintVersion;
   boundedContext: BlueprintBoundedContext;
@@ -34,21 +36,21 @@ export type BlueprintPresentation =
 
 export interface BlueprintDataService {
   dto: DtoStyleKind;
-  uow: BlueprintUnitOfWork;
+  uow: UnitOfWorkKind;
+  dataAccess: BlueprintDataAccess;
   domain: 'default';
 }
 
-export type BlueprintUnitOfWork =
+export type BlueprintDataAccess =
   | {
-      dataLayer: {
+      orm: {
         kind: 'ef-core';
         provider: DataProviderKind;
       };
       entities?: 'immutable';
     }
   | {
-      dataLayer: {
-        kind: 'ado-net';
+      ado: {
         provider: DataProviderKind;
         dialect?: 'pgsql';
       };
@@ -66,8 +68,9 @@ export const DEFAULT_BLUEPRINT: Blueprint = {
     },
     dataService: {
       dto: 'class',
-      uow: {
-        dataLayer: {
+      uow: 'injected',
+      dataAccess: {
+        orm: {
           kind: 'ef-core',
           provider: 'npgsql',
         },

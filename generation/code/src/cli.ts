@@ -30,6 +30,10 @@ function resolveBlueprintDtoLayout(blueprint: Blueprint): 'class' | 'record' {
   return blueprint.boundedContext.dataService.dto;
 }
 
+function resolveBlueprintDataLayer(blueprint: Blueprint): 'ef-core' | 'ado-net' {
+  return 'ado' in blueprint.boundedContext.dataService.dataAccess ? 'ado-net' : 'ef-core';
+}
+
 function validateBlueprintCompatibility(
   modelDtoLayout: 'class' | 'record' | undefined,
   blueprint?: Blueprint
@@ -90,7 +94,7 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
       console.log(`  Blueprint: ${chalk.yellow(path.resolve(options.blueprint))}`);
       console.log(`  DTO Layout (resolved): ${chalk.yellow(model.boundedContext.dtoLayout || 'class')}`);
       console.log(`  Presentation Kind: ${chalk.yellow(blueprint?.boundedContext.presentation.kind || 'controllers')}`);
-      console.log(`  Data Layer: ${chalk.yellow(blueprint?.boundedContext.dataService.uow.dataLayer.kind || 'ef-core')}`);
+      console.log(`  Data Layer: ${chalk.yellow(blueprint ? resolveBlueprintDataLayer(blueprint) : 'ef-core')}`);
     }
     console.log(`  Output Directory: ${chalk.yellow(outputDir)}`);
     console.log(`  Skip Tests: ${chalk.yellow(options.skipTests)}`);
@@ -182,7 +186,7 @@ async function validateCommand(dataModelPath: string, blueprintPath?: string) {
       console.log(`  Blueprint: ${chalk.yellow(path.resolve(blueprintPath))}`);
       console.log(`  DTO Layout (resolved): ${chalk.yellow(resolveBlueprintDtoLayout(blueprint))}`);
       console.log(`  Presentation: ${chalk.yellow(blueprint.boundedContext.presentation.kind)}`);
-      console.log(`  Data Layer: ${chalk.yellow(blueprint.boundedContext.dataService.uow.dataLayer.kind)}`);
+      console.log(`  Data Layer: ${chalk.yellow(resolveBlueprintDataLayer(blueprint))}`);
     }
 
     console.log(chalk.blue('\nEntities:'));

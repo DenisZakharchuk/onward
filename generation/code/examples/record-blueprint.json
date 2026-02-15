@@ -9,8 +9,9 @@
     },
     "dataService": {
       "dto": "record",
-      "uow": {
-        "dataLayer": {
+      "uow": "injected",
+      "dataAccess": {
+        "orm": {
           "kind": "ef-core",
           "provider": "npgsql"
         },

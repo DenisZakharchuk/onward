@@ -9,9 +9,9 @@
     },
     "dataService": {
       "dto": "class",
-      "uow": {
-        "dataLayer": {
-          "kind": "ado-net",
+      "uow": "injected",
+      "dataAccess": {
+        "ado": {
           "provider": "npgsql",
           "dialect": "pgsql"
         },

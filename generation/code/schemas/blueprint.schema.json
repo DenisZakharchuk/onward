@@ -37,7 +37,7 @@
         },
         "dataService": {
           "type": "object",
-          "required": ["dto", "uow", "domain"],
+          "required": ["dto", "uow", "dataAccess", "domain"],
           "properties": {
             "dto": {
               "type": "string",
@@ -48,21 +48,35 @@
               "enum": ["default"]
             },
             "uow": {
+              "type": "string",
+              "enum": ["injected"]
+            },
+            "dataAccess": {
               "type": "object",
-              "required": ["dataLayer"],
               "properties": {
                 "entities": {
                   "type": "string",
                   "enum": ["immutable"]
                 },
-                "dataLayer": {
+                "orm": {
                   "type": "object",
                   "required": ["kind", "provider"],
                   "properties": {
                     "kind": {
                       "type": "string",
-                      "enum": ["ef-core", "ado-net"]
+                      "enum": ["ef-core"]
                     },
+                    "provider": {
+                      "type": "string",
+                      "enum": ["npgsql"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "ado": {
+                  "type": "object",
+                  "required": ["provider"],
+                  "properties": {
                     "provider": {
                       "type": "string",
                       "enum": ["npgsql"]
@@ -75,6 +89,20 @@
                   "additionalProperties": false
                 }
               },
+              "oneOf": [
+                {
+                  "required": ["entities", "orm"],
+                  "not": {
+                    "required": ["ado"]
+                  }
+                },
+                {
+                  "required": ["entities", "ado"],
+                  "not": {
+                    "required": ["orm"]
+                  }
+                }
+              ],
               "additionalProperties": false
             }
           },
