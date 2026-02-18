@@ -1,5 +1,6 @@
 using Inventorization.Base.Abstractions;
 using Inventorization.Base.ADTs;
+using Inventorization.Base.Ownership;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -255,4 +256,78 @@ public abstract class BaseQueryBuilder<TEntity> : IQueryBuilder<TEntity> where T
     }
     
     #endregion
+}
+
+/// <summary>
+/// Ownership-aware base query builder.
+/// Extends <see cref="BaseQueryBuilder{TEntity}"/> with the ability to append an
+/// ownership predicate derived from the injected
+/// <see cref="ICurrentIdentityContext{TOwnership}"/> — keeping ownership filtering
+/// inside the query pipeline rather than relying on global EF query filters.
+/// </summary>
+/// <remarks>
+/// Bounded contexts derive a concrete query builder per entity:
+/// <code>
+/// public class OrderQueryBuilder : BaseQueryBuilder&lt;Order, UserTenantOwnership&gt;
+/// {
+///     public OrderQueryBuilder(ICurrentIdentityContext&lt;UserTenantOwnership&gt; identityContext)
+///         : base(identityContext) { }
+/// }
+/// </code>
+/// Override <see cref="BuildOwnershipPredicate"/> to apply custom visibility rules
+/// (e.g. allow all users in the same tenant to read each other's records).
+/// </remarks>
+/// <typeparam name="TEntity">The entity type to build queries for.</typeparam>
+/// <typeparam name="TOwnership">Concrete ownership VO for this bounded context.</typeparam>
+public abstract class BaseQueryBuilder<TEntity, TOwnership>
+    : BaseQueryBuilder<TEntity>, IQueryBuilder<TEntity, TOwnership>
+    where TEntity : class
+    where TOwnership : OwnershipValueObject
+{
+    private readonly ICurrentIdentityContext<TOwnership> _identityContext;
+
+    protected BaseQueryBuilder(ICurrentIdentityContext<TOwnership> identityContext)
+    {
+        _identityContext = identityContext ?? throw new ArgumentNullException(nameof(identityContext));
+    }
+
+    /// <inheritdoc />
+    public IQueryable<TEntity> BuildOwnedQuery(IQueryable<TEntity> baseQuery, SearchQuery searchQuery)
+    {
+        // If entity does not participate in ownership, fall back to standard query
+        if (!typeof(IOwnedEntity<TOwnership>).IsAssignableFrom(typeof(TEntity)))
+            return BuildQuery(baseQuery, searchQuery);
+
+        // Anonymous callers get no results for owned entities
+        if (!_identityContext.IsAuthenticated || _identityContext.Ownership is null)
+            return baseQuery.Where(_ => false);
+
+        // Build standard query first, then append ownership predicate
+        var query = BuildQuery(baseQuery, searchQuery);
+        var ownershipPredicate = BuildOwnershipPredicate(_identityContext.Ownership);
+        return query.Where(ownershipPredicate);
+    }
+
+    /// <summary>
+    /// Builds the LINQ predicate that restricts results to entities the current
+    /// caller is permitted to see based on their ownership VO.
+    /// </summary>
+    /// <remarks>
+    /// The default implementation performs an exact-match check between the entity's
+    /// <see cref="IOwnedEntity{TOwnership}.Ownership"/> and the caller's
+    /// <paramref name="ownership"/> VO (record equality).
+    /// Override to implement broader access rules — for example, allowing all members
+    /// of the same tenant to read records owned by any user in that tenant.
+    /// </remarks>
+    protected virtual Expression<Func<TEntity, bool>> BuildOwnershipPredicate(TOwnership ownership)
+    {
+        var parameter = Expression.Parameter(typeof(TEntity), ParameterName);
+
+        // entity.Ownership == ownership  (record structural equality via EqualityContract)
+        var ownershipProperty = Expression.Property(parameter, nameof(IOwnedEntity<TOwnership>.Ownership));
+        var ownershipConstant = Expression.Constant(ownership, typeof(TOwnership));
+        var equalsCall = Expression.Equal(ownershipProperty, ownershipConstant);
+
+        return Expression.Lambda<Func<TEntity, bool>>(equalsCall, parameter);
+    }
 }

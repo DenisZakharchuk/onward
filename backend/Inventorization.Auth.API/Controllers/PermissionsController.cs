@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using InventorySystem.API.Base.Controllers;
-using Inventorization.Auth.Domain.Entities;
+using Inventorization.Auth.BL.Entities;
 using Inventorization.Auth.DTO.DTO.Permission;
-using Inventorization.Auth.Domain.DataServices;
+using Inventorization.Auth.BL.DataServices;
 
 namespace Inventorization.Auth.API.Controllers;
 

@@ -8,9 +8,9 @@ namespace Inventorization.Base.DataAccess;
 /// Base entity configuration for all entities inheriting from BaseEntity.
 /// Handles common configuration like primary key, table naming, and common indexes.
 /// </summary>
-/// <typeparam name="TEntity">Entity type (must inherit from BaseEntity)</typeparam>
+/// <typeparam name="TEntity">Entity type (must inherit from BaseEntity or OwnedBaseEntity)</typeparam>
 public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
-    where TEntity : BaseEntity
+    where TEntity : BaseEntity<Guid>
 {
     public virtual void Configure(EntityTypeBuilder<TEntity> builder)
     {

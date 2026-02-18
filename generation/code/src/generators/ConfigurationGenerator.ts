@@ -13,7 +13,7 @@ export class ConfigurationGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const configurationsDir = `${baseNamespace}.${contextName}.Domain/EntityConfigurations`;
+    const configurationsDir = `${baseNamespace}.${contextName}.BL/EntityConfigurations`;
 
     for (const entity of model.entities) {
       if (entity.isJunction) {
@@ -49,7 +49,7 @@ export class ConfigurationGenerator extends BaseGenerator {
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);
     await this.writeRenderedTemplate(
-      ['domain/configuration/entity.generated.cs.hbs', 'entity-configuration.generated.cs.hbs'],
+      ['bl/configuration/entity.generated.cs.hbs', 'entity-configuration.generated.cs.hbs'],
       context,
       filePath,
       true
@@ -88,7 +88,7 @@ export class ConfigurationGenerator extends BaseGenerator {
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);
     await this.writeRenderedTemplate(
-      ['domain/configuration/junction.generated.cs.hbs', 'junction-configuration.generated.cs.hbs'],
+      ['bl/configuration/junction.generated.cs.hbs', 'junction-configuration.generated.cs.hbs'],
       context,
       filePath,
       true

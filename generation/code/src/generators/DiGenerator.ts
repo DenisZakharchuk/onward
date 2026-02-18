@@ -37,13 +37,22 @@ export class DiGenerator extends BaseGenerator {
         searchQueryValidatorName: `${e.name}SearchQueryValidator`,
         dataServiceInterfaceName: NamingConventions.toDataServiceInterfaceName(e.name),
         dataServiceName: NamingConventions.toDataServiceClassName(e.name),
+        isOwned: e.owned === true && model.boundedContext.ownership?.enabled === true,
       }));
+
+    const ownershipCfg = model.boundedContext.ownership;
+    const hasOwnership = ownershipCfg?.enabled === true;
+    const ownershipValueObject = ownershipCfg?.valueObject ?? 'UserTenantOwnership';
+    const ownershipFactory = ownershipCfg?.factory ?? `${ownershipValueObject}Factory`;
 
     const context = {
       baseNamespace,
       namespace,
       contextName,
       entities,
+      hasOwnership,
+      ownershipValueObject,
+      ownershipFactory,
     };
 
     const filePath = path.join(extensionsDir, `${contextName}ServiceCollectionExtensions.cs`);

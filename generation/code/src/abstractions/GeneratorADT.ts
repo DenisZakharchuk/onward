@@ -5,10 +5,10 @@ import { IResultWriter } from './IResultWriter';
 
 export type GeneratorAmbiguity = 'deterministic' | 'variant' | 'composite' | 'optional';
 
-export type GeneratorDomain =
+export type GeneratorBL =
   | 'project'
   | 'dto'
-  | 'domain'
+  | 'bl'
   | 'api'
   | 'query'
   | 'metadata'
@@ -30,7 +30,7 @@ export interface IGeneratorExecutionContext {
 
 export interface IGeneratorCore<M, Ctx, Out extends string = string> {
   id: string;
-  domain: GeneratorDomain;
+  domain: GeneratorBL;
   phase: GeneratorPhase;
   outputs: readonly Out[];
   ambiguity: GeneratorAmbiguity;

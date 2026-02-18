@@ -24,6 +24,6 @@ export {
 	IVariantSelection,
 	IVariantSlot,
 	GeneratorAmbiguity,
-	GeneratorDomain,
+	GeneratorBL,
 	GeneratorPhase,
 } from './GeneratorADT';

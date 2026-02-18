@@ -15,8 +15,8 @@ namespace Inventorization.Base.DataAccess;
 public abstract class JunctionEntityConfiguration<TJunction, TEntity, TRelatedEntity> 
     : BaseEntityConfiguration<TJunction>
     where TJunction : JunctionEntityBase
-    where TEntity : BaseEntity
-    where TRelatedEntity : BaseEntity
+    where TEntity : BaseEntity<Guid>
+    where TRelatedEntity : BaseEntity<Guid>
 {
     /// <summary>
     /// Relationship metadata describing the many-to-many relationship.

@@ -2,6 +2,7 @@ using Inventorization.Base.Abstractions;
 using Inventorization.Base.ADTs;
 using Inventorization.Base.DTOs;
 using Inventorization.Base.Models;
+using Inventorization.Base.Ownership;
 using Inventorization.Base.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -190,6 +191,105 @@ public abstract class BaseSearchService<TEntity, TProjection> : ISearchService<T
             Logger.LogError(ex, "Error executing transformation search query for {EntityName}", EntityName);
             return ServiceResult<SearchResult<TransformationResult>>.Failure(
                 $"Failed to execute transformation search: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>
+/// Ownership-aware base search service.
+/// Extends <see cref="BaseSearchService{TEntity,TProjection}"/> with
+/// <see cref="ExecuteOwnedSearchAsync"/> which delegates to
+/// <see cref="IQueryBuilder{TEntity,TOwnership}.BuildOwnedQuery"/> instead of the
+/// standard <see cref="IQueryBuilder{TEntity}.BuildQuery"/>.
+/// </summary>
+/// <remarks>
+/// The <see cref="ICurrentIdentityContext{TOwnership}"/> is injected here so bounded
+/// contexts can log or inspect the identity during the search pipeline without
+/// duplicating the dependency resolution.
+/// </remarks>
+/// <typeparam name="TEntity">The entity type to search.</typeparam>
+/// <typeparam name="TProjection">The projection result type.</typeparam>
+/// <typeparam name="TOwnership">Concrete ownership VO for this bounded context.</typeparam>
+public abstract class BaseSearchService<TEntity, TProjection, TOwnership>
+    : BaseSearchService<TEntity, TProjection>,
+      ISearchService<TEntity, TProjection, TOwnership>
+    where TEntity : class
+    where TProjection : class, new()
+    where TOwnership : OwnershipValueObject
+{
+    private readonly IQueryBuilder<TEntity, TOwnership> _ownedQueryBuilder;
+    private readonly ICurrentIdentityContext<TOwnership> _identityContext;
+
+    protected BaseSearchService(
+        IRepository<TEntity> repository,
+        IQueryBuilder<TEntity, TOwnership> ownedQueryBuilder,
+        IProjectionMapper<TEntity, TProjection> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        IValidator<SearchQuery> validator,
+        ICurrentIdentityContext<TOwnership> identityContext,
+        ILogger logger)
+        : base(repository, ownedQueryBuilder, projectionMapper, expressionBuilder, validator, logger)
+    {
+        _ownedQueryBuilder = ownedQueryBuilder ?? throw new ArgumentNullException(nameof(ownedQueryBuilder));
+        _identityContext = identityContext ?? throw new ArgumentNullException(nameof(identityContext));
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<ServiceResult<SearchResult<TProjection>>> ExecuteOwnedSearchAsync(
+        SearchQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate the search query
+            var validationResult = await Validator.ValidateAsync(query, cancellationToken);
+            if (!validationResult.IsValid)
+            {
+                Logger.LogWarning("Owned search query validation failed for {EntityName}: {Errors}",
+                    EntityName, string.Join(", ", validationResult.Errors));
+                return ServiceResult<SearchResult<TProjection>>.Failure(
+                    "Search query validation failed",
+                    validationResult.Errors);
+            }
+
+            // Build owned query — includes both standard filters and ownership predicate
+            var baseQuery = Repository.GetQueryable();
+            var builtQuery = _ownedQueryBuilder.BuildOwnedQuery(baseQuery, query);
+
+            // Get total count before pagination
+            var totalCount = await builtQuery.CountAsync(cancellationToken);
+
+            // Apply pagination
+            var pagedQuery = builtQuery
+                .Skip((query.Pagination.PageNumber - 1) * query.Pagination.PageSize)
+                .Take(query.Pagination.PageSize);
+
+            // Execute query with projection
+            var projectionExpression = ProjectionMapper.GetProjectionExpression(query.Projection);
+            var items = await pagedQuery
+                .Select(projectionExpression)
+                .ToListAsync(cancellationToken);
+
+            var result = new SearchResult<TProjection>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = query.Pagination.PageNumber,
+                PageSize = query.Pagination.PageSize
+            };
+
+            Logger.LogInformation(
+                "{EntityName} owned search executed for caller {OwnershipSummary}: {TotalCount} total items, page {PageNumber} with {ItemCount} items",
+                EntityName, _identityContext.Ownership?.ToString() ?? "anonymous",
+                totalCount, query.Pagination.PageNumber, items.Count);
+
+            return ServiceResult<SearchResult<TProjection>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error executing owned search query for {EntityName}", EntityName);
+            return ServiceResult<SearchResult<TProjection>>.Failure(
+                $"Failed to execute owned search: {ex.Message}");
         }
     }
 }

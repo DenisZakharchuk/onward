@@ -13,7 +13,7 @@ export class ValidatorGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const validatorsDir = `${baseNamespace}.${contextName}.Domain/Validators`;
+    const validatorsDir = `${baseNamespace}.${contextName}.BL/Validators`;
 
     for (const entity of model.entities) {
       // Skip junction entities
@@ -45,7 +45,7 @@ export class ValidatorGenerator extends BaseGenerator {
 
     const filePath = path.join(validatorsDir, `Create${entity.name}Validator.cs`);
     await this.writeRenderedTemplate(
-      ['domain/validator/create.generated.cs.hbs', 'create-validator.generated.cs.hbs'],
+      ['bl/validator/create.generated.cs.hbs', 'create-validator.generated.cs.hbs'],
       context,
       filePath,
       true
@@ -71,7 +71,7 @@ export class ValidatorGenerator extends BaseGenerator {
 
     const filePath = path.join(validatorsDir, `Update${entity.name}Validator.cs`);
     await this.writeRenderedTemplate(
-      ['domain/validator/update.generated.cs.hbs', 'update-validator.generated.cs.hbs'],
+      ['bl/validator/update.generated.cs.hbs', 'update-validator.generated.cs.hbs'],
       context,
       filePath,
       true

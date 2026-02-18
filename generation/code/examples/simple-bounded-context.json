@@ -4,7 +4,12 @@
     "namespace": "Inventorization.Commerce",
     "description": "E-commerce and order management bounded context",
     "databaseName": "commerce_db",
-    "apiPort": 5042
+    "apiPort": 5042,
+    "ownership": {
+      "enabled": true,
+      "valueObject": "UserTenantOwnership",
+      "factory": "UserTenantOwnershipFactory"
+    }
   },
   "enums": [
     {
@@ -229,6 +234,7 @@
       "tableName": "Addresses",
       "description": "Customer address",
       "auditable": false,
+      "owned": true,
       "properties": [
         {
           "name": "CustomerId",
@@ -302,6 +308,7 @@
       "tableName": "Orders",
       "description": "Customer order",
       "auditable": true,
+      "owned": true,
       "properties": [
         {
           "name": "CustomerId",

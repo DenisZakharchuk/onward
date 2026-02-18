@@ -7,18 +7,18 @@ export class AdoNetDataAccessGenerator extends BaseGenerator {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
-    const domainProjectPath = `${baseNamespace}.${contextName}.Domain`;
+    const blProjectPath = `${baseNamespace}.${contextName}.BL`;
 
-    await this.generateAdoNetRepository(domainProjectPath, namespace, baseNamespace);
-    await this.generateAdoNetUnitOfWork(domainProjectPath, namespace, baseNamespace, contextName);
+    await this.generateAdoNetRepository(blProjectPath, namespace, baseNamespace);
+    await this.generateAdoNetUnitOfWork(blProjectPath, namespace, baseNamespace, contextName);
   }
 
   private async generateAdoNetRepository(
-    domainProjectPath: string,
+    blProjectPath: string,
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
-    const dataAccessDir = path.join(domainProjectPath, 'DataAccess');
+    const dataAccessDir = path.join(blProjectPath, 'DataAccess');
     const context = {
       namespace,
       baseNamespace,
@@ -26,7 +26,7 @@ export class AdoNetDataAccessGenerator extends BaseGenerator {
 
     const filePath = path.join(dataAccessDir, 'AdoNetRepository.cs');
     await this.writeRenderedTemplate(
-      ['domain/repository/ado-net.generated.cs.hbs', 'ado-net-repository.generated.cs.hbs'],
+      ['bl/repository/ado-net.generated.cs.hbs', 'ado-net-repository.generated.cs.hbs'],
       context,
       filePath,
       true
@@ -34,12 +34,12 @@ export class AdoNetDataAccessGenerator extends BaseGenerator {
   }
 
   private async generateAdoNetUnitOfWork(
-    domainProjectPath: string,
+    blProjectPath: string,
     namespace: string,
     baseNamespace: string,
     contextName: string
   ): Promise<void> {
-    const dataAccessDir = path.join(domainProjectPath, 'DataAccess');
+    const dataAccessDir = path.join(blProjectPath, 'DataAccess');
     const context = {
       namespace,
       baseNamespace,
@@ -48,7 +48,7 @@ export class AdoNetDataAccessGenerator extends BaseGenerator {
 
     const filePath = path.join(dataAccessDir, `${contextName}AdoNetUnitOfWork.cs`);
     await this.writeRenderedTemplate(
-      ['domain/unit-of-work/ado-net.generated.cs.hbs', 'ado-net-unit-of-work.generated.cs.hbs'],
+      ['bl/unit-of-work/ado-net.generated.cs.hbs', 'ado-net-unit-of-work.generated.cs.hbs'],
       context,
       filePath,
       true

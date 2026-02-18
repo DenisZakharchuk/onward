@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Inventorization.Auth.Domain\Inventorization.Auth.Domain.csproj" />
+    <ProjectReference Include="..\Inventorization.Auth.BL\Inventorization.Auth.BL.csproj" />
     <ProjectReference Include="..\Inventorization.Auth.DTO\Inventorization.Auth.DTO.csproj" />
     <ProjectReference Include="..\InventorySystem.API.Base\InventorySystem.API.Base.csproj" />
     <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />

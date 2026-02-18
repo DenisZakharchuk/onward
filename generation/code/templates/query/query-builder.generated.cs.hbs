@@ -9,17 +9,39 @@
 // </auto-generated>
 
 using {{baseNamespace}}.Base.DataAccess;
-using {{namespace}}.Domain.Entities;
+{{#if isOwned}}
+using {{baseNamespace}}.Base.Abstractions;
+using {{baseNamespace}}.Base.Ownership;
+{{/if}}
+using {{namespace}}.BL.Entities;
 
-namespace {{namespace}}.Domain.DataAccess;
+namespace {{namespace}}.BL.DataAccess;
 
 /// <summary>
 /// Converts SearchQuery ADT to IQueryable for {{entityName}} entity.
+{{#if isOwned}}
+/// Ownership-aware: extends BaseQueryBuilder&lt;{{entityName}}, {{ownershipValueObject}}&gt;.
+/// Appends an ownership predicate derived from ICurrentIdentityContext&lt;{{ownershipValueObject}}&gt;.
+{{else}}
 /// Inherits all query building logic from BaseQueryBuilder.
+{{/if}}
 /// Uses default ParameterName (first letter of entity name in lowercase).
 /// </summary>
+{{#if isOwned}}
+public class {{entityName}}QueryBuilder : BaseQueryBuilder<{{entityName}}, {{ownershipValueObject}}>
+{
+    public {{entityName}}QueryBuilder(ICurrentIdentityContext<{{ownershipValueObject}}> identityContext)
+        : base(identityContext)
+    {
+    }
+
+    // Override BuildOwnershipPredicate({{ownershipValueObject}} ownership) to customise visibility rules.
+    // Default: exact-match on the Ownership VO (all fields must match).
+}
+{{else}}
 public class {{entityName}}QueryBuilder : BaseQueryBuilder<{{entityName}}>
 {
     // Empty body - uses all defaults from base class
     // Override ParameterName property if custom parameter name is needed
 }
+{{/if}}

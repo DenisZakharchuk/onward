@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("GoodsDatabase") 
     ?? throw new InvalidOperationException("Connection string 'GoodsDatabase' not found.");
 
-builder.Services.AddDbContext<Inventorization.Goods.Domain.DbContexts.GoodsDbContext>(options =>
+builder.Services.AddDbContext<Inventorization.Goods.BL.DbContexts.GoodsDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // ===== JWT Authentication Configuration =====
@@ -45,230 +45,230 @@ builder.Services.AddAuthorization();
 
 // ===== Repository & UnitOfWork Registration =====
 // Register DbContext as both specific type and base DbContext for repositories
-builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<Inventorization.Goods.Domain.DbContexts.GoodsDbContext>());
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<Inventorization.Goods.BL.DbContexts.GoodsDbContext>());
 
 // Generic repository registration
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Inventorization.Base.DataAccess.BaseRepository<>));
 
 // UnitOfWork registration
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataAccess.IGoodsUnitOfWork, Inventorization.Goods.Domain.DataAccess.GoodsUnitOfWork>();
-builder.Services.AddScoped<Inventorization.Base.DataAccess.IUnitOfWork>(sp => sp.GetRequiredService<Inventorization.Goods.Domain.DataAccess.IGoodsUnitOfWork>());
+builder.Services.AddScoped<Inventorization.Goods.BL.DataAccess.IGoodsUnitOfWork, Inventorization.Goods.BL.DataAccess.GoodsUnitOfWork>();
+builder.Services.AddScoped<Inventorization.Base.DataAccess.IUnitOfWork>(sp => sp.GetRequiredService<Inventorization.Goods.BL.DataAccess.IGoodsUnitOfWork>());
 
 // ===== Mappers, Creators, Modifiers, SearchProviders, Validators =====
 // Good entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.Good, Inventorization.Goods.DTO.DTO.Good.GoodDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.GoodMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.Good, Inventorization.Goods.DTO.DTO.Good.CreateGoodDTO>, 
-    Inventorization.Goods.Domain.Creators.GoodCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.Good, Inventorization.Goods.DTO.DTO.Good.UpdateGoodDTO>, 
-    Inventorization.Goods.Domain.Modifiers.GoodModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.Good, Inventorization.Goods.DTO.DTO.Good.GoodSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.GoodSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.Good, Inventorization.Goods.DTO.DTO.Good.GoodDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.GoodMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.Good, Inventorization.Goods.DTO.DTO.Good.CreateGoodDTO>, 
+    Inventorization.Goods.BL.Creators.GoodCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.Good, Inventorization.Goods.DTO.DTO.Good.UpdateGoodDTO>, 
+    Inventorization.Goods.BL.Modifiers.GoodModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.Good, Inventorization.Goods.DTO.DTO.Good.GoodSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.GoodSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Good.CreateGoodDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateGoodValidator>();
+    Inventorization.Goods.BL.Validators.CreateGoodValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Good.UpdateGoodDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateGoodValidator>();
+    Inventorization.Goods.BL.Validators.UpdateGoodValidator>();
 
 // ===== ADT-Based Search Components for Good =====
 // Query builder for ADT-based search
-builder.Services.AddScoped<IQueryBuilder<Inventorization.Goods.Domain.Entities.Good>, 
-    Inventorization.Goods.Domain.DataAccess.GoodQueryBuilder>();
+builder.Services.AddScoped<IQueryBuilder<Inventorization.Goods.BL.Entities.Good>, 
+    Inventorization.Goods.BL.DataAccess.GoodQueryBuilder>();
 
 // Projection mapper
-builder.Services.AddScoped<Inventorization.Goods.Domain.Mappers.Projection.IGoodProjectionMapper, 
-    Inventorization.Goods.Domain.Mappers.Projection.GoodProjectionMapper>();
+builder.Services.AddScoped<Inventorization.Goods.BL.Mappers.Projection.IGoodProjectionMapper, 
+    Inventorization.Goods.BL.Mappers.Projection.GoodProjectionMapper>();
 
 // Projection expression builder for transformations
 builder.Services.AddScoped<Inventorization.Base.Services.ProjectionExpressionBuilder>();
 
 // Search query validator
 builder.Services.AddScoped<IValidator<Inventorization.Base.ADTs.SearchQuery>, 
-    Inventorization.Goods.Domain.Validators.GoodSearchQueryValidator>();
+    Inventorization.Goods.BL.Validators.GoodSearchQueryValidator>();
 
 // Search service (concrete type for dual method support)
-builder.Services.AddScoped<Inventorization.Goods.Domain.Services.GoodSearchService>();
-builder.Services.AddScoped<ISearchService<Inventorization.Goods.Domain.Entities.Good, Inventorization.Goods.DTO.ADTs.GoodProjection>>(
-    sp => sp.GetRequiredService<Inventorization.Goods.Domain.Services.GoodSearchService>());
+builder.Services.AddScoped<Inventorization.Goods.BL.Services.GoodSearchService>();
+builder.Services.AddScoped<ISearchService<Inventorization.Goods.BL.Entities.Good, Inventorization.Goods.DTO.ADTs.GoodProjection>>(
+    sp => sp.GetRequiredService<Inventorization.Goods.BL.Services.GoodSearchService>());
 
 // Category entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CategoryDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.CategoryMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CreateCategoryDTO>, 
-    Inventorization.Goods.Domain.Creators.CategoryCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.DTO.Category.UpdateCategoryDTO>, 
-    Inventorization.Goods.Domain.Modifiers.CategoryModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CategorySearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.CategorySearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CategoryDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.CategoryMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CreateCategoryDTO>, 
+    Inventorization.Goods.BL.Creators.CategoryCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.Category, Inventorization.Goods.DTO.DTO.Category.UpdateCategoryDTO>, 
+    Inventorization.Goods.BL.Modifiers.CategoryModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.Category, Inventorization.Goods.DTO.DTO.Category.CategorySearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.CategorySearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Category.CreateCategoryDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateCategoryValidator>();
+    Inventorization.Goods.BL.Validators.CreateCategoryValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Category.UpdateCategoryDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateCategoryValidator>();
+    Inventorization.Goods.BL.Validators.UpdateCategoryValidator>();
 
 // ===== ADT-Based Search Components for Category =====
 // Query builder for ADT-based search
-builder.Services.AddScoped<IQueryBuilder<Inventorization.Goods.Domain.Entities.Category>, 
-    Inventorization.Goods.Domain.DataAccess.CategoryQueryBuilder>();
+builder.Services.AddScoped<IQueryBuilder<Inventorization.Goods.BL.Entities.Category>, 
+    Inventorization.Goods.BL.DataAccess.CategoryQueryBuilder>();
 
 // Projection mapper
-builder.Services.AddScoped<Inventorization.Goods.Domain.Mappers.Projection.ICategoryProjectionMapper, 
-    Inventorization.Goods.Domain.Mappers.Projection.CategoryProjectionMapper>();
+builder.Services.AddScoped<Inventorization.Goods.BL.Mappers.Projection.ICategoryProjectionMapper, 
+    Inventorization.Goods.BL.Mappers.Projection.CategoryProjectionMapper>();
 
 // Search query validator
-builder.Services.AddScoped<Inventorization.Goods.Domain.Validators.CategorySearchQueryValidator>();
+builder.Services.AddScoped<Inventorization.Goods.BL.Validators.CategorySearchQueryValidator>();
 
 // Search service (concrete type for dual method support)
-builder.Services.AddScoped<Inventorization.Goods.Domain.Services.CategorySearchService>();
-builder.Services.AddScoped<ISearchService<Inventorization.Goods.Domain.Entities.Category, Inventorization.Goods.DTO.ADTs.CategoryProjection>>(
-    sp => sp.GetRequiredService<Inventorization.Goods.Domain.Services.CategorySearchService>());
+builder.Services.AddScoped<Inventorization.Goods.BL.Services.CategorySearchService>();
+builder.Services.AddScoped<ISearchService<Inventorization.Goods.BL.Entities.Category, Inventorization.Goods.DTO.ADTs.CategoryProjection>>(
+    sp => sp.GetRequiredService<Inventorization.Goods.BL.Services.CategorySearchService>());
 
 // Supplier entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.SupplierDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.SupplierMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.CreateSupplierDTO>, 
-    Inventorization.Goods.Domain.Creators.SupplierCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.UpdateSupplierDTO>, 
-    Inventorization.Goods.Domain.Modifiers.SupplierModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.SupplierSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.SupplierSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.SupplierDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.SupplierMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.CreateSupplierDTO>, 
+    Inventorization.Goods.BL.Creators.SupplierCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.UpdateSupplierDTO>, 
+    Inventorization.Goods.BL.Modifiers.SupplierModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.Supplier, Inventorization.Goods.DTO.DTO.Supplier.SupplierSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.SupplierSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Supplier.CreateSupplierDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateSupplierValidator>();
+    Inventorization.Goods.BL.Validators.CreateSupplierValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Supplier.UpdateSupplierDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateSupplierValidator>();
+    Inventorization.Goods.BL.Validators.UpdateSupplierValidator>();
 
 // Warehouse entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.WarehouseDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.WarehouseMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.CreateWarehouseDTO>, 
-    Inventorization.Goods.Domain.Creators.WarehouseCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.UpdateWarehouseDTO>, 
-    Inventorization.Goods.Domain.Modifiers.WarehouseModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.WarehouseSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.WarehouseSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.WarehouseDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.WarehouseMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.CreateWarehouseDTO>, 
+    Inventorization.Goods.BL.Creators.WarehouseCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.UpdateWarehouseDTO>, 
+    Inventorization.Goods.BL.Modifiers.WarehouseModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.Warehouse, Inventorization.Goods.DTO.DTO.Warehouse.WarehouseSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.WarehouseSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Warehouse.CreateWarehouseDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateWarehouseValidator>();
+    Inventorization.Goods.BL.Validators.CreateWarehouseValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.Warehouse.UpdateWarehouseDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateWarehouseValidator>();
+    Inventorization.Goods.BL.Validators.UpdateWarehouseValidator>();
 
 // StockLocation entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.StockLocationDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.StockLocationMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.CreateStockLocationDTO>, 
-    Inventorization.Goods.Domain.Creators.StockLocationCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.UpdateStockLocationDTO>, 
-    Inventorization.Goods.Domain.Modifiers.StockLocationModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.StockLocationSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.StockLocationSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.StockLocationDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.StockLocationMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.CreateStockLocationDTO>, 
+    Inventorization.Goods.BL.Creators.StockLocationCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.UpdateStockLocationDTO>, 
+    Inventorization.Goods.BL.Modifiers.StockLocationModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.StockLocation, Inventorization.Goods.DTO.DTO.StockLocation.StockLocationSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.StockLocationSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.StockLocation.CreateStockLocationDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateStockLocationValidator>();
+    Inventorization.Goods.BL.Validators.CreateStockLocationValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.StockLocation.UpdateStockLocationDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateStockLocationValidator>();
+    Inventorization.Goods.BL.Validators.UpdateStockLocationValidator>();
 
 // StockItem entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.StockItemDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.StockItemMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.CreateStockItemDTO>, 
-    Inventorization.Goods.Domain.Creators.StockItemCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.UpdateStockItemDTO>, 
-    Inventorization.Goods.Domain.Modifiers.StockItemModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.StockItemSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.StockItemSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.StockItemDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.StockItemMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.CreateStockItemDTO>, 
+    Inventorization.Goods.BL.Creators.StockItemCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.UpdateStockItemDTO>, 
+    Inventorization.Goods.BL.Modifiers.StockItemModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.StockItem, Inventorization.Goods.DTO.DTO.StockItem.StockItemSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.StockItemSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.StockItem.CreateStockItemDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateStockItemValidator>();
+    Inventorization.Goods.BL.Validators.CreateStockItemValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.StockItem.UpdateStockItemDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateStockItemValidator>();
+    Inventorization.Goods.BL.Validators.UpdateStockItemValidator>();
 
 // PurchaseOrder entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.PurchaseOrderDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.PurchaseOrderMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.CreatePurchaseOrderDTO>, 
-    Inventorization.Goods.Domain.Creators.PurchaseOrderCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.UpdatePurchaseOrderDTO>, 
-    Inventorization.Goods.Domain.Modifiers.PurchaseOrderModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.PurchaseOrderSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.PurchaseOrderSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.PurchaseOrderDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.PurchaseOrderMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.CreatePurchaseOrderDTO>, 
+    Inventorization.Goods.BL.Creators.PurchaseOrderCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.UpdatePurchaseOrderDTO>, 
+    Inventorization.Goods.BL.Modifiers.PurchaseOrderModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.PurchaseOrder, Inventorization.Goods.DTO.DTO.PurchaseOrder.PurchaseOrderSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.PurchaseOrderSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.PurchaseOrder.CreatePurchaseOrderDTO>, 
-    Inventorization.Goods.Domain.Validators.CreatePurchaseOrderValidator>();
+    Inventorization.Goods.BL.Validators.CreatePurchaseOrderValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.PurchaseOrder.UpdatePurchaseOrderDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdatePurchaseOrderValidator>();
+    Inventorization.Goods.BL.Validators.UpdatePurchaseOrderValidator>();
 
 // PurchaseOrderItem entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.PurchaseOrderItemDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.PurchaseOrderItemMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.CreatePurchaseOrderItemDTO>, 
-    Inventorization.Goods.Domain.Creators.PurchaseOrderItemCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.UpdatePurchaseOrderItemDTO>, 
-    Inventorization.Goods.Domain.Modifiers.PurchaseOrderItemModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.PurchaseOrderItemSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.PurchaseOrderItemSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.PurchaseOrderItemDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.PurchaseOrderItemMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.CreatePurchaseOrderItemDTO>, 
+    Inventorization.Goods.BL.Creators.PurchaseOrderItemCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.UpdatePurchaseOrderItemDTO>, 
+    Inventorization.Goods.BL.Modifiers.PurchaseOrderItemModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.PurchaseOrderItem, Inventorization.Goods.DTO.DTO.PurchaseOrderItem.PurchaseOrderItemSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.PurchaseOrderItemSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.PurchaseOrderItem.CreatePurchaseOrderItemDTO>, 
-    Inventorization.Goods.Domain.Validators.CreatePurchaseOrderItemValidator>();
+    Inventorization.Goods.BL.Validators.CreatePurchaseOrderItemValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.PurchaseOrderItem.UpdatePurchaseOrderItemDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdatePurchaseOrderItemValidator>();
+    Inventorization.Goods.BL.Validators.UpdatePurchaseOrderItemValidator>();
 
 // GoodSupplier junction entity abstractions
-builder.Services.AddScoped<IMapper<Inventorization.Goods.Domain.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.GoodSupplierDetailsDTO>, 
-    Inventorization.Goods.Domain.Mappers.GoodSupplierMapper>();
-builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.Domain.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.CreateGoodSupplierDTO>, 
-    Inventorization.Goods.Domain.Creators.GoodSupplierCreator>();
-builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.Domain.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.UpdateGoodSupplierDTO>, 
-    Inventorization.Goods.Domain.Modifiers.GoodSupplierModifier>();
-builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.Domain.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.GoodSupplierSearchDTO>, 
-    Inventorization.Goods.Domain.SearchProviders.GoodSupplierSearchProvider>();
+builder.Services.AddScoped<IMapper<Inventorization.Goods.BL.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.GoodSupplierDetailsDTO>, 
+    Inventorization.Goods.BL.Mappers.GoodSupplierMapper>();
+builder.Services.AddScoped<IEntityCreator<Inventorization.Goods.BL.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.CreateGoodSupplierDTO>, 
+    Inventorization.Goods.BL.Creators.GoodSupplierCreator>();
+builder.Services.AddScoped<IEntityModifier<Inventorization.Goods.BL.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.UpdateGoodSupplierDTO>, 
+    Inventorization.Goods.BL.Modifiers.GoodSupplierModifier>();
+builder.Services.AddScoped<ISearchQueryProvider<Inventorization.Goods.BL.Entities.GoodSupplier, Inventorization.Goods.DTO.DTO.GoodSupplier.GoodSupplierSearchDTO>, 
+    Inventorization.Goods.BL.SearchProviders.GoodSupplierSearchProvider>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.GoodSupplier.CreateGoodSupplierDTO>, 
-    Inventorization.Goods.Domain.Validators.CreateGoodSupplierValidator>();
+    Inventorization.Goods.BL.Validators.CreateGoodSupplierValidator>();
 builder.Services.AddScoped<IValidator<Inventorization.Goods.DTO.DTO.GoodSupplier.UpdateGoodSupplierDTO>, 
-    Inventorization.Goods.Domain.Validators.UpdateGoodSupplierValidator>();
+    Inventorization.Goods.BL.Validators.UpdateGoodSupplierValidator>();
 
 // ===== Property Accessors (Keyed Services) =====
-builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.Domain.Entities.Category, Guid?>>(
-    sp => new Inventorization.Goods.Domain.PropertyAccessors.CategoryParentIdAccessor());
-builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.Domain.Entities.Good, Guid?>>(
-    sp => new Inventorization.Goods.Domain.PropertyAccessors.GoodCategoryIdAccessor());
-builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.Domain.Entities.StockLocation, Guid>>(
-    sp => new Inventorization.Goods.Domain.PropertyAccessors.StockLocationWarehouseIdAccessor());
-builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.Domain.Entities.StockItem, Guid>>(
-    sp => new Inventorization.Goods.Domain.PropertyAccessors.StockItemLocationIdAccessor());
-builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.Domain.Entities.PurchaseOrder, Guid>>(
-    sp => new Inventorization.Goods.Domain.PropertyAccessors.PurchaseOrderSupplierIdAccessor());
-builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.Domain.Entities.PurchaseOrderItem, Guid>>(
-    sp => new Inventorization.Goods.Domain.PropertyAccessors.PurchaseOrderItemOrderIdAccessor());
+builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.BL.Entities.Category, Guid?>>(
+    sp => new Inventorization.Goods.BL.PropertyAccessors.CategoryParentIdAccessor());
+builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.BL.Entities.Good, Guid?>>(
+    sp => new Inventorization.Goods.BL.PropertyAccessors.GoodCategoryIdAccessor());
+builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.BL.Entities.StockLocation, Guid>>(
+    sp => new Inventorization.Goods.BL.PropertyAccessors.StockLocationWarehouseIdAccessor());
+builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.BL.Entities.StockItem, Guid>>(
+    sp => new Inventorization.Goods.BL.PropertyAccessors.StockItemLocationIdAccessor());
+builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.BL.Entities.PurchaseOrder, Guid>>(
+    sp => new Inventorization.Goods.BL.PropertyAccessors.PurchaseOrderSupplierIdAccessor());
+builder.Services.AddScoped<IPropertyAccessor<Inventorization.Goods.BL.Entities.PurchaseOrderItem, Guid>>(
+    sp => new Inventorization.Goods.BL.PropertyAccessors.PurchaseOrderItemOrderIdAccessor());
 
 // Junction entity property accessors
-builder.Services.AddScoped<IEntityIdPropertyAccessor<Inventorization.Goods.Domain.Entities.GoodSupplier>, 
-    Inventorization.Goods.Domain.PropertyAccessors.GoodSupplierEntityIdAccessor>();
-builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<Inventorization.Goods.Domain.Entities.GoodSupplier>, 
-    Inventorization.Goods.Domain.PropertyAccessors.GoodSupplierRelatedEntityIdAccessor>();
+builder.Services.AddScoped<IEntityIdPropertyAccessor<Inventorization.Goods.BL.Entities.GoodSupplier>, 
+    Inventorization.Goods.BL.PropertyAccessors.GoodSupplierEntityIdAccessor>();
+builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<Inventorization.Goods.BL.Entities.GoodSupplier>, 
+    Inventorization.Goods.BL.PropertyAccessors.GoodSupplierRelatedEntityIdAccessor>();
 
 // ===== Relationship Managers =====
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.CategoryGoodRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.CategorySubcategoryRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.WarehouseStockLocationRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.StockLocationStockItemRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.GoodStockItemRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.SupplierPurchaseOrderRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.PurchaseOrderPurchaseOrderItemRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.GoodPurchaseOrderItemRelationshipManager>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.GoodSupplierRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.CategoryGoodRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.CategorySubcategoryRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.WarehouseStockLocationRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.StockLocationStockItemRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.GoodStockItemRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.SupplierPurchaseOrderRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.PurchaseOrderPurchaseOrderItemRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.GoodPurchaseOrderItemRelationshipManager>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.GoodSupplierRelationshipManager>();
 
 // ===== Data Services =====
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IGoodDataService, 
-    Inventorization.Goods.Domain.DataServices.GoodDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.ICategoryDataService, 
-    Inventorization.Goods.Domain.DataServices.CategoryDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.ISupplierDataService, 
-    Inventorization.Goods.Domain.DataServices.SupplierDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IWarehouseDataService, 
-    Inventorization.Goods.Domain.DataServices.WarehouseDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IStockLocationDataService, 
-    Inventorization.Goods.Domain.DataServices.StockLocationDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IStockItemDataService, 
-    Inventorization.Goods.Domain.DataServices.StockItemDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IPurchaseOrderDataService, 
-    Inventorization.Goods.Domain.DataServices.PurchaseOrderDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IPurchaseOrderItemDataService, 
-    Inventorization.Goods.Domain.DataServices.PurchaseOrderItemDataService>();
-builder.Services.AddScoped<Inventorization.Goods.Domain.DataServices.IGoodSupplierDataService, 
-    Inventorization.Goods.Domain.DataServices.GoodSupplierDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IGoodDataService, 
+    Inventorization.Goods.BL.DataServices.GoodDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.ICategoryDataService, 
+    Inventorization.Goods.BL.DataServices.CategoryDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.ISupplierDataService, 
+    Inventorization.Goods.BL.DataServices.SupplierDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IWarehouseDataService, 
+    Inventorization.Goods.BL.DataServices.WarehouseDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IStockLocationDataService, 
+    Inventorization.Goods.BL.DataServices.StockLocationDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IStockItemDataService, 
+    Inventorization.Goods.BL.DataServices.StockItemDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IPurchaseOrderDataService, 
+    Inventorization.Goods.BL.DataServices.PurchaseOrderDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IPurchaseOrderItemDataService, 
+    Inventorization.Goods.BL.DataServices.PurchaseOrderItemDataService>();
+builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IGoodSupplierDataService, 
+    Inventorization.Goods.BL.DataServices.GoodSupplierDataService>();
 
 // ===== Controllers & Swagger =====
 builder.Services.AddControllers();

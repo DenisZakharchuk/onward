@@ -12,7 +12,7 @@ export class ServiceGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const servicesDir = `${baseNamespace}.${contextName}.Domain/DataServices`;
+    const servicesDir = `${baseNamespace}.${contextName}.BL/DataServices`;
 
     for (const entity of model.entities) {
       // Skip junction entities - they use RelationshipManagerBase instead
@@ -20,7 +20,10 @@ export class ServiceGenerator extends BaseGenerator {
         continue;
       }
 
-      await this.generateDataService(entity, servicesDir, namespace, baseNamespace);
+      const ownershipCfg = model.boundedContext.ownership;
+      const isContextOwned = ownershipCfg?.enabled === true;
+      const ownershipValueObject = ownershipCfg?.valueObject ?? 'UserTenantOwnership';
+      await this.generateDataService(entity, servicesDir, namespace, baseNamespace, isContextOwned, ownershipValueObject);
     }
   }
 
@@ -28,17 +31,22 @@ export class ServiceGenerator extends BaseGenerator {
     entity: Entity,
     servicesDir: string,
     namespace: string,
-    baseNamespace: string
+    baseNamespace: string,
+    isContextOwned: boolean = false,
+    ownershipValueObject: string = 'UserTenantOwnership'
   ): Promise<void> {
+    const isOwned = entity.owned === true && isContextOwned;
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
+      isOwned,
+      ownershipValueObject,
     };
 
     const filePath = path.join(servicesDir, `${entity.name}DataService.cs`);
     await this.writeRenderedTemplate(
-      ['domain/data-service/generated.cs.hbs', 'data-service.generated.cs.hbs'],
+      ['bl/data-service/generated.cs.hbs', 'data-service.generated.cs.hbs'],
       context,
       filePath,
       true

@@ -12,7 +12,7 @@ export class SearchServiceGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const servicesDir = `${baseNamespace}.${contextName}.Domain/Services`;
+    const servicesDir = `${baseNamespace}.${contextName}.BL/Services`;
 
     for (const entity of model.entities) {
       // Skip junction entities
@@ -20,12 +20,18 @@ export class SearchServiceGenerator extends BaseGenerator {
         continue;
       }
 
+      const ownershipCfg = model.boundedContext.ownership;
+      const isOwned = ownershipCfg?.enabled === true && entity.owned === true;
+      const ownershipValueObject = ownershipCfg?.valueObject ?? 'UserTenantOwnership';
+
       const context = {
         namespace,
         baseNamespace,
         entityName: entity.name,
         projectionName: `${entity.name}Projection`,
         description: entity.description || entity.name,
+        isOwned,
+        ownershipValueObject,
       };
 
       const filePath = path.join(servicesDir, `${entity.name}SearchService.cs`);

@@ -6,10 +6,14 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using {{namespace}}.Domain.Entities;
+using {{namespace}}.BL.Entities;
 using {{namespace}}.DTO.{{entityName}};
-using {{namespace}}.Domain.DataServices;
+using {{namespace}}.BL.DataServices;
 using InventorySystem.API.Base.Controllers;
+{{#if isOwned}}
+using {{baseNamespace}}.Base.Abstractions;
+using {{baseNamespace}}.Base.Ownership;
+{{/if}}
 
 namespace {{namespace}}.API.Controllers;
 
@@ -21,10 +25,25 @@ namespace {{namespace}}.API.Controllers;
 [Authorize]
 public partial class {{pluralEntityName}}Controller : DataController<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, I{{entityName}}DataService>
 {
+{{#if isOwned}}
+    private readonly ICurrentUserService<{{ownershipValueObject}}> _currentUserService;
+
+    public {{pluralEntityName}}Controller(
+        I{{entityName}}DataService service,
+        ICurrentUserService<{{ownershipValueObject}}> currentUserService,
+        ILogger<ServiceController> logger
+    ) : base(service, logger)
+    {
+        _currentUserService = currentUserService;
+    }
+    // _currentUserService is available for developer-authored partial-class overrides.
+    // Ownership stamping (creation & update) is handled automatically by DataServiceBase.
+{{else}}
     public {{pluralEntityName}}Controller(
         I{{entityName}}DataService service,
         ILogger<ServiceController> logger
     ) : base(service, logger)
     {
     }
+{{/if}}
 }

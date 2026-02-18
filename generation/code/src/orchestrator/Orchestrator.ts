@@ -165,7 +165,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new EntityGenerator(), {
       id: 'EntityGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 3,
       ambiguity: 'variant',
       requires: ['metadata'],
@@ -195,7 +195,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new ConfigurationGenerator(), {
       id: 'ConfigurationGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 5,
       ambiguity: 'variant',
       requires: ['entities'],
@@ -206,7 +206,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new DataAccessGenerator(), {
       id: 'DataAccessGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 6,
       ambiguity: 'composite',
       requires: ['entity-configurations'],
@@ -217,7 +217,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new AdoNetDataAccessGenerator(), {
       id: 'AdoNetDataAccessGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 6,
       ambiguity: 'composite',
       requires: ['entities'],
@@ -228,7 +228,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new AbstractionGenerator(), {
       id: 'AbstractionGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 7,
       ambiguity: 'composite',
       requires: ['entities'],
@@ -278,7 +278,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new ValidatorGenerator(), {
       id: 'ValidatorGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 8,
       ambiguity: 'composite',
       requires: ['dto'],
@@ -298,7 +298,7 @@ export class Orchestrator {
 
     this.registerLegacyGenerator(new ServiceGenerator(), {
       id: 'ServiceGenerator',
-      domain: 'domain',
+      domain: 'bl',
       phase: 9,
       ambiguity: 'deterministic',
       requires: ['validators'],
@@ -485,7 +485,7 @@ export class Orchestrator {
       meta: `${baseNamespace}.${contextName}.Meta`,
       common: `${baseNamespace}.${contextName}.Common`,
       dto: `${baseNamespace}.${contextName}.DTO`,
-      domain: `${baseNamespace}.${contextName}.Domain`,
+      bl: `${baseNamespace}.${contextName}.BL`,
       di: `${baseNamespace}.${contextName}.DI`,
       api: `${baseNamespace}.${contextName}.API`,
       tests: `${baseNamespace}.${contextName}.API.Tests`,
@@ -500,7 +500,7 @@ export class Orchestrator {
       await this.writer.ensureDirectory(dirPath as string);
 
       // Create subdirectories
-      if (key === 'domain') {
+      if (key === 'bl') {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Entities'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'EntityConfigurations'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Creators'));

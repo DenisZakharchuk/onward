@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using Inventorization.Auth.Domain.Services.Abstractions;
+using Inventorization.Auth.BL.Services.Abstractions;
 using Inventorization.Auth.DTO.DTO.Auth;
 using Inventorization.Base.DTOs;
 

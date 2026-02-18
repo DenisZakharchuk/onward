@@ -5,23 +5,23 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Inventorization.Base.Abstractions;
 using Inventorization.Base.DataAccess;
-using Inventorization.Auth.Domain.DbContexts;
-using Inventorization.Auth.Domain.DataAccess.UnitOfWork;
-using Inventorization.Auth.Domain.DataAccess.Repositories;
-using Inventorization.Auth.Domain.DataServices;
-using Inventorization.Auth.Domain.Entities;
-using Inventorization.Auth.Domain.Mappers;
-using Inventorization.Auth.Domain.Creators;
-using Inventorization.Auth.Domain.Modifiers;
-using Inventorization.Auth.Domain.SearchProviders;
-using Inventorization.Auth.Domain.Validators;
-using Inventorization.Auth.Domain.Services.Abstractions;
-using Inventorization.Auth.Domain.Services.Implementations;
-using Inventorization.Auth.Domain.DataAccess.Seeding;
+using Inventorization.Auth.BL.DbContexts;
+using Inventorization.Auth.BL.DataAccess.UnitOfWork;
+using Inventorization.Auth.BL.DataAccess.Repositories;
+using Inventorization.Auth.BL.DataServices;
+using Inventorization.Auth.BL.Entities;
+using Inventorization.Auth.BL.Mappers;
+using Inventorization.Auth.BL.Creators;
+using Inventorization.Auth.BL.Modifiers;
+using Inventorization.Auth.BL.SearchProviders;
+using Inventorization.Auth.BL.Validators;
+using Inventorization.Auth.BL.Services.Abstractions;
+using Inventorization.Auth.BL.Services.Implementations;
+using Inventorization.Auth.BL.DataAccess.Seeding;
 using Inventorization.Auth.DTO.DTO.User;
 using Inventorization.Auth.DTO.DTO.Role;
 using Inventorization.Auth.DTO.DTO.Permission;
-using Inventorization.Auth.Domain.PropertyAccessors;
+using Inventorization.Auth.BL.PropertyAccessors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,22 +62,22 @@ builder.Services.AddAuthorization();
 
 // ===== Repository & UnitOfWork Registration =====
 // Concrete specialized repositories
-builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.IUserRepository>(sp =>
+builder.Services.AddScoped<Inventorization.Auth.BL.Services.Abstractions.IUserRepository>(sp =>
 {
     var dbContext = sp.GetRequiredService<AuthDbContext>();
-    return new Inventorization.Auth.Domain.DataAccess.Repositories.UserRepository(dbContext);
+    return new Inventorization.Auth.BL.DataAccess.Repositories.UserRepository(dbContext);
 });
 // Register DataAccess.Repositories interface as well (used by validators)
-builder.Services.AddScoped<Inventorization.Auth.Domain.DataAccess.Repositories.IUserRepository>(sp =>
+builder.Services.AddScoped<Inventorization.Auth.BL.DataAccess.Repositories.IUserRepository>(sp =>
 {
     var dbContext = sp.GetRequiredService<AuthDbContext>();
-    return new Inventorization.Auth.Domain.DataAccess.Repositories.UserRepository(dbContext);
+    return new Inventorization.Auth.BL.DataAccess.Repositories.UserRepository(dbContext);
 });
 
-builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.IRefreshTokenRepository>(sp =>
+builder.Services.AddScoped<Inventorization.Auth.BL.Services.Abstractions.IRefreshTokenRepository>(sp =>
 {
     var dbContext = sp.GetRequiredService<AuthDbContext>();
-    return new Inventorization.Auth.Domain.DataAccess.Repositories.RefreshTokenRepository(dbContext);
+    return new Inventorization.Auth.BL.DataAccess.Repositories.RefreshTokenRepository(dbContext);
 });
 
 // Specific repositories for Role and Permission
@@ -95,7 +95,7 @@ builder.Services.AddScoped<IRepository<Permission>>(sp =>
 builder.Services.AddScoped<IRepository<User>>(sp =>
 {
     var dbContext = sp.GetRequiredService<AuthDbContext>();
-    return new Inventorization.Auth.Domain.DataAccess.Repositories.UserRepository(dbContext);
+    return new Inventorization.Auth.BL.DataAccess.Repositories.UserRepository(dbContext);
 });
 
 // UnitOfWork
@@ -149,7 +149,7 @@ builder.Services.AddScoped<IEntityIdPropertyAccessor<RolePermission>, RolePermis
 builder.Services.AddScoped<IRelatedEntityIdPropertyAccessor<RolePermission>, RolePermissionRelatedEntityIdPropertyAccessor>();
 
 // Relationship Metadata Registration
-builder.Services.AddSingleton<IRelationshipMetadata<User, Role>>(Inventorization.Auth.Domain.DataModelRelationships.UserRoles);
+builder.Services.AddSingleton<IRelationshipMetadata<User, Role>>(Inventorization.Auth.BL.DataModelRelationships.UserRoles);
 
 // Relationship Managers
 builder.Services.AddScoped<IRelationshipManager<User, Role>, UserRoleRelationshipManager>();
@@ -158,22 +158,22 @@ builder.Services.AddScoped<IValidator<Inventorization.Base.DTOs.EntityReferences
 
 // ===== Authentication & Authorization Services =====
 builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
-builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.ITokenRotationService, TokenRotationService>();
+builder.Services.AddScoped<Inventorization.Auth.BL.Services.Abstractions.ITokenRotationService, TokenRotationService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
-builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.IAuthorizationService, AuthorizationService>();
+builder.Services.AddScoped<Inventorization.Auth.BL.Services.Abstractions.IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 // ===== Repository Implementations (using Service.Abstractions interfaces) =====
 // Note: Actual implementations need to be created or BaseRepository<T> used
-builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.IUserRepository>(sp =>
+builder.Services.AddScoped<Inventorization.Auth.BL.Services.Abstractions.IUserRepository>(sp =>
 {
     var dbContext = sp.GetRequiredService<AuthDbContext>();
-    return new Inventorization.Auth.Domain.DataAccess.Repositories.UserRepository(dbContext);
+    return new Inventorization.Auth.BL.DataAccess.Repositories.UserRepository(dbContext);
 });
-builder.Services.AddScoped<Inventorization.Auth.Domain.Services.Abstractions.IRefreshTokenRepository>(sp =>
+builder.Services.AddScoped<Inventorization.Auth.BL.Services.Abstractions.IRefreshTokenRepository>(sp =>
 {
     var dbContext = sp.GetRequiredService<AuthDbContext>();
-    return new Inventorization.Auth.Domain.DataAccess.Repositories.RefreshTokenRepository(dbContext);
+    return new Inventorization.Auth.BL.DataAccess.Repositories.RefreshTokenRepository(dbContext);
 });
 
 // ===== Controllers & Swagger =====

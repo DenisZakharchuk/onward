@@ -14,7 +14,7 @@ interface ProjectContext {
 interface GlobalUsingsContext {
   baseNamespace: string;
   namespace: string; // Full BoundedContext namespace (e.g., "Inventorization.Goods" or "CompanyX.Goods")
-  projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests' | 'di';
+  projectType: 'meta' | 'common' | 'dto' | 'bl' | 'api' | 'tests' | 'di';
 }
 
 /**
@@ -24,7 +24,7 @@ export class ProjectGenerator extends BaseGenerator {
   private metaCsprojTemplate!: HandlebarsTemplateDelegate;
   private commonCsprojTemplate!: HandlebarsTemplateDelegate;
   private dtoCsprojTemplate!: HandlebarsTemplateDelegate;
-  private domainCsprojTemplate!: HandlebarsTemplateDelegate;
+  private blCsprojTemplate!: HandlebarsTemplateDelegate;
   private apiCsprojTemplate!: HandlebarsTemplateDelegate;
   private testsCsprojTemplate!: HandlebarsTemplateDelegate;
   private diCsprojTemplate!: HandlebarsTemplateDelegate;
@@ -47,8 +47,8 @@ export class ProjectGenerator extends BaseGenerator {
     this.dtoCsprojTemplate = Handlebars.compile(
       await this.loadTemplateWithFallback(templateDir, ['project/csproj/dto.hbs', 'dto.csproj.hbs'])
     );
-    this.domainCsprojTemplate = Handlebars.compile(
-      await this.loadTemplateWithFallback(templateDir, ['project/csproj/domain.hbs', 'domain.csproj.hbs'])
+    this.blCsprojTemplate = Handlebars.compile(
+      await this.loadTemplateWithFallback(templateDir, ['project/csproj/bl.hbs', 'bl.csproj.hbs'])
     );
     this.apiCsprojTemplate = Handlebars.compile(
       await this.loadTemplateWithFallback(templateDir, ['project/csproj/api.hbs', 'api.csproj.hbs'])
@@ -69,14 +69,14 @@ export class ProjectGenerator extends BaseGenerator {
     await this.generateProject('meta', contextName, this.metaCsprojTemplate, model);
     await this.generateProject('common', contextName, this.commonCsprojTemplate, model);
     await this.generateProject('dto', contextName, this.dtoCsprojTemplate, model);
-    await this.generateProject('domain', contextName, this.domainCsprojTemplate, model);
+    await this.generateProject('bl', contextName, this.blCsprojTemplate, model);
     await this.generateProject('di', contextName, this.diCsprojTemplate, model);
     await this.generateProject('api', contextName, this.apiCsprojTemplate, model);
     await this.generateProject('tests', contextName, this.testsCsprojTemplate, model);
   }
 
   private async generateProject(
-    projectType: 'meta' | 'common' | 'dto' | 'domain' | 'api' | 'tests' | 'di',
+    projectType: 'meta' | 'common' | 'dto' | 'bl' | 'api' | 'tests' | 'di',
     contextName: string,
     template: HandlebarsTemplateDelegate,
     model: DataModel
@@ -90,7 +90,8 @@ export class ProjectGenerator extends BaseGenerator {
       projectName,
       this.metadata!.baseNamespace,
       model.boundedContext.namespace, // Use namespace from model
-      projectType
+      projectType,
+      model.boundedContext.ownership?.enabled === true
     );
     const csprojContent = template(csprojContext);
     await this.writer!.write(
@@ -118,7 +119,7 @@ export class ProjectGenerator extends BaseGenerator {
       case 'meta': return 'Meta';
       case 'common': return 'Common';
       case 'dto': return 'DTO';
-      case 'domain': return 'Domain';
+      case 'bl': return 'BL';
       case 'di': return 'DI';
       case 'api': return 'API';
       case 'tests': return 'API.Tests';
@@ -130,17 +131,18 @@ export class ProjectGenerator extends BaseGenerator {
     projectName: string,
     baseNamespace: string,
     namespace: string, // Full namespace from BoundedContext (e.g., "Inventorization.Goods" or "CompanyX.Goods")
-    projectType: string
+    projectType: string,
+    hasOwnership = false
   ): ProjectContext {
     return {
       projectName,
       baseNamespace,
-      itemGroup: this.buildItemGroup(projectType, namespace, baseNamespace),
+      itemGroup: this.buildItemGroup(projectType, namespace, baseNamespace, hasOwnership),
       targetFramework: 'net8.0'
     };
   }
 
-  private buildItemGroup(projectType: string, namespace: string, baseNamespace: string): string {
+  private buildItemGroup(projectType: string, namespace: string, baseNamespace: string, hasOwnership = false): string {
     switch (projectType) {
       case 'meta':
         return `
@@ -162,7 +164,7 @@ export class ProjectGenerator extends BaseGenerator {
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
   </ItemGroup>`;
       
-      case 'domain':
+      case 'bl':
         return `
   <ItemGroup>
     <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
@@ -176,30 +178,37 @@ export class ProjectGenerator extends BaseGenerator {
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
   </ItemGroup>`;
 
-      case 'di':
+      case 'di': {
+        const aspNetCoreRef = hasOwnership
+          ? `\n    <ProjectReference Include="../${baseNamespace}.Base.AspNetCore/${baseNamespace}.Base.AspNetCore.csproj" />`
+          : '';
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />${aspNetCoreRef}
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
-    <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
+    <ProjectReference Include="../${namespace}.BL/${namespace}.BL.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
   </ItemGroup>`;
+      }
       
-      case 'api':
+      case 'api': {
+        const apiAspNetCoreRef = hasOwnership
+          ? `\n    <ProjectReference Include="../${baseNamespace}.Base.AspNetCore/${baseNamespace}.Base.AspNetCore.csproj" />`
+          : '';
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />${apiAspNetCoreRef}
     <ProjectReference Include="../InventorySystem.API.Base/InventorySystem.API.Base.csproj" />
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
-    <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
+    <ProjectReference Include="../${namespace}.BL/${namespace}.BL.csproj" />
     <ProjectReference Include="../${namespace}.DI/${namespace}.DI.csproj" />
   </ItemGroup>
 
@@ -207,12 +216,13 @@ export class ProjectGenerator extends BaseGenerator {
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>`;
+      }
       
       case 'tests':
         return `
   <ItemGroup>
     <ProjectReference Include="../${namespace}.API/${namespace}.API.csproj" />
-    <ProjectReference Include="../${namespace}.Domain/${namespace}.Domain.csproj" />
+    <ProjectReference Include="../${namespace}.BL/${namespace}.BL.csproj" />
     <ProjectReference Include="../${namespace}.DI/${namespace}.DI.csproj" />
   </ItemGroup>
 

@@ -35,7 +35,7 @@ See [GENERATION.md](../GENERATION.md) for complete code generation patterns and 
 ## Backend Project Naming & Structure
 Follow the conventions from Architecture.md strictly:
 - **DTO Projects**: `Inventorization.[BoundedContextName].DTO` (class library)
-- **Domain Projects**: `Inventorization.[BoundedContextName].Domain` (class library with Entities, Services, DbContexts, UOWs)
+- **Domain Projects**: `Inventorization.[BoundedContextName].BL` (class library with Entities, Services, DbContexts, UOWs)
 - **API Projects**: `Inventorization.[BoundedContextName].API` (ASP.NET web app)
 - **Test Projects**: `Inventorization.[BoundedContextName].API.Tests` (unit tests required for every API project)
 

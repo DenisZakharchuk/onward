@@ -1,6 +1,7 @@
 using Inventorization.Base.Abstractions;
 using Inventorization.Base.DataAccess;
 using Inventorization.Base.DTOs;
+using Inventorization.Base.Ownership;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,17 +12,25 @@ namespace Inventorization.Base.Services;
 using IUnitOfWorkInterface = Inventorization.Base.DataAccess.IUnitOfWork;
 
 /// <summary>
-/// Abstract base class for generic data services implementing full CRUD operations
+/// Abstract base class for generic data services implementing full CRUD operations,
+/// with optional ownership stamping via <see cref="ICurrentIdentityContext{TOwnership}"/>.
 /// </summary>
 /// <remarks>
-/// This class reduces boilerplate code by providing common implementation for all data services.
-/// Dependencies are resolved lazily from IServiceProvider to minimize overhead.
-/// Subclasses only need to define the interface and constructor call.
-/// 
-/// This is a reusable service abstraction for all bounded contexts.
+/// When <typeparamref name="TOwnership"/> is provided and the entity implements
+/// <see cref="IOwnedEntity{TOwnership}"/>, the service automatically stamps
+/// <see cref="IOwnedEntity{TOwnership}.Ownership"/> on creation and
+/// <see cref="IOwnedEntity{TOwnership}.LastModifiedOwnership"/> on update.
+///
+/// <typeparamref name="TOwnership"/> is constrained to <see cref="OwnershipValueObject"/>
+/// so the service is decoupled from any specific identity shape.
+///
+/// For entities that do not require ownership tracking, derive from
+/// <see cref="DataServiceBase{TEntity,TCreateDTO,TUpdateDTO,TDeleteDTO,TInitDTO,TDetailsDTO,TSearchDTO}"/>
+/// instead (the non-generic variant below).
 /// </remarks>
-public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
     : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    where TOwnership : OwnershipValueObject
     where TEntity : class
     where TCreateDTO : class
     where TUpdateDTO : UpdateDTO
@@ -33,20 +42,62 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
     protected readonly IUnitOfWorkInterface UnitOfWork;
     protected readonly IRepository<TEntity> Repository;
     protected readonly IServiceProvider ServiceProvider;
-    protected readonly ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> Logger;
+    protected readonly ICurrentIdentityContext<TOwnership> IdentityContext;
+    protected readonly ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> Logger;
 
     protected string EntityName => typeof(TEntity).Name;
 
-    public DataServiceBase(
+    protected DataServiceBase(
         IUnitOfWorkInterface unitOfWork,
         IRepository<TEntity> repository,
         IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> logger)
+        ICurrentIdentityContext<TOwnership> identityContext,
+        ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> logger)
     {
         UnitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         Repository = repository ?? throw new ArgumentNullException(nameof(repository));
         ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        IdentityContext = identityContext ?? throw new ArgumentNullException(nameof(identityContext));
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Stamps ownership on the entity if it implements <see cref="IOwnedEntity{TOwnership}"/>
+    /// and the caller is authenticated.  Returns a failure result when ownership is
+    /// required but the caller is anonymous.
+    /// </summary>
+    private ServiceResult<TDetailsDTO>? TryStampCreateOwnership(TEntity entity)
+    {
+        if (entity is not IOwnedEntity<TOwnership> owned)
+            return null; // entity does not participate in ownership — skip silently
+
+        if (!IdentityContext.IsAuthenticated || IdentityContext.Ownership is null)
+        {
+            Logger.LogWarning("Attempted to create {EntityName} without an authenticated identity", EntityName);
+            return ServiceResult<TDetailsDTO>.Failure($"An authenticated identity is required to create {EntityName}");
+        }
+
+        owned.SetOwnership(IdentityContext.Ownership);
+        return null; // null = success, proceed
+    }
+
+    /// <summary>
+    /// Stamps last-modified ownership on the entity if it implements
+    /// <see cref="IOwnedEntity{TOwnership}"/> and the caller is authenticated.
+    /// A missing identity is logged as a warning but does not block the update.
+    /// </summary>
+    private void TryStampUpdateOwnership(TEntity entity)
+    {
+        if (entity is not IOwnedEntity<TOwnership> owned)
+            return;
+
+        if (!IdentityContext.IsAuthenticated || IdentityContext.Ownership is null)
+        {
+            Logger.LogWarning("Updating {EntityName} without an authenticated identity — LastModifiedOwnership will not be stamped", EntityName);
+            return;
+        }
+
+        owned.UpdateOwnership(IdentityContext.Ownership);
     }
 
     /// <summary>
@@ -74,7 +125,9 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
     }
 
     /// <summary>
-    /// Creates a new entity
+    /// Creates a new entity. When the entity implements <see cref="IOwnedEntity{TOwnership}"/>,
+    /// ownership is stamped from the current <see cref="ICurrentIdentityContext{TOwnership}"/>
+    /// before the entity is persisted.
     /// </summary>
     public async Task<ServiceResult<TDetailsDTO>> AddAsync(TCreateDTO createDto, CancellationToken cancellationToken = default)
     {
@@ -91,6 +144,11 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
             var creator = ServiceProvider.GetRequiredService<IEntityCreator<TEntity, TCreateDTO>>();
             var entity = creator.Create(createDto);
 
+            // Stamp ownership before persistence if entity participates in ownership
+            var ownershipError = TryStampCreateOwnership(entity);
+            if (ownershipError is not null)
+                return ownershipError;
+
             await Repository.CreateAsync(entity, cancellationToken);
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -106,7 +164,8 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
     }
 
     /// <summary>
-    /// Updates an existing entity
+    /// Updates an existing entity. When the entity implements <see cref="IOwnedEntity{TOwnership}"/>,
+    /// <see cref="IOwnedEntity{TOwnership}.LastModifiedOwnership"/> is stamped from the current identity.
     /// </summary>
     public async Task<ServiceResult<TDetailsDTO>> UpdateAsync(TUpdateDTO updateDto, CancellationToken cancellationToken = default)
     {
@@ -126,7 +185,10 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
 
             var modifier = ServiceProvider.GetRequiredService<IEntityModifier<TEntity, TUpdateDTO>>();
             modifier.Modify(entity, updateDto);
-            
+
+            // Stamp last-modified ownership if entity participates in ownership
+            TryStampUpdateOwnership(entity);
+
             await Repository.UpdateAsync(entity, cancellationToken);
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -231,4 +293,59 @@ public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDT
         var idProperty = typeof(TEntity).GetProperty("Id");
         return idProperty?.GetValue(entity);
     }
+}
+
+/// <summary>
+/// Backward-compatible, non-ownership variant of <see cref="DataServiceBase{TOwnership,TEntity,TCreateDTO,TUpdateDTO,TDeleteDTO,TInitDTO,TDetailsDTO,TSearchDTO}"/>.
+/// Use this as the base class for data services whose entities do not implement
+/// <see cref="IOwnedEntity{TOwnership}"/> and therefore require no ownership stamping.
+/// <para>
+/// Internally delegates to the ownership-aware base with an
+/// <see cref="AnonymousIdentityContext{TOwnership}"/> that is never accessed
+/// because no entity in this path implements <see cref="IOwnedEntity{TOwnership}"/>.
+/// </para>
+/// </summary>
+public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    : DataServiceBase<NoOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    where TEntity : class
+    where TCreateDTO : class
+    where TUpdateDTO : UpdateDTO
+    where TDeleteDTO : DeleteDTO
+    where TInitDTO : InitDTO
+    where TDetailsDTO : class
+    where TSearchDTO : class
+{
+    protected DataServiceBase(
+        IUnitOfWorkInterface unitOfWork,
+        IRepository<TEntity> repository,
+        IServiceProvider serviceProvider,
+        ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> logger)
+        : base(unitOfWork, repository, serviceProvider,
+               AnonymousIdentityContext<NoOwnership>.Instance,
+               // Logger type coercion: wrap in a typed forwarder so base class logger type param matches
+               new TypeForwardingLogger<DataServiceBase<NoOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>>(logger))
+    {
+    }
+}
+
+/// <summary>
+/// Sentinel ownership VO used by the non-ownership <see cref="DataServiceBase{TEntity,TCreateDTO,TUpdateDTO,TDeleteDTO,TInitDTO,TDetailsDTO,TSearchDTO}"/>.
+/// It is never constructed at runtime — it only satisfies the generic constraint.
+/// </summary>
+public sealed record NoOwnership : OwnershipValueObject;
+
+/// <summary>
+/// Thin <see cref="ILogger{T}"/> wrapper that forwards all calls to an inner logger
+/// while satisfying a different open-generic type parameter T.
+/// Used to bridge the logger type parameter between the non-ownership shim and the
+/// ownership-aware base class.
+/// </summary>
+internal sealed class TypeForwardingLogger<T> : ILogger<T>
+{
+    private readonly ILogger _inner;
+    public TypeForwardingLogger(ILogger inner) => _inner = inner;
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => _inner.BeginScope(state);
+    public bool IsEnabled(LogLevel logLevel) => _inner.IsEnabled(logLevel);
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        => _inner.Log(logLevel, eventId, state, exception, formatter);
 }

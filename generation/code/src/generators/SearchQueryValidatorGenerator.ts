@@ -13,7 +13,7 @@ export class SearchQueryValidatorGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const validatorsDir = `${baseNamespace}.${contextName}.Domain/Validators`;
+    const validatorsDir = `${baseNamespace}.${contextName}.BL/Validators`;
 
     for (const entity of model.entities) {
       // Skip junction entities

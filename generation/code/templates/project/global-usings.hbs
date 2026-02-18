@@ -18,7 +18,7 @@ global using {{baseNamespace}}.Base.DTOs;
 global using {{namespace}}.Meta;
 {{/if}}
 
-{{#if (eq projectType 'domain')}}
+{{#if (eq projectType 'bl')}}
 global using {{baseNamespace}}.Base.DataAccess;
 global using {{baseNamespace}}.Base.Abstractions;
 global using {{namespace}}.Meta;
@@ -32,7 +32,7 @@ global using Microsoft.AspNetCore.Authorization;
 global using {{baseNamespace}}.Base.DTOs;
 global using {{namespace}}.Meta;
 global using {{namespace}}.DTO;
-global using {{namespace}}.Domain;
+global using {{namespace}}.BL;
 {{/if}}
 
 {{#if (eq projectType 'tests')}}
@@ -45,7 +45,7 @@ global using {{baseNamespace}}.Base.Abstractions;
 global using {{baseNamespace}}.Base.DataAccess;
 global using {{baseNamespace}}.Base.Services;
 global using {{baseNamespace}}.Base.ADTs;
-global using {{namespace}}.Domain;
+global using {{namespace}}.BL;
 global using {{namespace}}.DTO;
 global using {{namespace}}.Common.Enums;
 {{/if}}

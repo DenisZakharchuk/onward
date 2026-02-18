@@ -14,7 +14,7 @@ export class AbstractionGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const domainProjectPath = `${baseNamespace}.${contextName}.Domain`;
+    const blProjectPath = `${baseNamespace}.${contextName}.BL`;
 
     for (const entity of model.entities) {
       // Skip junction entities - they don't need full CRUD abstractions
@@ -22,20 +22,20 @@ export class AbstractionGenerator extends BaseGenerator {
         continue;
       }
 
-      await this.generateCreator(entity, domainProjectPath, namespace, baseNamespace);
-      await this.generateModifier(entity, domainProjectPath, namespace, baseNamespace);
-      await this.generateMapper(entity, domainProjectPath, namespace, baseNamespace);
-      await this.generateSearchProvider(entity, domainProjectPath, namespace, baseNamespace);
+      await this.generateCreator(entity, blProjectPath, namespace, baseNamespace);
+      await this.generateModifier(entity, blProjectPath, namespace, baseNamespace);
+      await this.generateMapper(entity, blProjectPath, namespace, baseNamespace);
+      await this.generateSearchProvider(entity, blProjectPath, namespace, baseNamespace);
     }
   }
 
   private async generateCreator(
     entity: Entity,
-    domainProjectPath: string,
+    blProjectPath: string,
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
-    const creatorsDir = path.join(domainProjectPath, 'Creators');
+    const creatorsDir = path.join(blProjectPath, 'Creators');
     
     // Get constructor arguments from Create DTO
     const constructorArgs = this.getConstructorArgs(entity);
@@ -52,7 +52,7 @@ export class AbstractionGenerator extends BaseGenerator {
 
     const filePath = path.join(creatorsDir, `${entity.name}Creator.cs`);
     await this.writeRenderedTemplate(
-      ['domain/abstractions/creator.generated.cs.hbs', 'creator.generated.cs.hbs'],
+      ['bl/abstractions/creator.generated.cs.hbs', 'creator.generated.cs.hbs'],
       context,
       filePath,
       true
@@ -61,11 +61,11 @@ export class AbstractionGenerator extends BaseGenerator {
 
   private async generateModifier(
     entity: Entity,
-    domainProjectPath: string,
+    blProjectPath: string,
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
-    const modifiersDir = path.join(domainProjectPath, 'Modifiers');
+    const modifiersDir = path.join(blProjectPath, 'Modifiers');
 
     // Get properties that can be modified (exclude Id, CreatedAt, UpdatedAt, navigation props, FKs)
     const modifiableProps = entity.properties.filter(
@@ -93,7 +93,7 @@ export class AbstractionGenerator extends BaseGenerator {
 
     const filePath = path.join(modifiersDir, `${entity.name}Modifier.cs`);
     await this.writeRenderedTemplate(
-      ['domain/abstractions/modifier.generated.cs.hbs', 'modifier.generated.cs.hbs'],
+      ['bl/abstractions/modifier.generated.cs.hbs', 'modifier.generated.cs.hbs'],
       context,
       filePath,
       true
@@ -102,11 +102,11 @@ export class AbstractionGenerator extends BaseGenerator {
 
   private async generateMapper(
     entity: Entity,
-    domainProjectPath: string,
+    blProjectPath: string,
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
-    const mappersDir = path.join(domainProjectPath, 'Mappers');
+    const mappersDir = path.join(blProjectPath, 'Mappers');
 
     // Get all properties that should be mapped to DetailsDTO
     const mappableProps = entity.properties.filter(
@@ -127,7 +127,7 @@ export class AbstractionGenerator extends BaseGenerator {
 
     const filePath = path.join(mappersDir, `${entity.name}Mapper.cs`);
     await this.writeRenderedTemplate(
-      ['domain/abstractions/mapper.generated.cs.hbs', 'mapper.generated.cs.hbs'],
+      ['bl/abstractions/mapper.generated.cs.hbs', 'mapper.generated.cs.hbs'],
       context,
       filePath,
       true
@@ -136,11 +136,11 @@ export class AbstractionGenerator extends BaseGenerator {
 
   private async generateSearchProvider(
     entity: Entity,
-    domainProjectPath: string,
+    blProjectPath: string,
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
-    const searchProvidersDir = path.join(domainProjectPath, 'SearchProviders');
+    const searchProvidersDir = path.join(blProjectPath, 'SearchProviders');
 
     // Identify searchable properties (text fields, dates, status fields)
     const searchableProps = entity.properties.filter(
@@ -178,7 +178,7 @@ export class AbstractionGenerator extends BaseGenerator {
 
     const filePath = path.join(searchProvidersDir, `${entity.name}SearchProvider.cs`);
     await this.writeRenderedTemplate(
-      ['domain/abstractions/search-provider.generated.cs.hbs', 'search-provider.generated.cs.hbs'],
+      ['bl/abstractions/search-provider.generated.cs.hbs', 'search-provider.generated.cs.hbs'],
       context,
       filePath,
       true

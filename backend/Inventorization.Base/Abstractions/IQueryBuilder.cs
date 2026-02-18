@@ -1,6 +1,7 @@
 using Inventorization.Base.ADTs;
 using Inventorization.Base.DTOs;
 using Inventorization.Base.Models;
+using Inventorization.Base.Ownership;
 using System.Linq.Expressions;
 
 namespace Inventorization.Base.Abstractions;
@@ -33,6 +34,31 @@ public interface IQueryBuilder<TEntity> where TEntity : class
 }
 
 /// <summary>
+/// Ownership-aware extension of <see cref="IQueryBuilder{TEntity}"/>.
+/// The builder is injected with an <see cref="ICurrentIdentityContext{TOwnership}"/>
+/// and exposes an ownership-scoped query path in addition to the standard path.
+/// This keeps ownership filtering inside the query pipeline rather than as a
+/// global EF query filter, giving each bounded context full control over the predicate.
+/// </summary>
+/// <typeparam name="TEntity">The entity type to build queries for.</typeparam>
+/// <typeparam name="TOwnership">Concrete ownership VO for this bounded context.</typeparam>
+public interface IQueryBuilder<TEntity, TOwnership>
+    : IQueryBuilder<TEntity>
+    where TEntity : class
+    where TOwnership : OwnershipValueObject
+{
+    /// <summary>
+    /// Builds a queryable that applies all standard <see cref="SearchQuery"/> clauses
+    /// AND an additional ownership predicate derived from the injected
+    /// <see cref="ICurrentIdentityContext{TOwnership}"/>.
+    /// When the caller is not authenticated, the predicate evaluates to no results
+    /// (returns an empty queryable) unless the entity does not implement
+    /// <see cref="IOwnedEntity{TOwnership}"/>, in which case the standard query is returned.
+    /// </summary>
+    IQueryable<TEntity> BuildOwnedQuery(IQueryable<TEntity> baseQuery, SearchQuery searchQuery);
+}
+
+/// <summary>
 /// Service for executing ADT-based search queries.
 /// Replaces the old ISearchQueryProvider pattern.
 /// Supports both regular projections and field transformations.
@@ -53,6 +79,31 @@ public interface ISearchService<TEntity, TProjection>
     /// Field transformations allow computed fields, string operations, arithmetic, conditionals, etc.
     /// </summary>
     Task<ServiceResult<SearchResult<TransformationResult>>> ExecuteTransformationSearchAsync(
+        SearchQuery query,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Ownership-aware extension of <see cref="ISearchService{TEntity,TProjection}"/>.
+/// Adds an ownership-scoped search method that automatically applies the caller's
+/// ownership predicate to the query, driven by the injected
+/// <see cref="ICurrentIdentityContext{TOwnership}"/>.
+/// </summary>
+/// <typeparam name="TEntity">The entity type to search.</typeparam>
+/// <typeparam name="TProjection">The projection result type.</typeparam>
+/// <typeparam name="TOwnership">Concrete ownership VO for this bounded context.</typeparam>
+public interface ISearchService<TEntity, TProjection, TOwnership>
+    : ISearchService<TEntity, TProjection>
+    where TEntity : class
+    where TProjection : class
+    where TOwnership : OwnershipValueObject
+{
+    /// <summary>
+    /// Executes a paginated search scoped to the current caller's ownership context.
+    /// The ownership predicate is appended by the injected
+    /// <see cref="IQueryBuilder{TEntity,TOwnership}"/> implementation.
+    /// </summary>
+    Task<ServiceResult<SearchResult<TProjection>>> ExecuteOwnedSearchAsync(
         SearchQuery query,
         CancellationToken cancellationToken = default);
 }

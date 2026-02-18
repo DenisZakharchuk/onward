@@ -14,13 +14,17 @@ export class ControllerGenerator extends BaseGenerator {
 
     const controllersDir = `${baseNamespace}.${contextName}.API/Controllers`;
 
+    const ownershipCfg = model.boundedContext.ownership;
+    const isContextOwned = ownershipCfg?.enabled === true;
+    const ownershipValueObject = ownershipCfg?.valueObject ?? 'UserTenantOwnership';
+
     for (const entity of model.entities) {
       // Skip junction entities - they use relationship endpoints on parent entities
       if (entity.isJunction) {
         continue;
       }
 
-      await this.generateController(entity, controllersDir, namespace, baseNamespace);
+      await this.generateController(entity, controllersDir, namespace, baseNamespace, isContextOwned, ownershipValueObject);
     }
   }
 
@@ -28,15 +32,20 @@ export class ControllerGenerator extends BaseGenerator {
     entity: Entity,
     controllersDir: string,
     namespace: string,
-    baseNamespace: string
+    baseNamespace: string,
+    isContextOwned: boolean = false,
+    ownershipValueObject: string = 'UserTenantOwnership'
   ): Promise<void> {
     const pluralEntityName = this.pluralize(entity.name);
+    const isOwned = entity.owned === true && isContextOwned;
 
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
       pluralEntityName,
+      isOwned,
+      ownershipValueObject,
     };
 
     const filePath = path.join(controllersDir, `${pluralEntityName}Controller.cs`);

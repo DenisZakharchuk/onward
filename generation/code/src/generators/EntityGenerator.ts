@@ -14,13 +14,22 @@ export class EntityGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const entitiesDir = `${baseNamespace}.${contextName}.Domain/Entities`;
+    const entitiesDir = `${baseNamespace}.${contextName}.BL/Entities`;
+
+    const ownershipCfg = model.boundedContext.ownership;
+    const ownershipValueObject = ownershipCfg?.valueObject ?? 'UserTenantOwnership';
 
     for (const entity of model.entities) {
       if (entity.isJunction) {
         await this.generateJunctionEntity(entity, entitiesDir, namespace);
       } else {
-        await this.generateRegularEntity(entity, entitiesDir, namespace, model.relationships || []);
+        await this.generateRegularEntity(
+          entity,
+          entitiesDir,
+          namespace,
+          model.relationships || [],
+          ownershipValueObject
+        );
       }
     }
   }
@@ -29,7 +38,8 @@ export class EntityGenerator extends BaseGenerator {
     entity: Entity,
     entitiesDir: string,
     namespace: string,
-    relationships: Relationship[]
+    relationships: Relationship[],
+    ownershipValueObject: string = 'UserTenantOwnership'
   ): Promise<void> {
     // Regular properties include FK properties (they are Guid properties)
     const properties = entity.properties.filter(
@@ -48,6 +58,9 @@ export class EntityGenerator extends BaseGenerator {
       description: entity.description || entity.name,
       auditable: entity.auditable !== false,
       hasEnums: this.hasEnumProperties(properties),
+      isOwned: entity.owned === true,
+      ownershipValueObject,
+      baseEntityClass: entity.owned === true ? `OwnedBaseEntity<${ownershipValueObject}>` : 'BaseEntity',
       constructorParams: this.getConstructorParams(properties),
       validations: this.getValidations(properties),
       propertyAssignments: this.getPropertyAssignments(properties),
@@ -62,7 +75,7 @@ export class EntityGenerator extends BaseGenerator {
 
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);
     await this.writeRenderedTemplate(
-      ['domain/entity/regular.hbs', 'entity.cs.hbs'],
+      ['bl/entity/regular.hbs', 'entity.cs.hbs'],
       context,
       filePath,
       true
@@ -108,7 +121,7 @@ export class EntityGenerator extends BaseGenerator {
 
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);
     await this.writeRenderedTemplate(
-      ['domain/entity/junction.hbs', 'junction-entity.cs.hbs'],
+      ['bl/entity/junction.hbs', 'junction-entity.cs.hbs'],
       context,
       filePath,
       true

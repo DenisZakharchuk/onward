@@ -21,8 +21,8 @@
  We need to have separate microservice (with dedicated Data Storage) for each set of interconnected entities
  Naming conventions for projects: 
  - DTO projects: Inventorization.[BoundedContextName].DTO; class library;
- - Inventorization.[BoundedContextName].Domain; class library; It has folders: Entities, Services, DbContexts, UOWs. Inventorization.[BoundedContextName].DTO is a dependency;
- - Inventorization.[BoundedContextName].API; asp.net web app; Inventorization.[BoundedContextName].Domain and Inventorization.[BoundedContextName].DTO are dependencies
+ - Inventorization.[BoundedContextName].BL; class library; It has folders: Entities, Services, DbContexts, UOWs. Inventorization.[BoundedContextName].DTO is a dependency;
+ - Inventorization.[BoundedContextName].API; asp.net web app; Inventorization.[BoundedContextName].BL and Inventorization.[BoundedContextName].DTO are dependencies
  all microservices are containarized;
  maintein docker-compose file in workspace root directory for all microservices
 
@@ -203,6 +203,188 @@ public class User
 - Relationships managed purely through CRUD operations
 - Junction entity has additional metadata requiring full service layer
 
+---
+
+## Ownership System
+
+Entities can be *owned* by users or tenants. The ownership system is implemented as a small, strongly-typed value-object hierarchy with no direct coupling to the Identity bounded context. All types live in `Inventorization.Base/Ownership/` and `Inventorization.Base.AspNetCore/`.
+
+### Ownership Value Objects
+
+All ownership VOs inherit from the abstract base record:
+
+```csharp
+// Inventorization.Base/Ownership/OwnershipValueObject.cs
+public abstract record OwnershipValueObject;
+
+// Concrete variants:
+public record UserOwnership(Guid UserId) : OwnershipValueObject;
+public record UserTenantOwnership(Guid UserId, Guid TenantId) : OwnershipValueObject;
+```
+
+**Rule**: Use `UserTenantOwnership` as the default for all multi-tenant bounded contexts. Use `UserOwnership` only for single-tenant or personal contexts.
+
+### Owned Entity Interfaces & Base Classes
+
+```csharp
+// IOwnedEntity<TOwnership>.cs
+public interface IOwnedEntity<TOwnership> where TOwnership : OwnershipValueObject
+{
+    TOwnership? Ownership { get; }          // Creator's ownership stamp
+    TOwnership? LastModifiedOwnership { get; }  // Last modifier's stamp
+    void SetOwnership(TOwnership ownership);
+    void UpdateOwnership(TOwnership ownership);
+}
+
+// OwnedBaseEntity<TOwnership, TPrimaryKey> — owned entity with custom PK
+// OwnedBaseEntity<TOwnership> : OwnedBaseEntity<TOwnership, Guid>  — shortcut
+public abstract class OwnedBaseEntity<TOwnership> : BaseEntity, IOwnedEntity<TOwnership>
+    where TOwnership : OwnershipValueObject
+{
+    // Ownership properties added automatically
+    public TOwnership? Ownership { get; private set; }
+    public TOwnership? LastModifiedOwnership { get; private set; }
+
+    public void SetOwnership(TOwnership ownership) => Ownership = ownership;
+    public void UpdateOwnership(TOwnership ownership) => LastModifiedOwnership = ownership;
+}
+```
+
+**Entity declaration**:
+```csharp
+// Non-owned entity (default)
+public class Category : BaseEntity { ... }
+
+// Owned entity (user + tenant scope)
+public class Order : OwnedBaseEntity<UserTenantOwnership> { ... }
+```
+
+### Identity Context Abstractions
+
+The bounded context layer knows **nothing** about JWT or HTTP. It depends only on `ICurrentIdentityContext<TOwnership>`:
+
+```csharp
+// Inventorization.Base/Abstractions/ICurrentIdentityContext.cs
+public interface ICurrentIdentityContext<TOwnership>
+    where TOwnership : OwnershipValueObject
+{
+    TOwnership? Ownership { get; }       // UserId/TenantId wrapped in VO
+    string? Email { get; }
+    IReadOnlyList<string> Roles { get; }
+    bool IsAuthenticated { get; }
+    bool IsInRole(string role);
+}
+
+// Inventorization.Base/Abstractions/ICurrentUserService.cs
+public interface ICurrentUserService<TOwnership>
+    where TOwnership : OwnershipValueObject
+{
+    Task<bool> HasPermissionAsync(string resource, string action, CancellationToken ct = default);
+    Task<bool> CanAccessEntityAsync<TEntity>(TEntity entity, CancellationToken ct = default)
+        where TEntity : IOwnedEntity<TOwnership>;
+}
+```
+
+**Anonymous fallback** (null-object, no registration needed): `AnonymousIdentityContext<TOwnership>.Instance`
+
+### HTTP Layer — Inventorization.Base.AspNetCore
+
+JWT → `ICurrentIdentityContext<TOwnership>` resolution lives in the separate project `Inventorization.Base.AspNetCore`:
+
+| Class | Responsibility |
+|---|---|
+| `HttpContextCurrentIdentityContext<TOwnership>` | Reads `name` + `tenant_id` claims, delegates to `IOwnershipFactory` |
+| `ClaimsCurrentUserService<TOwnership>` | `AnAdmin` role bypass; permission claim convention `resource.action` |
+| `UserOwnershipFactory` | `(userId, _) => new UserOwnership(userId)` |
+| `UserTenantOwnershipFactory` | `(userId, tenantId) => new UserTenantOwnership(userId, tenantId ?? Guid.Empty)` |
+
+**DI registration** (in API `Program.cs`):
+```csharp
+// Convenience method — registers all 4 services in one call
+builder.Services.AddUserTenantOwnershipServices(); // UserTenantOwnership + UserTenantOwnershipFactory
+// or:
+builder.Services.AddOwnershipServices<UserTenantOwnership, UserTenantOwnershipFactory>();
+```
+
+**Project references required:**
+```
+Inventorization.[BoundedContext].API  →  Inventorization.Base.AspNetCore
+                                      →  Inventorization.Base
+```
+
+### Ownership in DataServiceBase
+
+For owned entities use the 8-type-parameter variant that constructor-injects identity context:
+
+```csharp
+// Owned data service — DataServiceBase stamps Ownership on Add/Update
+public class OrderDataService
+    : DataServiceBase<UserTenantOwnership,
+                      Order, CreateOrderDTO, UpdateOrderDTO, DeleteOrderDTO,
+                      OrderDetailsDTO, OrderSearchDTO>,
+      IOrderDataService
+{
+    public OrderDataService(
+        IUnitOfWork unitOfWork,
+        IRepository<Order> repository,
+        ICurrentIdentityContext<UserTenantOwnership> identityContext,
+        ILogger<OrderDataService> logger)
+        : base(unitOfWork, repository, identityContext, logger) { }
+}
+
+// Non-owned (existing) — backward-compatible, no changes required
+public class CategoryDataService
+    : DataServiceBase<Category, CreateCategoryDTO, ...>, ICategoryDataService { ... }
+```
+
+`DataServiceBase<TOwnership, ...>` automatically:
+- Calls `entity.SetOwnership(identityContext.Ownership)` inside `AddAsync`
+- Calls `entity.UpdateOwnership(identityContext.Ownership)` inside `UpdateAsync`
+- Returns a `403 Forbidden` `ServiceResult` when `!identityContext.IsAuthenticated`
+
+### Ownership in Query Layer
+
+Query filtering by ownership is integrated into `BaseQueryBuilder` and `BaseSearchService` via ownership-aware generic overloads — **not** via global EF Core query filters.
+
+```csharp
+// IQueryBuilder<TEntity, TOwnership> extends IQueryBuilder<TEntity>
+public interface IQueryBuilder<TEntity, TOwnership> : IQueryBuilder<TEntity>
+    where TEntity : class
+    where TOwnership : OwnershipValueObject
+{
+    IQueryable<TEntity> BuildOwnedQuery(IQueryable<TEntity> baseQuery, SearchQuery searchQuery);
+}
+
+// BaseQueryBuilder<TEntity, TOwnership> — constructor-injects ICurrentIdentityContext
+public class OrderQueryBuilder : BaseQueryBuilder<Order, UserTenantOwnership>
+{
+    public OrderQueryBuilder(ICurrentIdentityContext<UserTenantOwnership> identityContext)
+        : base(identityContext) { }
+    // Override BuildOwnershipPredicate if non-default matching is needed
+}
+
+// BaseSearchService<TEntity, TProjection, TOwnership>
+public class OrderSearchService
+    : BaseSearchService<Order, OrderProjection, UserTenantOwnership>
+{
+    public OrderSearchService(
+        IRepository<Order> repository,
+        IQueryBuilder<Order, UserTenantOwnership> queryBuilder,
+        IProjectionMapper<Order, OrderProjection> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        IValidator<SearchQuery> validator,
+        ICurrentIdentityContext<UserTenantOwnership> identityContext,
+        ILogger<OrderSearchService> logger)
+        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, identityContext, logger) { }
+}
+```
+
+**`BuildOwnedQuery` behaviour**:
+- Anonymous caller (`!IsAuthenticated`) → returns `Queryable.Empty<TEntity>()`
+- Authenticated → calls `BuildQuery` then applies `BuildOwnershipPredicate(ownership)` (default: record equality on `Ownership` property)
+
+---
+
 ## ADT-Based Query/Search Architecture
 
 ### Overview
@@ -304,24 +486,34 @@ public class GoodsQueryController : BaseQueryController<Good, GoodProjection>
 }
 ```
 
-#### BaseSearchService\<TEntity, TProjection\>
+#### BaseSearchService\<TEntity, TProjection\> / BaseSearchService\<TEntity, TProjection, TOwnership\>
 
 **Location**: `Inventorization.Base/DataAccess/BaseSearchService.cs`
 
 **Purpose**: Orchestrates query execution pipeline (validate → build → execute → project)
 
+**Two variants:**
+- `BaseSearchService<TEntity, TProjection>` — non-owned entities; no identity context
+- `BaseSearchService<TEntity, TProjection, TOwnership>` — owned entities; adds `ICurrentIdentityContext<TOwnership>` and `IQueryBuilder<TEntity, TOwnership>`; exposes `ExecuteOwnedSearchAsync`
+
 **Generic Constraints:**
 - `TEntity : class`
 - `TProjection : class, new()` - Required by IProjectionMapper
+- `TOwnership : OwnershipValueObject` (ownership variant only)
 
 **Dependencies (Constructor Injection):**
 ```csharp
+// Non-owned variant
 IRepository<TEntity> repository           // Data access
 IQueryBuilder<TEntity> queryBuilder       // ADT → LINQ expression
 IProjectionMapper<TEntity, TProjection> projectionMapper  // Entity → DTO
 ProjectionExpressionBuilder expressionBuilder  // Field transformations
 IValidator<SearchQuery> validator         // Query validation
 ILogger logger                            // Logging
+
+// Ownership variant adds:
+IQueryBuilder<TEntity, TOwnership> ownedQueryBuilder  // ownership-scoped query builder
+ICurrentIdentityContext<TOwnership> identityContext   // caller's ownership stamp
 ```
 
 **Virtual Members:**
@@ -355,20 +547,27 @@ public class GoodSearchService : BaseSearchService<Good, GoodProjection>
 }
 ```
 
-#### BaseQueryBuilder\<TEntity\>
+#### BaseQueryBuilder\<TEntity\> / BaseQueryBuilder\<TEntity, TOwnership\>
 
 **Location**: `Inventorization.Base/DataAccess/BaseQueryBuilder.cs`
 
 **Purpose**: Converts SearchQuery ADT (filters, projections, sorting) to LINQ expressions
 
+**Two variants:**
+- `BaseQueryBuilder<TEntity>` — non-owned entities
+- `BaseQueryBuilder<TEntity, TOwnership>` — owned entities; constructor-injects `ICurrentIdentityContext<TOwnership>`; implements `IQueryBuilder<TEntity, TOwnership>`
+
 **Generic Constraints:**
 - `TEntity : class`
+- `TOwnership : OwnershipValueObject` (ownership variant only)
 
 **Virtual Members:**
 ```csharp
 protected virtual string ParameterName => typeof(TEntity).Name.ToLower()[0].ToString();
+// Ownership variant also exposes:
+protected virtual Expression<Func<TEntity, bool>> BuildOwnershipPredicate(TOwnership ownership)
+// default: record equality on entity.Ownership property
 ```
-Defaults to first character of entity name ("Good" → "g", "Category" → "c")
 
 **Key Methods:**
 ```csharp
@@ -376,6 +575,8 @@ Expression<Func<TEntity, bool>>? BuildFilterExpression(FilterExpression? filter)
 IQueryable<TEntity> ApplyProjection(IQueryable<TEntity> query, ProjectionRequest? projection)
 IQueryable<TEntity> ApplySorting(IQueryable<TEntity> query, SortRequest? sort)
 IQueryable<TEntity> BuildQuery(IQueryable<TEntity> baseQuery, SearchQuery searchQuery)
+// Ownership variant adds:
+IQueryable<TEntity> BuildOwnedQuery(IQueryable<TEntity> baseQuery, SearchQuery searchQuery)
 ```
 
 **Pattern Matching**: Recursively processes FilterExpression ADT variants:
@@ -383,12 +584,21 @@ IQueryable<TEntity> BuildQuery(IQueryable<TEntity> baseQuery, SearchQuery search
 - `AndFilter` → Logical AND of child filters
 - `OrFilter` → Logical OR of child filters
 
-**Concrete Implementation** (per entity, ~13 lines):
+**Concrete Implementation** (per entity):
 ```csharp
+// Non-owned (~13 lines)
 public class GoodQueryBuilder : BaseQueryBuilder<Good>
 {
     // Empty body - uses all defaults from base class
     // Override ParameterName only if custom name needed
+}
+
+// Owned (~15 lines) — requires ICurrentIdentityContext injected from DI
+public class OrderQueryBuilder : BaseQueryBuilder<Order, UserTenantOwnership>
+{
+    public OrderQueryBuilder(ICurrentIdentityContext<UserTenantOwnership> ctx)
+        : base(ctx) { }
+    // Override BuildOwnershipPredicate only for non-standard ownership matching
 }
 ```
 
@@ -632,15 +842,15 @@ For each entity, the following infrastructure classes are created:
 
 | Component | Naming Pattern | Location | Lines | Purpose |
 |-----------|---------------|----------|-------|---------|
-| Entity | `{Entity}` | Domain/Entities/ | Variable | Core domain model |
-| Query Builder | `{Entity}QueryBuilder` | Domain/DataAccess/ | ~13 | ADT → LINQ expressions |
-| Search Service | `{Entity}SearchService` | Domain/Services/ | ~28 | Query orchestration |
+| Entity | `{Entity}` | BL/Entities/ | Variable | Core domain model |
+| Query Builder | `{Entity}QueryBuilder` | BL/DataAccess/ | ~13 | ADT → LINQ expressions |
+| Search Service | `{Entity}SearchService` | BL/Services/ | ~28 | Query orchestration |
 | Query Controller | `{Entity}sQueryController` | API/Controllers/ | ~25 | HTTP endpoints |
-| Projection Mapper | `{Entity}ProjectionMapper` | Domain/Mappers/Projection/ | ~250 | Entity → DTO mapping |
-| Projection Interface | `I{Entity}ProjectionMapper` | Domain/Mappers/Projection/ | ~3 | Marker interface |
+| Projection Mapper | `{Entity}ProjectionMapper` | BL/Mappers/Projection/ | ~250 | Entity → DTO mapping |
+| Projection Interface | `I{Entity}ProjectionMapper` | BL/Mappers/Projection/ | ~3 | Marker interface |
 | Projection DTO | `{Entity}Projection` | DTO/ADTs/ | ~30 | DTO structure |
 | Search Fields | `{Entity}SearchFields` | DTO/ADTs/ | ~40 | Field name constants |
-| Validator | `{Entity}SearchQueryValidator` | Domain/Validators/ | ~200 | Query validation |
+| Validator | `{Entity}SearchQueryValidator` | BL/Validators/ | ~200 | Query validation |
 
 **Total: ~589 lines per entity** (mostly concentrated in ProjectionMapper and Validator)
 
@@ -779,11 +989,10 @@ public class GoodSearchQueryValidator : IValidator<SearchQuery>
 
 ### Dependency Injection Registration Pattern
 
-Each entity requires careful DI registration following this pattern:
+Each entity requires careful DI registration following this pattern.
 
+**Non-owned entity (standard):**
 ```csharp
-// In Program.cs or DI configuration
-
 // 1. Query Builder
 builder.Services.AddScoped<IQueryBuilder<Good>, GoodQueryBuilder>();
 
@@ -808,6 +1017,34 @@ builder.Services.AddScoped<ISearchService<Good, GoodProjection>>(
 builder.Services.AddScoped<ProjectionExpressionBuilder>();
 ```
 
+**Owned entity (ownership-aware):**
+```csharp
+// Register ownership services once per API project
+builder.Services.AddUserTenantOwnershipServices(); // or AddOwnershipServices<TOwnership, TFactory>()
+
+// 1. Owned Query Builder (requires ICurrentIdentityContext)
+builder.Services.AddScoped<IQueryBuilder<Order, UserTenantOwnership>>(sp =>
+    new OrderQueryBuilder(sp.GetRequiredService<ICurrentIdentityContext<UserTenantOwnership>>()));
+builder.Services.AddScoped<IQueryBuilder<Order>>(
+    sp => sp.GetRequiredService<IQueryBuilder<Order, UserTenantOwnership>>());
+
+// 4. Owned Search Service
+builder.Services.AddScoped<OrderSearchService>(sp => new OrderSearchService(
+    sp.GetRequiredService<IRepository<Order>>(),
+    sp.GetRequiredService<IQueryBuilder<Order, UserTenantOwnership>>(),
+    sp.GetRequiredService<IProjectionMapper<Order, OrderProjection>>(),
+    sp.GetRequiredService<ProjectionExpressionBuilder>(),
+    sp.GetRequiredService<OrderSearchQueryValidator>(),
+    sp.GetRequiredService<ICurrentIdentityContext<UserTenantOwnership>>(),
+    sp.GetRequiredService<ILogger<OrderSearchService>>()));
+builder.Services.AddScoped<ISearchService<Order, OrderProjection, UserTenantOwnership>>(
+    sp => sp.GetRequiredService<OrderSearchService>());
+builder.Services.AddScoped<ISearchService<Order, OrderProjection>>(
+    sp => sp.GetRequiredService<OrderSearchService>());
+```
+
+> **Note**: In generated bounded contexts this DI wiring is emitted automatically by the code generator when `"owned": true` is set on the entity in the data model JSON.
+
 **Why Dual Registration?**
 - Entity-specific interfaces (e.g., `IGoodProjectionMapper`) allow type-safe nested mapper injection
 - Generic interfaces (e.g., `IProjectionMapper<Good, GoodProjection>`) enable polymorphic service injection
@@ -821,12 +1058,12 @@ builder.Services.AddScoped<ProjectionExpressionBuilder>();
 
 2. **Create Infrastructure Classes** (8 files per entity):
    
-   a. **QueryBuilder** (Domain/DataAccess/{Entity}QueryBuilder.cs):
+   a. **QueryBuilder** (BL/DataAccess/{Entity}QueryBuilder.cs):
    ```csharp
    public class ProductQueryBuilder : BaseQueryBuilder<Product> { }
    ```
    
-   b. **SearchService** (Domain/Services/{Entity}SearchService.cs):
+   b. **SearchService** (BL/Services/{Entity}SearchService.cs):
    ```csharp
    public class ProductSearchService : BaseSearchService<Product, ProductProjection>
    {
@@ -855,12 +1092,12 @@ builder.Services.AddScoped<ProjectionExpressionBuilder>();
    }
    ```
    
-   d. **ProjectionMapper** (Domain/Mappers/Projection/{Entity}ProjectionMapper.cs):
+   d. **ProjectionMapper** (BL/Mappers/Projection/{Entity}ProjectionMapper.cs):
    - Implement 4 abstract methods
    - Handle nested entity projections
    - Use HashSet pattern for selective fields
    
-   e. **ProjectionMapper Interface** (Domain/Mappers/Projection/I{Entity}ProjectionMapper.cs):
+   e. **ProjectionMapper Interface** (BL/Mappers/Projection/I{Entity}ProjectionMapper.cs):
    ```csharp
    public interface IProductProjectionMapper : IProjectionMapper<Product, ProductProjection> { }
    ```
@@ -874,7 +1111,7 @@ builder.Services.AddScoped<ProjectionExpressionBuilder>();
    - String constants for field names
    - Validation helpers
    
-   h. **Validator** (Domain/Validators/{Entity}SearchQueryValidator.cs):
+   h. **Validator** (BL/Validators/{Entity}SearchQueryValidator.cs):
    - Use `DataModelMetadata.{Entity}` for validation
    - Validate filters, projections, sorts
 
@@ -930,7 +1167,7 @@ Inventorization.[BoundedContextName].DI/
 The DI project must reference:
 - `Inventorization.Base` (for shared abstractions and base types)
 - `Inventorization.[BoundedContextName].DTO` (for DTO types)
-- `Inventorization.[BoundedContextName].Domain` (for domain services, entities, and DbContext)
+- `Inventorization.[BoundedContextName].BL` (for domain services, entities, and DbContext)
 - `Inventorization.[BoundedContextName].Common` (for enums and constants, if applicable)
 
 **Important**: DI project should NOT reference the API project to prevent circular dependencies.
@@ -945,13 +1182,13 @@ All DI configuration for a bounded context is encapsulated in a static extension
 using Inventorization.Base.Abstractions;
 using Inventorization.Base.DataAccess;
 using Inventorization.Base.Services;
-using Inventorization.Commerce.Domain;
-using Inventorization.Commerce.Domain.DataServices;
-using Inventorization.Commerce.Domain.EntityConfigurations;
-using Inventorization.Commerce.Domain.Mappers;
-using Inventorization.Commerce.Domain.PropertyAccessors;
-using Inventorization.Commerce.Domain.SearchProviders;
-using Inventorization.Commerce.Domain.Validators;
+using Inventorization.Commerce.BL;
+using Inventorization.Commerce.BL.DataServices;
+using Inventorization.Commerce.BL.EntityConfigurations;
+using Inventorization.Commerce.BL.Mappers;
+using Inventorization.Commerce.BL.PropertyAccessors;
+using Inventorization.Commerce.BL.SearchProviders;
+using Inventorization.Commerce.BL.Validators;
 using Inventorization.Commerce.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -1169,7 +1406,7 @@ Each bounded context requires the following project structure:
     - Purpose: Data Transfer Objects and mapping abstractions
     - Contents: DTOs organized in `DTO/[Entity]/` folders, mappers, validators
     
-  - **Domain Project**: `Inventorization.[BoundedContextName].Domain` (class library)
+  - **Domain Project**: `Inventorization.[BoundedContextName].BL` (class library)
     - Purpose: Domain logic, entities, data access, business services
     - Contents: Entities, DbContexts, Unit of Work, business services, entity configurations, search providers
     
@@ -1368,13 +1605,13 @@ global using FluentAssertions;
 global using Moq;
 global using Inventorization.Base.Abstractions;
 global using Inventorization.Base.Services;
-global using Inventorization.[BoundedContextName].Domain;
-global using Inventorization.[BoundedContextName].Domain.DataServices;
-global using Inventorization.[BoundedContextName].Domain.Validators;
-global using Inventorization.[BoundedContextName].Domain.Mappers;
-global using Inventorization.[BoundedContextName].Domain.SearchProviders;
-global using Inventorization.[BoundedContextName].Domain.Creators;
-global using Inventorization.[BoundedContextName].Domain.Modifiers;
+global using Inventorization.[BoundedContextName].BL;
+global using Inventorization.[BoundedContextName].BL.DataServices;
+global using Inventorization.[BoundedContextName].BL.Validators;
+global using Inventorization.[BoundedContextName].BL.Mappers;
+global using Inventorization.[BoundedContextName].BL.SearchProviders;
+global using Inventorization.[BoundedContextName].BL.Creators;
+global using Inventorization.[BoundedContextName].BL.Modifiers;
 global using Inventorization.[BoundedContextName].DTO;
 global using Inventorization.[BoundedContextName].Common.Enums;
 global using Microsoft.EntityFrameworkCore;
@@ -1621,7 +1858,7 @@ Each bounded context requires minimal concrete code for its Unit of Work:
 **Step 1: Define bounded context interface** (inherits from `IUnitOfWork`):
 
 ```csharp
-// In BoundedContext.Domain/DataAccess/
+// In BoundedContext.BL/DataAccess/
 public interface IGoodsUnitOfWork : Inventorization.Base.DataAccess.IUnitOfWork
 {
     // Add bounded context-specific methods if needed (usually empty)
@@ -1631,7 +1868,7 @@ public interface IGoodsUnitOfWork : Inventorization.Base.DataAccess.IUnitOfWork
 **Step 2: Implement concrete UnitOfWork** (inherits from `UnitOfWorkBase<TDbContext>`):
 
 ```csharp
-// In BoundedContext.Domain/DataAccess/
+// In BoundedContext.BL/DataAccess/
 using Inventorization.Base.DataAccess;
 using Microsoft.Extensions.Logging;
 
@@ -1854,7 +2091,7 @@ public static class DataModelRelationships
 }
 ```
 
-**3. Concrete Entity Configurations** (in BoundedContext.Domain/EntityConfigurations/)
+**3. Concrete Entity Configurations** (in BoundedContext.BL/EntityConfigurations/)
 
 Each entity gets its own configuration file inheriting from appropriate base:
 
@@ -1914,7 +2151,7 @@ public class UserRoleConfiguration : JunctionEntityConfiguration<UserRole, User,
 }
 ```
 
-**4. Simplified DbContext** (in BoundedContext.Domain/DbContexts/)
+**4. Simplified DbContext** (in BoundedContext.BL/DbContexts/)
 
 ```csharp
 public class AuthDbContext : DbContext
@@ -1945,7 +2182,7 @@ public class AuthDbContext : DbContext
 Each bounded context must have:
 
 ```
-BoundedContext.Domain/
+BoundedContext.BL/
   ├── DbContexts/
   │   └── BoundedContextDbContext.cs (simplified)
   ├── EntityConfigurations/
@@ -2167,7 +2404,14 @@ else if (product.Status == ProductStatus.Active)
 
 ## Domain Service Abstractions
 
-All bounded contexts should use the **generic `DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TDetailsDTO, TSearchDTO>`** class located in `Inventorization.Base.Services` for implementing data services. This eliminates boilerplate CRUD code while enforcing consistent patterns across all contexts.
+All bounded contexts should use the **`DataServiceBase`** class located in `Inventorization.Base.Services` for implementing data services. Two variants exist:
+
+| Variant | Type parameters | When to use |
+|---|---|---|
+| Non-owned | `DataServiceBase<TEntity, TCreate, TUpdate, TDelete, TDetails, TSearch>` | Entity has no ownership (e.g. lookup/reference data) |
+| Owned | `DataServiceBase<TOwnership, TEntity, TCreate, TUpdate, TDelete, TDetails, TSearch>` | Entity is owned by a user/tenant |
+
+The owned variant constructor-injects `ICurrentIdentityContext<TOwnership>` and automatically stamps `Ownership` on create/update. This eliminates boilerplate CRUD code while enforcing consistent patterns across all contexts.
 
 ### Creating Data Services in a Bounded Context
 
@@ -2184,30 +2428,43 @@ All base DTOs should be defined in `Inventorization.Base` and inherited/extended
 
 #### 2. Concrete Data Service (in BoundedContext.Domain project)
 
-**Step-by-step example** for a `Customer` entity:
+**Step-by-step examples:**
 
 ```csharp
-// ICustomerDataService.cs
-public interface ICustomerDataService : IDataService<Customer, CreateCustomerDTO, UpdateCustomerDTO, DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>
-{
-}
+// Non-owned entity (lookup / reference data)
+public interface ICustomerDataService : IDataService<
+    Customer, CreateCustomerDTO, UpdateCustomerDTO,
+    DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO> { }
 
-// CustomerDataService.cs
-using Inventorization.Base.Services;
-using Inventorization.Base.DataAccess;
-using Inventorization.Base.Abstractions;
-using Microsoft.Extensions.Logging;
-
-public class CustomerDataService : DataServiceBase<Customer, CreateCustomerDTO, UpdateCustomerDTO, DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>, ICustomerDataService
+public class CustomerDataService
+    : DataServiceBase<Customer, CreateCustomerDTO, UpdateCustomerDTO,
+                      DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>,
+      ICustomerDataService
 {
     public CustomerDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        IUnitOfWork unitOfWork,
         IRepository<Customer> repository,
-        IServiceProvider serviceProvider,
-        ILogger<DataServiceBase<Customer, CreateCustomerDTO, UpdateCustomerDTO, DeleteCustomerDTO, CustomerDetailsDTO, CustomerSearchDTO>> logger)
-        : base(unitOfWork, repository, serviceProvider, logger)
-    {
-    }
+        ILogger<CustomerDataService> logger)
+        : base(unitOfWork, repository, logger) { }
+}
+
+// Owned entity — automatic ownership stamping on Add/Update
+public interface IOrderDataService : IDataService<
+    Order, CreateOrderDTO, UpdateOrderDTO,
+    DeleteOrderDTO, OrderDetailsDTO, OrderSearchDTO> { }
+
+public class OrderDataService
+    : DataServiceBase<UserTenantOwnership,
+                      Order, CreateOrderDTO, UpdateOrderDTO,
+                      DeleteOrderDTO, OrderDetailsDTO, OrderSearchDTO>,
+      IOrderDataService
+{
+    public OrderDataService(
+        IUnitOfWork unitOfWork,
+        IRepository<Order> repository,
+        ICurrentIdentityContext<UserTenantOwnership> identityContext,
+        ILogger<OrderDataService> logger)
+        : base(unitOfWork, repository, identityContext, logger) { }
 }
 ```
 
@@ -2226,29 +2483,30 @@ The `DataServiceBase` class provides:
 
 ### Dependency Resolution Pattern
 
-`DataServiceBase` uses lazy dependency resolution to minimize overhead:
+`DataServiceBase` uses explicit constructor injection:
 
-**Constructor (always injected):**
+**Non-owned constructor:**
 ```csharp
-IUnitOfWorkInterface unitOfWork,     // For SaveChangesAsync
+IUnitOfWork unitOfWork,              // For SaveChangesAsync
 IRepository<TEntity> repository,     // For CRUD operations
-IServiceProvider serviceProvider,    // For lazy resolution
 ILogger<...> logger                  // For logging
 ```
 
-**Runtime resolution (resolved only when needed):**
-- `IMapper<TEntity, TDetailsDTO>` - Resolved in GetByIdAsync, AddAsync, UpdateAsync, SearchAsync
-- `IValidator<TCreateDTO>` - Resolved in AddAsync
-- `IValidator<TUpdateDTO>` - Resolved in UpdateAsync
-- `IEntityCreator<TEntity, TCreateDTO>` - Resolved in AddAsync
-- `IEntityModifier<TEntity, TUpdateDTO>` - Resolved in UpdateAsync
-- `ISearchQueryProvider<TEntity, TSearchDTO>` - Resolved in SearchAsync
+**Owned constructor (adds identity context):**
+```csharp
+IUnitOfWork unitOfWork,
+IRepository<TEntity> repository,
+ICurrentIdentityContext<TOwnership> identityContext,  // ← caller's ownership
+ILogger<...> logger
+```
 
-This approach:
-- Reduces constructor complexity
-- Minimizes DI container pressure
-- Only instantiates dependencies when actually used
-- Allows each bounded context to register only what it needs
+**Runtime resolution (resolved via IServiceProvider only when needed):**
+- `IMapper<TEntity, TDetailsDTO>` — GetByIdAsync, AddAsync, UpdateAsync, SearchAsync
+- `IValidator<TCreateDTO>` — AddAsync
+- `IValidator<TUpdateDTO>` — UpdateAsync
+- `IEntityCreator<TEntity, TCreateDTO>` — AddAsync
+- `IEntityModifier<TEntity, TUpdateDTO>` — UpdateAsync
+- `ISearchQueryProvider<TEntity, TSearchDTO>` — SearchAsync
 
 ### Required Component Implementations
 
@@ -2283,7 +2541,7 @@ All bounded contexts should use the **generic `RelationshipManagerBase<TEntity, 
 
 Each many-to-many relationship requires:
 
-#### 1. Junction Entity (in BoundedContext.Domain/Entities)
+#### 1. Junction Entity (in BoundedContext.BL/Entities)
 
 Junction entities should inherit from `JunctionEntityBase` which provides standard `EntityId` and `RelatedEntityId` properties:
 
@@ -2312,7 +2570,7 @@ public class UserRole : JunctionEntityBase
 - Standardized EntityId/RelatedEntityId properties
 - Reduces junction entity code by ~50%
 
-#### 2. Property Accessors (in BoundedContext.Domain/PropertyAccessors)
+#### 2. Property Accessors (in BoundedContext.BL/PropertyAccessors)
 
 Property accessors encapsulate property access logic and are resolved via dependency injection:
 
@@ -2332,7 +2590,7 @@ public class UserRoleRelatedEntityIdPropertyAccessor
 }
 ```
 
-#### 3. Concrete Relationship Manager (in BoundedContext.Domain/DataServices)
+#### 3. Concrete Relationship Manager (in BoundedContext.BL/DataServices)
 
 **Step-by-step example** for a `User ↔ Role` relationship:
 
@@ -2485,7 +2743,7 @@ All bounded contexts should use the **generic `OneToManyRelationshipManagerBase<
 
 Each one-to-many relationship requires:
 
-#### 1. Child Entity with Foreign Key (in BoundedContext.Domain/Entities)
+#### 1. Child Entity with Foreign Key (in BoundedContext.BL/Entities)
 
 ```csharp
 using Inventorization.Base.Models;
@@ -2518,7 +2776,7 @@ public class RefreshToken : BaseEntity
 }
 ```
 
-#### 2. Property Accessor (in BoundedContext.Domain/PropertyAccessors)
+#### 2. Property Accessor (in BoundedContext.BL/PropertyAccessors)
 
 ```csharp
 using Inventorization.Base.Abstractions;
@@ -2530,7 +2788,7 @@ public class RefreshTokenUserIdAccessor
 }
 ```
 
-#### 3. Concrete Relationship Manager (in BoundedContext.Domain/DataServices)
+#### 3. Concrete Relationship Manager (in BoundedContext.BL/DataServices)
 
 ```csharp
 using Inventorization.Base.Services;
@@ -2621,7 +2879,7 @@ All bounded contexts should use the **generic `OneToOneRelationshipManagerBase<T
 
 Each one-to-one relationship requires:
 
-#### 1. Entity with Foreign Key (in BoundedContext.Domain/Entities)
+#### 1. Entity with Foreign Key (in BoundedContext.BL/Entities)
 
 ```csharp
 using Inventorization.Base.Models;
@@ -2642,7 +2900,7 @@ public class User : BaseEntity
 }
 ```
 
-#### 2. Property Accessor (in BoundedContext.Domain/PropertyAccessors)
+#### 2. Property Accessor (in BoundedContext.BL/PropertyAccessors)
 
 ```csharp
 using Inventorization.Base.Abstractions;
@@ -2654,7 +2912,7 @@ public class UserProfileIdAccessor
 }
 ```
 
-#### 3. Concrete Relationship Manager (in BoundedContext.Domain/DataServices)
+#### 3. Concrete Relationship Manager (in BoundedContext.BL/DataServices)
 
 ```csharp
 using Inventorization.Base.Services;

@@ -12,18 +12,44 @@ using {{baseNamespace}}.Base.Abstractions;
 using {{baseNamespace}}.Base.ADTs;
 using {{baseNamespace}}.Base.DataAccess;
 using {{baseNamespace}}.Base.Services;
-using {{namespace}}.Domain.Entities;
-using {{namespace}}.Domain.Validators;
+{{#if isOwned}}
+using {{baseNamespace}}.Base.Ownership;
+{{/if}}
+using {{namespace}}.BL.Entities;
+using {{namespace}}.BL.Validators;
 using {{namespace}}.DTO.ADTs;
 using Microsoft.Extensions.Logging;
 
-namespace {{namespace}}.Domain.Services;
+namespace {{namespace}}.BL.Services;
 
 /// <summary>
 /// Service for executing ADT-based search queries on {{entityName}} entities.
+{{#if isOwned}}
+/// Ownership-aware: extends BaseSearchService&lt;{{entityName}}, {{projectionName}}, {{ownershipValueObject}}&gt;.
+/// Exposes ExecuteOwnedSearchAsync which scopes results to the caller's identity.
+{{else}}
 /// Inherits all search logic from BaseSearchService.
+{{/if}}
 /// Supports both regular projections and field transformations.
 /// </summary>
+{{#if isOwned}}
+public class {{entityName}}SearchService : BaseSearchService<{{entityName}}, {{projectionName}}, {{ownershipValueObject}}>
+{
+    public {{entityName}}SearchService(
+        IRepository<{{entityName}}> repository,
+        IQueryBuilder<{{entityName}}, {{ownershipValueObject}}> queryBuilder,
+        IProjectionMapper<{{entityName}}, {{projectionName}}> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        {{entityName}}SearchQueryValidator validator,
+        ICurrentIdentityContext<{{ownershipValueObject}}> identityContext,
+        ILogger<{{entityName}}SearchService> logger)
+        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, identityContext, logger)
+    {
+    }
+
+    // Override ExecuteOwnedSearchAsync to apply custom owned-query logic if needed.
+}
+{{else}}
 public class {{entityName}}SearchService : BaseSearchService<{{entityName}}, {{projectionName}}>
 {
     public {{entityName}}SearchService(
@@ -36,6 +62,7 @@ public class {{entityName}}SearchService : BaseSearchService<{{entityName}}, {{p
         : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger)
     {
     }
-    
+
     // Override ExecuteSearchAsync or ExecuteTransformationSearchAsync if custom logic is needed
 }
+{{/if}}

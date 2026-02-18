@@ -1,7 +1,7 @@
 import { IGenerator } from '../abstractions/IGenerator';
 import {
   GeneratorAmbiguity,
-  GeneratorDomain,
+  GeneratorBL,
   GeneratorPhase,
   IControlledGenerator,
   IGeneratorExecutionContext,
@@ -10,7 +10,7 @@ import { DataModel } from '../models/DataModel';
 
 export interface LegacyGeneratorDescriptor {
   id: string;
-  domain: GeneratorDomain;
+  domain: GeneratorBL;
   phase: GeneratorPhase;
   outputs?: readonly string[];
   ambiguity?: GeneratorAmbiguity;
@@ -21,7 +21,7 @@ export interface LegacyGeneratorDescriptor {
 
 export class LegacyGeneratorAdapter implements IControlledGenerator<DataModel, IGeneratorExecutionContext> {
   readonly id: string;
-  readonly domain: GeneratorDomain;
+  readonly domain: GeneratorBL;
   readonly phase: GeneratorPhase;
   readonly outputs: readonly string[];
   readonly ambiguity: GeneratorAmbiguity;

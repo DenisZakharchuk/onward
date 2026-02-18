@@ -16,6 +16,27 @@ export interface BoundedContext {
   databaseName?: string;
   apiPort?: number;
   dtoLayout?: 'class' | 'record';
+  /**
+   * Ownership configuration for the bounded context.
+   * When set, entities marked with `owned: true` will extend OwnedBaseEntity<TOwnership>
+   * and the DI registration will call AddOwnershipServices<TOwnership, TFactory>().
+   */
+  ownership?: OwnershipConfig;
+}
+
+export interface OwnershipConfig {
+  /** Whether any entity in this context uses ownership (drives DI registration). */
+  enabled: boolean;
+  /**
+   * The concrete OwnershipValueObject type scaffolded for this context.
+   * Defaults to 'UserTenantOwnership' when omitted.
+   */
+  valueObject?: string;
+  /**
+   * The IOwnershipFactory implementation to register.
+   * Defaults to '<valueObject>Factory' when omitted.
+   */
+  factory?: string;
 }
 
 export interface EnumDefinition {
@@ -38,6 +59,12 @@ export interface Entity {
   isJunction?: boolean;
   junctionMetadata?: JunctionMetadata;
   auditable?: boolean;
+  /**
+   * When true, the entity extends OwnedBaseEntity<TOwnership> instead of BaseEntity,
+   * and the query builder / search service are generated with ownership awareness.
+   * Requires boundedContext.ownership.enabled = true.
+   */
+  owned?: boolean;
   properties: Property[];
   indexes?: Index[];
 }

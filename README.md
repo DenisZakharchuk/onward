@@ -9,10 +9,10 @@ onward/
 ├── backend/                           # .NET Backend Microservices
 │   ├── Inventorization.Base/          # Shared base abstractions and DTOs
 │   ├── Inventorization.Auth.API/      # Auth microservice API (port 5012)
-│   ├── Inventorization.Auth.Domain/   # Auth domain logic and entities
+│   ├── Inventorization.Auth.BL/   # Auth domain logic and entities
 │   ├── Inventorization.Auth.DTO/      # Auth data transfer objects
 │   ├── Inventorization.Goods.API/     # Goods microservice API (port 5022)
-│   ├── Inventorization.Goods.Domain/  # Goods domain logic and entities
+│   ├── Inventorization.Goods.BL/  # Goods domain logic and entities
 │   └── Inventorization.Goods.DTO/     # Goods data transfer objects
 ├── frontend/                          # Vue.js 3 + Quasar Frontend
 │   └── quasar/                        # Quasar application
@@ -197,9 +197,9 @@ See Swagger docs for complete API reference:
 
 Follow the established pattern (see [Architecture.md](Architecture.md) for details):
 
-1. **Create Entity** in Domain/Entities with immutability pattern
+1. **Create Entity** in BL/Entities with immutability pattern
 2. **Create DTOs** (Create, Update, Delete, Details, Search) in DTO project
-3. **Create Entity Configuration** in Domain/EntityConfigurations
+3. **Create Entity Configuration** in BL/EntityConfigurations
 4. **Create Mapper** implementing `IMapper<TEntity, TDetailsDTO>`
 5. **Create Creator** implementing `IEntityCreator<TCreateDTO, TEntity>`
 6. **Create Modifier** implementing `IEntityModifier<TEntity, TUpdateDTO>`
@@ -228,14 +228,14 @@ Follow the established pattern (see [Architecture.md](Architecture.md) for detai
 
 **Auth Service:**
 ```bash
-cd backend/Inventorization.Auth.Domain
+cd backend/Inventorization.Auth.BL
 dotnet ef migrations add MigrationName --startup-project ../Inventorization.Auth.API
 dotnet ef database update --startup-project ../Inventorization.Auth.API
 ```
 
 **Goods Service:**
 ```bash
-cd backend/Inventorization.Goods.Domain
+cd backend/Inventorization.Goods.BL
 dotnet ef migrations add MigrationName --startup-project ../Inventorization.Goods.API
 dotnet ef database update --startup-project ../Inventorization.Goods.API
 ```

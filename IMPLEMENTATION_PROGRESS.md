@@ -68,10 +68,10 @@
 **Updated:**
 - `Inventorization.Base/Services/ProjectionExpressionBuilder.cs` - Removed factory, builds TransformationResult
 - `Inventorization.Base/Abstractions/ProjectionMapperBase.cs` - Removed factory dependency, rejects transformations
-- `Inventorization.Goods.Domain/Mappers/Projection/GoodProjectionMapper.cs` - Removed factory injection
-- `Inventorization.Goods.Domain/Mappers/Projection/CategoryProjectionMapper.cs` - Removed factory injection
-- `Inventorization.Goods.Domain/Services/GoodSearchService.cs` - Added ExecuteTransformationSearchAsync()
-- `Inventorization.Goods.Domain/Services/CategorySearchService.cs` - Added ExecuteTransformationSearchAsync()
+- `Inventorization.Goods.BL/Mappers/Projection/GoodProjectionMapper.cs` - Removed factory injection
+- `Inventorization.Goods.BL/Mappers/Projection/CategoryProjectionMapper.cs` - Removed factory injection
+- `Inventorization.Goods.BL/Services/GoodSearchService.cs` - Added ExecuteTransformationSearchAsync()
+- `Inventorization.Goods.BL/Services/CategorySearchService.cs` - Added ExecuteTransformationSearchAsync()
 - `Inventorization.Goods.API/Controllers/GoodsController.cs` - Added /query/transform endpoint
 - `Inventorization.Goods.API/Controllers/CategoriesController.cs` - Added /query/transform endpoint
 - `Inventorization.Goods.API/Program.cs` - Added ProjectionExpressionBuilder, updated service registrations
@@ -221,10 +221,10 @@ POST /api/goods/query/transform
 **Goods-Specific Implementation:**
 - `Inventorization.Goods.DTO/ADTs/GoodSearchFields.cs`
 - `Inventorization.Goods.DTO/ADTs/GoodProjection.cs`
-- `Inventorization.Goods.Domain/Validators/GoodSearchQueryValidator.cs`
-- `Inventorization.Goods.Domain/DataAccess/GoodQueryBuilder.cs`
-- `Inventorization.Goods.Domain/Mappers/GoodProjectionMapper.cs`
-- `Inventorization.Goods.Domain/Services/GoodSearchService.cs`
+- `Inventorization.Goods.BL/Validators/GoodSearchQueryValidator.cs`
+- `Inventorization.Goods.BL/DataAccess/GoodQueryBuilder.cs`
+- `Inventorization.Goods.BL/Mappers/GoodProjectionMapper.cs`
+- `Inventorization.Goods.BL/Services/GoodSearchService.cs`
 - `Inventorization.Goods.API/GoodsSearchExamples.http`
 
 **Updated Files:**
@@ -323,7 +323,7 @@ POST /api/goods/query/transform
 #### 🔧 Issues Resolved
 
 **1. DTO Project Violating Separation of Concerns**
-- **Problem**: DTOs referenced `Inventorization.Goods.Domain.Entities` just to use `PurchaseOrderStatus` enum
+- **Problem**: DTOs referenced `Inventorization.Goods.BL.Entities` just to use `PurchaseOrderStatus` enum
 - **Solution**: Created `Inventorization.Goods.Common` project for shared primitives
   - Created `/Enums/PurchaseOrderStatus.cs`
   - Added Common reference to DTO and Domain projects
@@ -382,7 +382,7 @@ Inventorization.Goods.Common/
 
 **Project References Updated:**
 - `Inventorization.Goods.DTO` → references `Inventorization.Goods.Common`
-- `Inventorization.Goods.Domain` → references `Inventorization.Goods.Common`
+- `Inventorization.Goods.BL` → references `Inventorization.Goods.Common`
 
 #### 📝 Documentation Updates
 
@@ -465,7 +465,7 @@ Inventorization.Goods.Common/
    - **Auth API**: Added relationship metadata registration
      ```csharp
      builder.Services.AddSingleton<IRelationshipMetadata<User, Role>>(
-         Inventorization.Auth.Domain.DataModelRelationships.UserRoles);
+         Inventorization.Auth.BL.DataModelRelationships.UserRoles);
      ```
    - **Goods API**: Added DbContext base registration
      ```csharp
@@ -595,11 +595,11 @@ These are not blocking but could improve the implementation:
 
 1. **Migration Verification** (validate no schema changes)
    ```bash
-   cd backend/Inventorization.Auth.Domain
+   cd backend/Inventorization.Auth.BL
    dotnet ef migrations add VerifyConfigurationPattern --startup-project ../Inventorization.Auth.API
    # Should show "No changes detected"
    
-   cd ../Inventorization.Goods.Domain
+   cd ../Inventorization.Goods.BL
    dotnet ef migrations add VerifyConfigurationPattern --startup-project ../Inventorization.Goods.API
    # Should show "No changes detected"
    ```
@@ -633,7 +633,7 @@ All bounded contexts must now follow these patterns as documented in Architectur
   dotnet ef migrations add VerifyConfigurationPattern --context AuthDbContext
   # Should show "No changes detected"
   
-  cd ../Inventorization.Goods.Domain
+  cd ../Inventorization.Goods.BL
   dotnet ef migrations add VerifyConfigurationPattern --context GoodsDbContext
   # Should show "No changes detected"
   ```
@@ -716,12 +716,12 @@ public class GoodSupplierConfiguration : JunctionEntityConfiguration<GoodSupplie
 - `/Services/OneToManyRelationshipManagerBase.cs` - UPDATED to use interface
 - `/Services/OneToOneRelationshipManagerBase.cs` - UPDATED to use interface
 
-### Inventorization.Auth.Domain
+### Inventorization.Auth.BL
 - `/DataModelRelationships.cs` - NEW static class
 - `/DataServices/UserRoleRelationshipManager.cs` - UPDATED DI
 - `/EntityConfigurations/` - FOLDER CREATED (6 configs pending)
 
-### Inventorization.Goods.Domain
+### Inventorization.Goods.BL
 - `/DataModelRelationships.cs` - NEW static class (10 relationships)
 - `/Entities/*.cs` - 8 entities UPDATED to extend BaseEntity
 - `/EntityConfigurations/*.cs` - 9 configs CREATED
@@ -842,7 +842,7 @@ npm start generate examples/simple-bounded-context.json -- --output-dir ../../ba
 #### 📁 Generated Project Structure
 
 ```
-Inventorization.{Context}.Domain/
+Inventorization.{Context}.BL/
 ├── Entities/
 │   ├── {Entity}.generated.cs  (immutable, validated)
 │   └── {Entity}.cs            (custom logic stub)

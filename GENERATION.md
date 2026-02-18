@@ -249,7 +249,7 @@ await this.writeRenderedTemplate(
 
 ### Generated vs Custom Code Strategy
 
-**Generated Code**: `.cs` files in Domain/DTO projects (can be regenerated/overwritten)  
+**Generated Code**: `.cs` files in BL/DTO projects (can be regenerated/overwritten)  
 **Custom Logic**: Separate services, controllers, or domain service extensions
 
 ```csharp
@@ -392,7 +392,7 @@ export class EntityGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     
     // 2. Determine output paths
-    const domainProjectPath = path.join(outputDir, `Inventorization.${contextName}.Domain`);
+    const domainProjectPath = path.join(outputDir, `Inventorization.${contextName}.BL`);
     const entitiesDir = path.join(domainProjectPath, 'Entities');
     
     // 3. Iterate over entities
@@ -612,15 +612,17 @@ All generators located in `generation/code/src/generators/`
 
 #### QueryBuilderGenerator
 
-**Purpose**: Generate empty QueryBuilder class inheriting from BaseQueryBuilder
+**Purpose**: Generate QueryBuilder class inheriting from `BaseQueryBuilder<TEntity>` (non-owned) or `BaseQueryBuilder<TEntity, TOwnership>` (owned)
 
-**Output**: `Domain/DataAccess/{Entity}QueryBuilder.cs` (~13 lines)
+**Output**: `BL/DataAccess/{Entity}QueryBuilder.cs`
 
 **Template Context**:
 ```typescript
 interface QueryBuilderContext {
   namespace: string;              // Inventorization.Goods
   entityName: string;             // Good
+  isOwned: boolean;               // true → inherits BaseQueryBuilder<Good, UserTenantOwnership>
+  ownershipValueObject: string;   // "UserTenantOwnership" (only present when isOwned=true)
   generationStamp: string;        // 20260214-a3f8c891
   generatedAt: string;            // 2026-02-14 12:34:56 UTC
   sourceFile: string;             // goods-context.json
@@ -661,23 +663,25 @@ export class QueryBuilderGenerator extends BaseGenerator {
 
 #### SearchServiceGenerator
 
-**Purpose**: Generate SearchService with constructor-only delegation to BaseSearchService
+**Purpose**: Generate SearchService inheriting from `BaseSearchService<TEntity, TProjection>` (non-owned) or `BaseSearchService<TEntity, TProjection, TOwnership>` (owned)
 
-**Output**: `Domain/Services/{Entity}SearchService.cs` (~28 lines)
+**Output**: `BL/Services/{Entity}SearchService.cs`
 
 **Template Context**:
 ```typescript
 interface SearchServiceContext {
   namespace: string;
   entityName: string;
-  projectionName: string;         // GoodProjection  
+  projectionName: string;         // GoodProjection
+  isOwned: boolean;               // true → adds ICurrentIdentityContext ctor param
+  ownershipValueObject: string;   // "UserTenantOwnership" (only present when isOwned=true)
   generationStamp: string;
   generatedAt: string;
   sourceFile: string;
 }
 ```
 
-**Generated Code Structure**:
+**Generated Code Structure (non-owned)**:
 ```csharp
 public class GoodSearchService : BaseSearchService<Good, GoodProjection>
 {
@@ -688,9 +692,23 @@ public class GoodSearchService : BaseSearchService<Good, GoodProjection>
         ProjectionExpressionBuilder expressionBuilder,
         IValidator<SearchQuery> validator,
         ILogger<GoodSearchService> logger)
-        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger)
-    {
-    }
+        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, logger) { }
+}
+```
+
+**Generated Code Structure (owned)**:
+```csharp
+public class OrderSearchService : BaseSearchService<Order, OrderProjection, UserTenantOwnership>
+{
+    public OrderSearchService(
+        IRepository<Order> repository,
+        IQueryBuilder<Order, UserTenantOwnership> queryBuilder,
+        IProjectionMapper<Order, OrderProjection> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        IValidator<SearchQuery> validator,
+        ICurrentIdentityContext<UserTenantOwnership> identityContext,
+        ILogger<OrderSearchService> logger)
+        : base(repository, queryBuilder, projectionMapper, expressionBuilder, validator, identityContext, logger) { }
 }
 ```
 
@@ -724,7 +742,7 @@ interface QueryControllerContext {
 
 **Purpose**: Generate ProjectionMapper implementing 4 abstract methods from ProjectionMapperBase
 
-**Output**: `Domain/Mappers/Projection/{Entity}ProjectionMapper.cs` (~250 lines)
+**Output**: `BL/Mappers/Projection/{Entity}ProjectionMapper.cs` (~250 lines)
 
 **Template Context** (most complex):
 ```typescript
@@ -869,7 +887,7 @@ protected override void MapField(Good entity, GoodProjection result, string fiel
 
 **Purpose**: Generate marker interface extending IProjectionMapper
 
-**Output**: `Domain/Mappers/Projection/I{Entity}ProjectionMapper.cs` (~3 lines)
+**Output**: `BL/Mappers/Projection/I{Entity}ProjectionMapper.cs` (~3 lines)
 
 **Template Context**:
 ```typescript
@@ -981,7 +999,7 @@ public static class GoodSearchFields
 
 **Purpose**: Generate validator using DataModelMetadata
 
-**Output**: `Domain/Validators/{Entity}SearchQueryValidator.cs` (~200 lines)
+**Output**: `BL/Validators/{Entity}SearchQueryValidator.cs` (~200 lines)
 
 **Template Context**:
 ```typescript
@@ -1275,6 +1293,9 @@ phases.push({
 
 {{!-- Using statements --}}
 using {{namespace}}.Base;
+{{#if isOwned}}
+using Inventorization.Base.Ownership;
+{{/if}}
 
 {{!-- Namespace and class --}}
 namespace {{namespace}}.Domain.Entities;
@@ -1282,7 +1303,7 @@ namespace {{namespace}}.Domain.Entities;
 /// <summary>
 /// {{description}}
 /// </summary>
-public class {{entityName}} : BaseEntity
+public class {{entityName}} : {{baseEntityClass}}
 {
     {{!-- Constructor --}}
     public {{entityName}}(
@@ -1306,6 +1327,8 @@ public class {{entityName}} : BaseEntity
     {{/each}}
 }
 ```
+
+`{{baseEntityClass}}` resolves to `BaseEntity` (non-owned) or `OwnedBaseEntity<{{ownershipValueObject}}>` (owned). See [Ownership Support in Data Models](#ownership-support-in-data-models).
 
 ### Custom Handlebars Helpers
 
@@ -1663,6 +1686,66 @@ Blueprint defines architecture/layout strategy independently from `data-model` b
 - Blueprint is authoritative for architecture slots (`presentation`, `dataService.dataAccess`, `dataService.dto`).
 - If `data-model` sets `boundedContext.dtoLayout` and blueprint sets different DTO style, generation fails (fail-on-conflict).
 
+---
+
+## Ownership Support in Data Models
+
+The generator supports the ownership system (see [Architecture.md — Ownership System](Architecture.md#ownership-system)) via two fields:
+
+### `boundedContext.ownership` (context-level)
+
+Configures the ownership value object and factory for the entire bounded context:
+
+```json
+{
+  "boundedContext": {
+    "name": "Commerce",
+    "namespace": "Inventorization.Commerce",
+    "ownership": {
+      "enabled": true,
+      "valueObject": "UserTenantOwnership",
+      "factory": "UserTenantOwnershipFactory"
+    }
+  }
+}
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `enabled` | `boolean` | `false` | Activates ownership DI registration and owned-entity scaffolding |
+| `valueObject` | `string` | `"UserTenantOwnership"` | Must be a class in `Inventorization.Base.Ownership` or registered custom VO |
+| `factory` | `string` | `"UserTenantOwnershipFactory"` | Must implement `IOwnershipFactory<TOwnership>` |
+
+When `ownership.enabled = true` the generator:
+1. Emits `services.AddOwnershipServices<TOwnership, TFactory>()` in the DI extension
+2. Adds `using Inventorization.Base.AspNetCore.Extensions` to the DI file
+
+### `entity.owned` (entity-level)
+
+Marks a specific entity as owned by a user/tenant:
+
+```json
+{
+  "entities": [
+    { "name": "Category", "tableName": "Categories" },
+    { "name": "Order",    "tableName": "Orders", "owned": true }
+  ]
+}
+```
+
+When `owned: true` the generator produces:
+
+| Component | Non-owned output | Owned output |
+|---|---|---|
+| Entity base class | `BaseEntity` | `OwnedBaseEntity<UserTenantOwnership>` |
+| QueryBuilder | `BaseQueryBuilder<Order>` | `BaseQueryBuilder<Order, UserTenantOwnership>` (+ `ICurrentIdentityContext` ctor param) |
+| SearchService | `BaseSearchService<Order, OrderProjection>` | `BaseSearchService<Order, OrderProjection, UserTenantOwnership>` |
+| DataService constructor | `(unitOfWork, repo, logger)` | `(unitOfWork, repo, identityContext, logger)` |
+| CRUD controller | No `ICurrentUserService` | Injects `ICurrentUserService<TOwnership>`, overrides `UpdateAsync`/`DeleteAsync` with access check |
+| DI registration | `IQueryBuilder<Order>` | `IQueryBuilder<Order, UserTenantOwnership>` + forwarding `IQueryBuilder<Order>` |
+
+**Constraint**: `entity.owned: true` requires `boundedContext.ownership.enabled: true`. The generator emits a warning and falls back to non-owned if the context ownership is not configured.
+
 ### Blueprint Shape (v1)
 
 ```json
@@ -1802,7 +1885,7 @@ private validateBusinessRules(model: DataModel): void {
 export class ValidatorGenerator extends BaseGenerator {
   async generate(model: DataModel): Promise<void> {
     const validatorsDir = path.join(
-      `Inventorization.${model.boundedContext.name}.Domain/Validators`
+      `Inventorization.${model.boundedContext.name}.BL/Validators`
     );
     
     for (const entity of model.entities) {
@@ -1855,7 +1938,7 @@ Inventorization.{Context}.Meta/                   ← METADATA PROJECT
 ├── DataModelMetadata.cs                          ← Generated entity metadata
 └── DataModelRelationships.cs                     ← Generated relationship metadata
 
-Inventorization.{Context}.Domain/
+Inventorization.{Context}.BL/
 ├── Entities/
 │   ├── Product.cs                                ← GENERATED (can overwrite)
 │   └── Category.cs                               ← GENERATED (can overwrite)

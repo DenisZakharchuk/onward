@@ -25,7 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Inventorization.Goods.API\Inventorization.Goods.API.csproj" />
-    <ProjectReference Include="..\Inventorization.Goods.Domain\Inventorization.Goods.Domain.csproj" />
+    <ProjectReference Include="..\Inventorization.Goods.BL\Inventorization.Goods.BL.csproj" />
     <ProjectReference Include="..\Inventorization.Goods.DTO\Inventorization.Goods.DTO.csproj" />
     <ProjectReference Include="..\Inventorization.Base\Inventorization.Base.csproj" />
   </ItemGroup>

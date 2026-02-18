@@ -12,7 +12,7 @@ export class ProjectionMapperInterfaceGenerator extends BaseGenerator {
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 
-    const mappersDir = `${baseNamespace}.${contextName}.Domain/Mappers/Projection`;
+    const mappersDir = `${baseNamespace}.${contextName}.BL/Mappers/Projection`;
 
     for (const entity of model.entities) {
       // Skip junction entities
