@@ -34,6 +34,39 @@
           "minimum": 1024,
           "maximum": 65535
         },
+        "dbPort": {
+          "type": "integer",
+          "description": "PostgreSQL port number (defaults to 5432)",
+          "minimum": 1024,
+          "maximum": 65535,
+          "default": 5432
+        },
+        "jwt": {
+          "type": "object",
+          "description": "JWT authentication settings emitted into appsettings.json / appsettings.Development.json",
+          "required": ["issuer", "audience", "expirationMinutes"],
+          "properties": {
+            "issuer": {
+              "type": "string",
+              "description": "JWT issuer value (e.g., 'Inventorization.Auth')"
+            },
+            "audience": {
+              "type": "string",
+              "description": "JWT audience value (e.g., 'Inventorization.Client')"
+            },
+            "expirationMinutes": {
+              "type": "integer",
+              "description": "Access token expiration in minutes",
+              "minimum": 1
+            },
+            "devExpirationMinutes": {
+              "type": "integer",
+              "description": "Token expiration in minutes used only in Development environment (defaults to expirationMinutes)",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
         "dtoLayout": {
           "type": "string",
           "description": "DTO generation layout strategy",

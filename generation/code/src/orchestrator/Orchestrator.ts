@@ -39,6 +39,7 @@ import { AdoNetDataAccessGenerator } from '../generators/AdoNetDataAccessGenerat
 import { AdoNetDiGenerator } from '../generators/AdoNetDiGenerator';
 import { AdoNetApiProgramGenerator } from '../generators/AdoNetApiProgramGenerator';
 import { AdoNetMinimalApiProgramGenerator } from '../generators/AdoNetMinimalApiProgramGenerator';
+import { AppSettingsGenerator } from '../generators/AppSettingsGenerator';
 
 export interface OrchestratorOptions {
   skipTests?: boolean;
@@ -428,6 +429,15 @@ export class Orchestrator {
       provides: ['tests'],
       dependsOn: ['ServiceGenerator', 'ValidatorGenerator', 'ProjectionMapperGenerator'],
       optionalSlot: 'tests',
+    });
+
+    this.registerLegacyGenerator(new AppSettingsGenerator(), {
+      id: 'AppSettingsGenerator',
+      domain: 'api',
+      phase: 13,
+      ambiguity: 'deterministic',
+      requires: ['api-program'],
+      provides: ['app-settings'],
     });
 
     this.registerLegacyGenerator(new ProjectGenerator(), {

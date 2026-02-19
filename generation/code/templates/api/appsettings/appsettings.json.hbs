@@ -8,12 +8,12 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "GoodsDatabase": "Host=localhost;Port=5433;Database=inventorization_goods;Username=postgres;Password=postgres"
-  },
+    "{{contextName}}Database": "Host=localhost;Port={{dbPort}};Database={{databaseName}};Username=postgres;Password=postgres"
+  }{{#if jwt}},
   "JwtSettings": {
     "SecretKey": "your-super-secret-key-change-in-production-min-32-chars",
-    "Issuer": "Inventorization.Auth",
-    "Audience": "Inventorization.Client",
-    "ExpirationMinutes": 60
-  }
+    "Issuer": "{{jwt.issuer}}",
+    "Audience": "{{jwt.audience}}",
+    "ExpirationMinutes": {{jwt.expirationMinutes}}
+  }{{/if}}
 }

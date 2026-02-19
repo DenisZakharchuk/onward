@@ -9,12 +9,27 @@ export interface DataModel {
   relationships?: Relationship[];
 }
 
+export interface JwtConfig {
+  /** JWT issuer value (e.g., 'Inventorization.Auth') */
+  issuer: string;
+  /** JWT audience value (e.g., 'Inventorization.Client') */
+  audience: string;
+  /** Access token expiration in minutes */
+  expirationMinutes: number;
+  /** Development environment token expiration in minutes (defaults to expirationMinutes) */
+  devExpirationMinutes?: number;
+}
+
 export interface BoundedContext {
   name: string;
   namespace: string;
   description?: string;
   databaseName?: string;
   apiPort?: number;
+  /** PostgreSQL port (defaults to 5432) */
+  dbPort?: number;
+  /** When set, appsettings generation includes a JwtSettings section */
+  jwt?: JwtConfig;
   dtoLayout?: 'class' | 'record';
   /**
    * Ownership configuration for the bounded context.

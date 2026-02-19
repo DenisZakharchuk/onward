@@ -5,6 +5,13 @@
     "description": "E-commerce and order management bounded context",
     "databaseName": "commerce_db",
     "apiPort": 5042,
+    "dbPort": 5434,
+    "jwt": {
+      "issuer": "Inventorization.Auth",
+      "audience": "Inventorization.Client",
+      "expirationMinutes": 60,
+      "devExpirationMinutes": 480
+    },
     "ownership": {
       "enabled": true,
       "valueObject": "UserTenantOwnership",

@@ -205,6 +205,104 @@
       "label": "Start All",
       "dependsOn": ["Start Backend", "Start Frontend"],
       "problemMatcher": []
+    },
+    {
+      "label": "Generator: Build",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/generation/code"
+      },
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "generation"
+      }
+    },
+    {
+      "label": "Generator: Generate",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "generate",
+        "${input:dataModelPath}",
+        "--output-dir",
+        "${workspaceFolder}/backend",
+        "--blueprint",
+        "${input:blueprintPath}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/generation/code"
+      },
+      "dependsOn": ["Generator: Build"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "generation"
+      }
+    },
+    {
+      "label": "Generator: Generate (dry-run)",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "generate",
+        "${input:dataModelPath}",
+        "--output-dir",
+        "${workspaceFolder}/backend",
+        "--blueprint",
+        "${input:blueprintPath}",
+        "--dry-run"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/generation/code"
+      },
+      "dependsOn": ["Generator: Build"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "generation"
+      }
+    },
+    {
+      "label": "Generator: Validate",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "validate",
+        "${input:dataModelPath}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/generation/code"
+      },
+      "dependsOn": ["Generator: Build"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "generation"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "dataModelPath",
+      "type": "promptString",
+      "description": "Path to data model JSON file (relative to generation/code or absolute)",
+      "default": "examples/simple-bounded-context.json"
+    },
+    {
+      "id": "blueprintPath",
+      "type": "promptString",
+      "description": "Path to blueprint JSON file (relative to generation/code or absolute)",
+      "default": "examples/default-blueprint.json"
     }
   ]
 }
