@@ -17,6 +17,7 @@ import { FileResultWriter } from './writers/FileResultWriter';
 import { Orchestrator } from './orchestrator/Orchestrator';
 import { SequentialScheduler } from './orchestrator/SequentialScheduler';
 import { ConcurrentScheduler } from './orchestrator/ConcurrentScheduler';
+import { ChalkLogger } from './logging';
 import * as path from 'path';
 
 interface GenerateOptions {
@@ -130,6 +131,7 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
       blueprint,
       contextScheduler: scheduler,
       generatorScheduler: scheduler,
+      logger: new ChalkLogger(),
     });
 
     await orchestrator.generate(model);

@@ -2,7 +2,6 @@
  * Orchestrator coordinates all code generators
  */
 
-import chalk from 'chalk';
 import {
   DomainModel,
   BoundedContextGenerationContext,
@@ -11,12 +10,14 @@ import {
 import { Blueprint } from '../models/Blueprint';
 import { IResultWriter } from '../abstractions/IResultWriter';
 import { IGeneratorExecutionContext } from '../abstractions/GeneratorADT';
-import { IExecutionScheduler } from '../abstractions/IExecutionScheduler';
+import { IExecutionScheduler, SlotInfo } from '../abstractions/IExecutionScheduler';
+import { ILogger } from '../abstractions/ILogger';
 import { DataModelParser } from '../parser/DataModelParser';
 import { GenerationStamp } from '../utils/GenerationStamp';
 import { GeneratorRegistry, GeneratorRegistration } from './GeneratorRegistry';
 import { GeneratorRegistrar } from './GeneratorRegistrar';
 import { SequentialScheduler } from './SequentialScheduler';
+import { NullLogger } from '../logging';
 import * as path from 'path';
 
 export interface OrchestratorOptions {
@@ -30,6 +31,8 @@ export interface OrchestratorOptions {
   contextScheduler?: IExecutionScheduler;
   /** Controls how many generators within a single phase run simultaneously. Default: sequential. */
   generatorScheduler?: IExecutionScheduler;
+  /** Logger used for all generation output. Defaults to NullLogger (silent). */
+  logger?: ILogger;
 }
 
 export class Orchestrator {
@@ -38,12 +41,14 @@ export class Orchestrator {
   private writer: IResultWriter;
   private readonly contextScheduler: IExecutionScheduler;
   private readonly generatorScheduler: IExecutionScheduler;
+  private readonly logger: ILogger;
 
   constructor(writer: IResultWriter, options: OrchestratorOptions = {}) {
     this.writer = writer;
     this.registry = new GeneratorRegistry();
     this.contextScheduler = options.contextScheduler ?? new SequentialScheduler();
     this.generatorScheduler = options.generatorScheduler ?? new SequentialScheduler();
+    this.logger = options.logger ?? new NullLogger();
     this.options = {
       ...options,
       skipTests: options.skipTests ?? false,
@@ -74,7 +79,7 @@ export class Orchestrator {
    * Generate complete code for all bounded contexts in the domain model
    */
   async generate(domain: DomainModel): Promise<void> {
-    console.log(chalk.blue('\n🚀 Starting code generation...\n'));
+    this.logger.info('\n🚀 Starting code generation...\n');
 
     // Generate unique stamp for this generation run
     const generationStamp = GenerationStamp.create();
@@ -99,24 +104,24 @@ export class Orchestrator {
       },
     };
 
-    console.log(chalk.gray(`  Generation Stamp: ${generationStamp}`));
-    console.log(chalk.gray(`  Generated At: ${generatedAt}`));
-    console.log(chalk.gray(`  Source: ${sourceFile}\n`));
+    this.logger.detail('Generation Stamp', generationStamp);
+    this.logger.detail('Generated At', generatedAt);
+    this.logger.detail('Source', sourceFile);
 
     // Build a flattened generation context per bounded context
     const parser = new DataModelParser();
     const generationContexts = parser.buildGenerationContexts(domain);
 
-    console.log(chalk.blue(`  Bounded Contexts: ${generationContexts.length}\n`));
+    this.logger.detail('Bounded Contexts', generationContexts.length);
 
     await this.contextScheduler.run(
-      generationContexts.map((ctx) => async () => {
-        console.log(chalk.blue(`\n📦 Generating: ${chalk.yellow(ctx.boundedContext.name)}\n`));
+      generationContexts.map((ctx) => async (_slot: SlotInfo) => {
+        this.logger.info(`\n📦 Generating: ${ctx.boundedContext.name}\n`);
         await this.generateBoundedContext(ctx, context);
       })
     );
 
-    console.log(chalk.green('\n✅ All bounded contexts generated.\n'));
+    this.logger.success('\n✅ All bounded contexts generated.\n');
   }
 
   /**
@@ -154,14 +159,14 @@ export class Orchestrator {
 
     for (const group of phaseGroups) {
       await this.generatorScheduler.run(
-        group.map((registration) => async () => {
+        group.map((registration) => async (slot: SlotInfo) => {
           const generatorName = registration.generator.id;
-          console.log(chalk.cyan(`  ⚙️  Running ${generatorName}...`));
 
           if (!this.options.dryRun) {
+            this.logger.generator(generatorName, slot, 'Running');
             await registration.generator.generate(ctx, context);
           } else {
-            console.log(chalk.gray(`     (dry run - skipped)`));
+            this.logger.generator(generatorName, slot, 'Skipped (dry run)');
           }
         })
       );
@@ -268,30 +273,30 @@ export class Orchestrator {
    * Print generation summary
    */
   private printSummary(ctx: BoundedContextGenerationContext, projectPaths: Record<string, string>, generationStamp: string): void {
-    console.log(chalk.green('\n✅ Generation Summary:\n'));
+    this.logger.success('\n✅ Generation Summary:\n');
 
-    console.log(chalk.blue('  Generation:'));
-    console.log(`    Stamp: ${chalk.yellow(generationStamp)}`);
-    console.log(`    BoundedContext: ${chalk.yellow(ctx.boundedContext.name)}`);
+    this.logger.info('  Generation:');
+    this.logger.detail('  Stamp', generationStamp);
+    this.logger.detail('  BoundedContext', ctx.boundedContext.name);
 
     const entityCount = ctx.entities.length;
     const junctionCount = ctx.entities.filter((e) => e.isJunction).length;
     const regularCount = entityCount - junctionCount;
 
-    console.log(chalk.blue('\n  Entities:'));
-    console.log(`    Regular Entities: ${chalk.yellow(regularCount)}`);
-    console.log(`    Junction Entities: ${chalk.yellow(junctionCount)}`);
-    console.log(`    Total: ${chalk.yellow(entityCount)}`);
+    this.logger.info('\n  Entities:');
+    this.logger.detail('  Regular Entities', regularCount);
+    this.logger.detail('  Junction Entities', junctionCount);
+    this.logger.detail('  Total', entityCount);
 
-    console.log(chalk.blue('\n  Generated Files per Entity:'));
-    console.log(`    DTOs: ${chalk.yellow('6')} (Create, Update, Delete, Details, Search, Projection)`);
-    console.log(`    Entity: ${chalk.yellow('1')} (Entity.cs)`);
-    console.log(`    ADT Query Infrastructure: ${chalk.yellow('8')} (QueryBuilder, SearchService, QueryController, ProjectionMapper, etc.)`);
-    console.log(`    Total per entity: ${chalk.yellow('~20-25 files')} (when complete)`);
+    this.logger.info('\n  Generated Files per Entity:');
+    this.logger.detail('  DTOs', '6 (Create, Update, Delete, Details, Search, Projection)');
+    this.logger.detail('  Entity', '1 (Entity.cs)');
+    this.logger.detail('  ADT Query Infrastructure', '8 (QueryBuilder, SearchService, QueryController, ProjectionMapper, etc.)');
+    this.logger.detail('  Total per entity', '~20-25 files (when complete)');
 
-    console.log(chalk.blue('\n  Project Paths:'));
+    this.logger.info('\n  Project Paths:');
     Object.entries(projectPaths).forEach(([key, dirPath]) => {
-      console.log(`    ${key}: ${chalk.gray(dirPath as string)}`);
+      this.logger.detail(`  ${key}`, dirPath as string);
     });
   }
 }

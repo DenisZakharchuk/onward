@@ -38,6 +38,8 @@ await orchestrator.generate(domain);
 **Key Abstractions**:
 - `IModelProvider` - Loads and validates data models (currently from files, future: API, DB)
 - `IResultWriter` - Writes generated output (currently file system, future: HTTP, memory)
+- `IExecutionScheduler` - Runs task batches with a chosen concurrency policy; task callbacks receive `SlotInfo`
+- `ILogger` - Emits generation output (level-mapped methods + per-generator slot annotation)
 - `IGenerator` - Transitional legacy generator contract
 - `GeneratorADT` contracts - ADT-oriented generator taxonomy (`deterministic | variant | composite | optional`)
 
@@ -46,8 +48,24 @@ await orchestrator.generate(domain);
 Current implementation uses ADT-compatible orchestration with legacy compatibility:
 
 - Orchestrator executes through `GeneratorRegistry` using explicit phase/dependency descriptors
+- `GeneratorRegistrar` (separate class, `src/orchestrator/GeneratorRegistrar.ts`) owns all generator instantiation and wiring — `Orchestrator` has zero direct generator imports
+- All 29 concrete generators are re-exported from `src/generators/index.ts` barrel — the single import point for `GeneratorRegistrar` and tests
 - Existing generators run via `LegacyGeneratorAdapter`
 - `IGenerator` remains supported but is transitional for new design work
+
+Execution scheduling:
+
+- `IExecutionScheduler` abstraction with slot-aware task signature `(slot: SlotInfo) => Promise<void>`
+- `SequentialScheduler` (default): runs tasks one-by-one, always emits `{ index: 1, total: 1 }`
+- `ConcurrentScheduler(n)`: runs up to `n` tasks via `p-limit`; manages a slot-index pool so callers know which worker picked up their task
+- CLI flag `--concurrency <n>` activates concurrent mode
+
+Logging:
+
+- `ILogger` abstraction (`src/abstractions/ILogger.ts`) decouples `Orchestrator` from any rendering library
+- `ChalkLogger` (`src/logging/ChalkLogger.ts`) is the **only** file that imports `chalk` — maps log levels to terminal colours and renders concurrency slot badges (`[N/total]`) on generator lines
+- `NullLogger` (`src/logging/NullLogger.ts`) is the default (silent) — used in tests and when no logger is injected
+- `OrchestratorOptions.logger?: ILogger` — CLI passes `new ChalkLogger()`; tests omit it for silence
 
 DTO generation supports bounded layout variants:
 
@@ -1707,8 +1725,9 @@ export class Orchestrator {
     const contexts = this.parser.buildGenerationContexts(domain);
 
     // contextScheduler controls how many bounded contexts run simultaneously
+    // Each task receives a SlotInfo so it can annotate log lines with its slot index
     await this.contextScheduler.run(
-      contexts.map((ctx) => async () => this.generateBoundedContext(ctx))
+      contexts.map((ctx) => async (_slot: SlotInfo) => this.generateBoundedContext(ctx))
     );
   }
 
@@ -1726,7 +1745,10 @@ export class Orchestrator {
     for (const group of phaseGroups) {
       // generatorScheduler controls how many generators within a phase run simultaneously
       await this.generatorScheduler.run(
-        group.map((r) => () => r.generator.generate(model, context))
+        group.map((r) => async (slot: SlotInfo) => {
+          this.logger.generator(r.generator.id, slot, 'Running');
+          await r.generator.generate(model, context);
+        })
       );
     }
   }
@@ -1743,12 +1765,25 @@ All concurrency knowledge is isolated in two classes behind the `IExecutionSched
 
 ```typescript
 // src/abstractions/IExecutionScheduler.ts
+import { SlotInfo } from './SlotInfo';
+
 export interface IExecutionScheduler {
   /**
    * Run all tasks with the configured concurrency policy.
+   * Each task receives a SlotInfo so it can tag log lines with its slot index.
    * Resolves when every task completes.
    */
-  run(tasks: ReadonlyArray<() => Promise<void>>): Promise<void>;
+  run(tasks: ReadonlyArray<(slot: SlotInfo) => Promise<void>>): Promise<void>;
+}
+```
+
+```typescript
+// src/abstractions/SlotInfo.ts
+export interface SlotInfo {
+  /** 1-based worker slot index.  Always 1 for sequential execution. */
+  index: number;
+  /** Total number of concurrent slots.  Always 1 for sequential execution. */
+  total: number;
 }
 ```
 
@@ -1758,8 +1793,8 @@ The `Orchestrator`, generators, and all application logic depend **only** on thi
 
 | Class | Behaviour | Default? |
 |---|---|---|
-| `SequentialScheduler` | Runs tasks one at a time (`for await` loop) | ✅ Yes |
-| `ConcurrentScheduler(n)` | Runs up to `n` tasks simultaneously via `p-limit` | No — opt-in via `--concurrency` |
+| `SequentialScheduler` | Runs tasks one at a time (`for await` loop); every task receives `{ index: 1, total: 1 }` | ✅ Yes |
+| `ConcurrentScheduler(n)` | Runs up to `n` tasks simultaneously via `p-limit`; manages a slot-index pool `[1..n]` — each task takes a slot before running and returns it on completion | No — opt-in via `--concurrency` |
 
 ### Two Independent Parallelism Levels
 
@@ -1807,10 +1842,79 @@ const orchestrator = new Orchestrator(resultWriter, {
   // ...
   contextScheduler: scheduler,
   generatorScheduler: scheduler,
+  logger: new ChalkLogger(),   // ChalkLogger is the only place that imports chalk
 });
 ```
 
 A single scheduler instance is shared across both levels. If different limits are ever required (for example, allow 8 concurrent generators but only 2 contexts), the `OrchestratorOptions` accepts two independent `IExecutionScheduler` values so the calling site can pass different implementations.
+
+---
+
+## Logging Abstraction
+
+All terminal output goes through `ILogger` so the `Orchestrator` (and any future orchestration code) has zero coupling to Chalk or any specific rendering library.
+
+### Interface
+
+```typescript
+// src/abstractions/ILogger.ts
+import { SlotInfo } from './SlotInfo';
+
+export interface ILogger {
+  debug(message: string): void;         // gray — quiet diagnostics (stamps, paths)
+  info(message: string): void;          // blue — high-level progress headers
+  success(message: string): void;       // green — completion confirmations
+  warn(message: string): void;          // yellow — recoverable issues
+  error(message: string): void;         // red — fatal failures
+
+  /** key = value structured diagnostic line (e.g. "  Stamp: abc123") */
+  detail(key: string, value: string | number): void;
+
+  /**
+   * Per-generator execution line, annotated with the concurrency slot.
+   * @param id    Generator id (e.g. "EntityGenerator")
+   * @param slot  Slot context from the scheduler
+   * @param message  Short status ("Running", "Skipped (dry run)", ...)
+   */
+  generator(id: string, slot: SlotInfo, message: string): void;
+}
+```
+
+### Implementations
+
+| Class | Location | Purpose |
+|---|---|---|
+| `ChalkLogger` | `src/logging/ChalkLogger.ts` | Production logger — maps levels to Chalk colours; the **only** file that imports `chalk` |
+| `NullLogger` | `src/logging/NullLogger.ts` | Silent no-op — default when no logger is provided; ideal for unit tests |
+
+Both are exported from the `src/logging/index.ts` barrel.
+
+### Concurrency Visibility in Logs
+
+The `generator()` method on `ILogger` receives a `SlotInfo` from the scheduler. `ChalkLogger` renders it differently depending on whether execution is sequential or concurrent:
+
+```
+# Sequential scheduler (total = 1) — no badge:
+  ⚙️  EntityGenerator — Running
+
+# Concurrent scheduler with concurrency 4 — slot badge prepended:
+  ⚙️  [2/4] EntityGenerator — Running
+  ⚙️  [4/4] ProjectionDtoGenerator — Running
+```
+
+This means concurrency is always visible in the output without adding any branching to `Orchestrator` itself — the badge is purely a rendering concern owned by the logger implementation.
+
+### `OrchestratorOptions.logger`
+
+```typescript
+export interface OrchestratorOptions {
+  // ...
+  /** Logger used for all generation output. Defaults to NullLogger (silent). */
+  logger?: ILogger;
+}
+```
+
+The CLI (composition root) creates `new ChalkLogger()` and passes it in. Test harnesses pass `new NullLogger()` (or omit it entirely for the same effect).
 
 ---
 
@@ -2038,8 +2142,9 @@ private validateBusinessRules(domain: DomainModel): void {
 1. **Create generator class** extending `BaseGenerator`
 2. **Create Handlebars template(s)** under the appropriate concern/variant subdirectory in `templates/`
 3. **Use fallback template arrays** (`new-path`, then optional `legacy-flat`) during migration windows
-4. **Register in Orchestrator registry** with phase/dependencies/optionalSlot
-5. **Update types** if new context structure needed
+4. **Export from the generators barrel** (`src/generators/index.ts`) — all 29 concrete generators are re-exported from this file so `GeneratorRegistrar` and tests never need individual import paths
+5. **Register in `GeneratorRegistrar`** (`src/orchestrator/GeneratorRegistrar.ts`) with phase, dependencies, and optional slot — this is the only file that instantiates concrete generators
+6. **Update types** if new context structure needed
 
 ```typescript
 // src/generators/ValidatorGenerator.ts
