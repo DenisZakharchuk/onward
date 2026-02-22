@@ -3,12 +3,12 @@
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property } from '../models/DataModel';
+import { BoundedContextGenerationContext, Entity, Property } from '../models/DataModel';
 import { TypeMapper } from '../utils/TypeMapper';
 import * as path from 'path';
 
 export class ValidatorGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';

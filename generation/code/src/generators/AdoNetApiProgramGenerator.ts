@@ -1,9 +1,9 @@
 import * as path from 'path';
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel } from '../models/DataModel';
+import { BoundedContextGenerationContext } from '../models/DataModel';
 
 export class AdoNetApiProgramGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';

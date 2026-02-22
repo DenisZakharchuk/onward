@@ -6,7 +6,7 @@ import {
   IControlledGenerator,
   IGeneratorExecutionContext,
 } from '../abstractions/GeneratorADT';
-import { DataModel } from '../models/DataModel';
+import { BoundedContextGenerationContext } from '../models/DataModel';
 
 export interface LegacyGeneratorDescriptor {
   id: string;
@@ -16,10 +16,10 @@ export interface LegacyGeneratorDescriptor {
   ambiguity?: GeneratorAmbiguity;
   requires?: readonly string[];
   provides?: readonly string[];
-  applies?: (model: DataModel) => boolean;
+  applies?: (ctx: BoundedContextGenerationContext) => boolean;
 }
 
-export class LegacyGeneratorAdapter implements IControlledGenerator<DataModel, IGeneratorExecutionContext> {
+export class LegacyGeneratorAdapter implements IControlledGenerator<BoundedContextGenerationContext, IGeneratorExecutionContext> {
   readonly id: string;
   readonly domain: GeneratorBL;
   readonly phase: GeneratorPhase;
@@ -43,13 +43,13 @@ export class LegacyGeneratorAdapter implements IControlledGenerator<DataModel, I
     this.provides = descriptor.provides ?? [];
   }
 
-  applies(model: DataModel): boolean {
-    return this.descriptor.applies ? this.descriptor.applies(model) : true;
+  applies(ctx: BoundedContextGenerationContext): boolean {
+    return this.descriptor.applies ? this.descriptor.applies(ctx) : true;
   }
 
-  async generate(model: DataModel, context: IGeneratorExecutionContext): Promise<void> {
+  async generate(ctx: BoundedContextGenerationContext, context: IGeneratorExecutionContext): Promise<void> {
     this.legacyGenerator.setMetadata(context.metadata);
     this.legacyGenerator.setWriter(context.writer);
-    await this.legacyGenerator.generate(model);
+    await this.legacyGenerator.generate(ctx);
   }
 }

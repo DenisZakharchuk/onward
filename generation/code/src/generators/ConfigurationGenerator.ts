@@ -3,12 +3,12 @@
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property } from '../models/DataModel';
+import { BoundedContextGenerationContext, Entity, Property } from '../models/DataModel';
 import { TypeMapper } from '../utils/TypeMapper';
 import * as path from 'path';
 
 export class ConfigurationGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
@@ -30,7 +30,7 @@ export class ConfigurationGenerator extends BaseGenerator {
     configurationsDir: string,
     namespace: string,
     baseNamespace: string,
-    model: DataModel
+    model: BoundedContextGenerationContext
   ): Promise<void> {
     // Detect if entity has any enum properties
     const hasEnums = entity.properties.some((p) => p.enumType);
@@ -61,7 +61,7 @@ export class ConfigurationGenerator extends BaseGenerator {
     configurationsDir: string,
     namespace: string,
     baseNamespace: string,
-    _model: DataModel
+    _model: BoundedContextGenerationContext
   ): Promise<void> {
     if (!entity.junctionMetadata) {
       throw new Error(`Junction entity ${entity.name} missing junctionMetadata`);
@@ -189,7 +189,7 @@ export class ConfigurationGenerator extends BaseGenerator {
     return indexes;
   }
 
-  private getRelationshipConfigurations(entity: Entity, model: DataModel): string[] {
+  private getRelationshipConfigurations(entity: Entity, model: BoundedContextGenerationContext): string[] {
     const relationships: string[] = [];
 
     // Find relationships where this entity is involved

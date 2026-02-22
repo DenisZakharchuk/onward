@@ -2,11 +2,40 @@
  * TypeScript models representing the data model schema
  */
 
-export interface DataModel {
-  boundedContext: BoundedContext;
+/**
+ * Top-level domain model — the root input to the generator CLI.
+ * Contains shared enums and one or more bounded contexts, each with their own DataModel.
+ */
+export interface DomainModel {
+  /** Domain-wide shared enum definitions (available to every bounded context). */
   enums?: EnumDefinition[];
+  /** One or more bounded contexts to generate. */
+  boundedContexts: BoundedContext[];
+}
+
+/**
+ * Entity and relationship definitions scoped to a single bounded context.
+ * Previously this was the top-level type; it is now nested inside BoundedContext.
+ */
+export interface DataModel {
   entities: Entity[];
   relationships?: Relationship[];
+}
+
+/**
+ * Flattened per-context view passed to every generator.
+ * Carries the same field names that generators already use (boundedContext, entities, enums,
+ * relationships), derived by merging domain-level enums with context-level enums and
+ * unwrapping BoundedContext.dataModel.
+ */
+export interface BoundedContextGenerationContext {
+  boundedContext: BoundedContext;
+  /** Merged enums: domain-level + context-level (context-level wins on name collision). */
+  enums: EnumDefinition[];
+  /** Shorthand for boundedContext.dataModel.entities */
+  entities: Entity[];
+  /** Shorthand for boundedContext.dataModel.relationships */
+  relationships: Relationship[];
 }
 
 export interface JwtConfig {
@@ -37,6 +66,13 @@ export interface BoundedContext {
    * and the DI registration will call AddOwnershipServices<TOwnership, TFactory>().
    */
   ownership?: OwnershipConfig;
+  /**
+   * Enum definitions local to this bounded context.
+   * At generation time they are merged with the domain-level DomainModel.enums.
+   */
+  enums?: EnumDefinition[];
+  /** Entity and relationship definitions for this bounded context. */
+  dataModel: DataModel;
 }
 
 export interface OwnershipConfig {
@@ -173,7 +209,8 @@ export interface GenerationMetadata {
 }
 
 /**
- * Generated code context passed to templates
+ * Generated code context passed to templates.
+ * Derived from BoundedContextGenerationContext — field names are intentionally identical.
  */
 export interface TemplateContext {
   boundedContext: BoundedContext;

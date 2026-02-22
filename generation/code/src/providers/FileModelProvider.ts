@@ -3,7 +3,7 @@
  */
 
 import { IModelProvider } from '../abstractions/IModelProvider';
-import { DataModel } from '../models/DataModel';
+import { DomainModel } from '../models/DataModel';
 import { DataModelParser } from '../parser/DataModelParser';
 
 export class FileModelProvider implements IModelProvider {
@@ -13,7 +13,7 @@ export class FileModelProvider implements IModelProvider {
     this.parser = new DataModelParser();
   }
 
-  async load(source: string): Promise<DataModel> {
+  async load(source: string): Promise<DomainModel> {
     await this.parser.loadSchema();
     return await this.parser.parseFromFile(source);
   }
@@ -21,7 +21,7 @@ export class FileModelProvider implements IModelProvider {
   async validate(source: string): Promise<{
     valid: boolean;
     errors: string[];
-    model?: DataModel;
+    model?: DomainModel;
   }> {
     try {
       await this.parser.loadSchema();

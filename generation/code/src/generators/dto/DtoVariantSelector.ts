@@ -1,4 +1,4 @@
-import { DataModel } from '../../models/DataModel';
+import { BoundedContextGenerationContext } from '../../models/DataModel';
 import { IDTOLibGenerator, IDTOVariantGenerator } from './DtoVariantContracts';
 
 export class DtoVariantSelector implements IDTOLibGenerator {
@@ -8,7 +8,7 @@ export class DtoVariantSelector implements IDTOLibGenerator {
     this.variants = generators;
   }
 
-  select(model: DataModel): IDTOVariantGenerator {
+  select(model: BoundedContextGenerationContext): IDTOVariantGenerator {
     if (this.variants.length === 0) {
       throw new Error('DTO variants are not initialized.');
     }

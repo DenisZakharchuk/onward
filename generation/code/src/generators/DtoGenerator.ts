@@ -3,7 +3,7 @@
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel } from '../models/DataModel';
+import { BoundedContextGenerationContext } from '../models/DataModel';
 import { ClassDtoVariantGenerator } from './dto/ClassDtoVariantGenerator';
 import { DtoVariantSelector } from './dto/DtoVariantSelector';
 import { IDTOVariantGenerator } from './dto/DtoVariantContracts';
@@ -23,7 +23,7 @@ export class DtoGenerator extends BaseGenerator {
     this.selector.init(this.variants);
   }
 
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     if (!this.metadata) {
       throw new Error('Generation metadata is not set for DtoGenerator.');
     }

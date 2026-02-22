@@ -1,14 +1,31 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://inventorization.com/schemas/data-model.schema.json",
-  "title": "BoundedContext Data Model",
-  "description": "Schema for defining a complete BoundedContext data model for code generation",
+  "title": "DomainModel",
+  "description": "Schema for defining a DomainModel with one or more BoundedContexts for code generation",
   "type": "object",
-  "required": ["boundedContext", "entities"],
+  "required": ["boundedContexts"],
   "properties": {
-    "boundedContext": {
+    "enums": {
+      "type": "array",
+      "description": "Domain-wide shared enum definitions (available to every bounded context)",
+      "items": {
+        "$ref": "#/definitions/EnumDefinition"
+      }
+    },
+    "boundedContexts": {
+      "type": "array",
+      "description": "One or more bounded contexts to generate",
+      "items": {
+        "$ref": "#/definitions/BoundedContext"
+      },
+      "minItems": 1
+    }
+  },
+  "definitions": {
+    "BoundedContext": {
       "type": "object",
-      "required": ["name", "namespace"],
+      "required": ["name", "namespace", "dataModel"],
       "properties": {
         "name": {
           "type": "string",
@@ -93,63 +110,74 @@
               "description": "IOwnershipFactory implementation to register (defaults to '<valueObject>Factory')"
             }
           }
+        },
+        "enums": {
+          "type": "array",
+          "description": "Context-level enum definitions (merged with domain-level enums; context-level wins on name collision)",
+          "items": {
+            "$ref": "#/definitions/EnumDefinition"
+          }
+        },
+        "dataModel": {
+          "$ref": "#/definitions/DataModel"
         }
       }
     },
-    "enums": {
-      "type": "array",
-      "description": "Enum definitions for the Common project",
-      "items": {
-        "type": "object",
-        "required": ["name", "values"],
-        "properties": {
-          "name": {
-            "type": "string",
-            "pattern": "^[A-Z][a-zA-Z0-9]*$"
+    "DataModel": {
+      "type": "object",
+      "required": ["entities"],
+      "description": "Entity and relationship definitions for a single bounded context",
+      "properties": {
+        "entities": {
+          "type": "array",
+          "description": "Entity definitions",
+          "items": {
+            "$ref": "#/definitions/Entity"
           },
-          "description": {
-            "type": "string"
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["name"],
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "pattern": "^[A-Z][a-zA-Z0-9]*$"
-                },
-                "value": {
-                  "type": "integer"
-                },
-                "description": {
-                  "type": "string"
-                }
-              }
-            },
-            "minItems": 1
+          "minItems": 1
+        },
+        "relationships": {
+          "type": "array",
+          "description": "Relationship definitions between entities",
+          "items": {
+            "$ref": "#/definitions/Relationship"
           }
         }
       }
     },
-    "entities": {
-      "type": "array",
-      "description": "Entity definitions",
-      "items": {
-        "$ref": "#/definitions/Entity"
-      },
-      "minItems": 1
-    },
-    "relationships": {
-      "type": "array",
-      "description": "Relationship definitions between entities",
-      "items": {
-        "$ref": "#/definitions/Relationship"
+    "EnumDefinition": {
+      "type": "object",
+      "required": ["name", "values"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][a-zA-Z0-9]*$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Z][a-zA-Z0-9]*$"
+              },
+              "value": {
+                "type": "integer"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 1
+        }
       }
-    }
-  },
-  "definitions": {
+    },
     "Entity": {
       "type": "object",
       "required": ["name", "properties"],

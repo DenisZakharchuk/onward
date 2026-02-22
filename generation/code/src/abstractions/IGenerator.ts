@@ -2,7 +2,7 @@
  * Abstraction for code generators
  */
 
-import { DataModel, GenerationMetadata } from '../models/DataModel';
+import { BoundedContextGenerationContext, GenerationMetadata } from '../models/DataModel';
 import { IResultWriter } from './IResultWriter';
 
 export interface IGenerator {
@@ -22,8 +22,8 @@ export interface IGenerator {
   setWriter(writer: IResultWriter): void;
 
   /**
-   * Generate code for the data model
-   * @param model - Data model to generate from
+   * Generate code for one bounded context
+   * @param ctx - Flattened bounded context generation context
    */
-  generate(model: DataModel): Promise<void>;
+  generate(ctx: BoundedContextGenerationContext): Promise<void>;
 }

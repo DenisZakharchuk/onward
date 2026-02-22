@@ -3,7 +3,7 @@
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property } from '../models/DataModel';
+import { BoundedContextGenerationContext, Entity, Property } from '../models/DataModel';
 import { NamingConventions } from '../utils/NamingConventions';
 import { TypeMapper } from '../utils/TypeMapper';
 import * as path from 'path';
@@ -19,7 +19,7 @@ interface InvalidCase {
 }
 
 export class TestGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
@@ -110,14 +110,14 @@ export class TestGenerator extends BaseGenerator {
     );
   }
 
-  private buildDtoAssignments(entity: Entity, model: DataModel, dtoType: 'create' | 'update'): Assignment[] {
+  private buildDtoAssignments(entity: Entity, model: BoundedContextGenerationContext, dtoType: 'create' | 'update'): Assignment[] {
     return this.getDtoProperties(entity, dtoType).map((p) => ({
       name: p.name,
       value: this.getSampleValue(p, model),
     }));
   }
 
-  private buildConstructorArgs(entity: Entity, model: DataModel): Array<{ value: string }> {
+  private buildConstructorArgs(entity: Entity, model: BoundedContextGenerationContext): Array<{ value: string }> {
     const constructorProps = entity.properties.filter(
       (p) =>
         p.name !== 'Id' &&
@@ -228,7 +228,7 @@ export class TestGenerator extends BaseGenerator {
     });
   }
 
-  private getSampleValue(property: Property, model: DataModel): string {
+  private getSampleValue(property: Property, model: BoundedContextGenerationContext): string {
     if (property.enumType) {
       return this.getEnumSampleValue(property.enumType, model);
     }
@@ -466,7 +466,7 @@ export class TestGenerator extends BaseGenerator {
     }
   }
 
-  private getEnumSampleValue(enumType: string, model: DataModel): string {
+  private getEnumSampleValue(enumType: string, model: BoundedContextGenerationContext): string {
     const enumDef = model.enums?.find((e) => e.name === enumType);
     if (!enumDef || enumDef.values.length === 0) {
       return `default(${enumType})`;

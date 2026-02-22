@@ -1,8 +1,8 @@
 import { IControlledGenerator, IGeneratorExecutionContext } from '../abstractions/GeneratorADT';
-import { DataModel } from '../models/DataModel';
+import { BoundedContextGenerationContext } from '../models/DataModel';
 
 export interface GeneratorRegistration {
-  generator: IControlledGenerator<DataModel, IGeneratorExecutionContext>;
+  generator: IControlledGenerator<BoundedContextGenerationContext, IGeneratorExecutionContext>;
   dependsOn?: readonly string[];
   optionalSlot?: string;
 }
@@ -25,7 +25,7 @@ export class GeneratorRegistry {
   }
 
   resolveExecutionPlan(
-    model: DataModel,
+    ctx: BoundedContextGenerationContext,
     _context: IGeneratorExecutionContext,
     enabledSlots: ReadonlySet<string>
   ): GeneratorRegistration[] {
@@ -34,7 +34,7 @@ export class GeneratorRegistry {
         return false;
       }
 
-      return registration.generator.applies(model);
+      return registration.generator.applies(ctx);
     });
 
     this.validateDependencies(candidates);

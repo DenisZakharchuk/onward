@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { BaseGenerator } from '../BaseGenerator';
-import { DataModel, Entity, Property } from '../../models/DataModel';
+import { BoundedContextGenerationContext, Entity, Property } from '../../models/DataModel';
 import { TypeMapper } from '../../utils/TypeMapper';
 import { IDTOLayoutGenerator } from './DtoVariantContracts';
 
@@ -14,7 +14,7 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
   protected abstract getDetailsTemplateName(): string | readonly string[];
   protected abstract getSearchTemplateName(): string | readonly string[];
 
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';

@@ -5,7 +5,7 @@
 import * as Handlebars from 'handlebars';
 import * as path from 'path';
 import { FileManager } from '../utils/FileManager';
-import { DataModel, GenerationMetadata } from '../models/DataModel';
+import { BoundedContextGenerationContext, GenerationMetadata } from '../models/DataModel';
 import { IGenerator } from '../abstractions/IGenerator';
 import { IResultWriter } from '../abstractions/IResultWriter';
 
@@ -161,5 +161,5 @@ export abstract class BaseGenerator implements IGenerator {
   /**
    * Abstract method to be implemented by concrete generators
    */
-  abstract generate(model: DataModel): Promise<void>;
+  abstract generate(ctx: BoundedContextGenerationContext): Promise<void>;
 }

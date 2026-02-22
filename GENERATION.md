@@ -30,9 +30,9 @@ const modelProvider = new FileModelProvider();
 const resultWriter = new FileResultWriter(outputDir);
 const orchestrator = new Orchestrator(resultWriter, options);
 
-// Dependencies flow down
-const model = await modelProvider.load(source);
-await orchestrator.generate(model);
+// DomainModel loaded from JSON; Orchestrator loops over all bounded contexts
+const domain: DomainModel = await modelProvider.load(source);
+await orchestrator.generate(domain);
 ```
 
 **Key Abstractions**:
@@ -288,6 +288,56 @@ public class ProductDomainService : IProductDomainService
 
 ---
 
+## Input Type Hierarchy
+
+The generator uses four key TypeScript types that flow through the system:
+
+| Type | Location | Role |
+|---|---|---|
+| `DomainModel` | CLI / `IModelProvider` | Top-level JSON input – parsed from file |
+| `BoundedContext` | Nested in `DomainModel` | One microservice context (name, namespace, ports, enums, `dataModel`) |
+| `DataModel` | Nested in `BoundedContext.dataModel` | Entities and relationships for that context |
+| `BoundedContextGenerationContext` | Generator input | Flattened view per context – produced by `DataModelParser.buildGenerationContexts()` |
+
+```typescript
+// Top-level JSON shape (what the CLI reads)
+interface DomainModel {
+  enums?: EnumDefinition[];         // Shared across all contexts
+  boundedContexts: BoundedContext[];
+}
+
+// One entry in boundedContexts[]
+interface BoundedContext {
+  name: string;
+  namespace: string;
+  apiPort?: number;
+  dbPort?: number;
+  databaseName?: string;
+  dtoLayout?: 'class' | 'record';
+  ownership?: OwnershipConfig;
+  enums?: EnumDefinition[];         // Context-scoped (overrides domain-level on name collision)
+  dataModel: DataModel;
+}
+
+// Nested inside BoundedContext
+interface DataModel {
+  entities: Entity[];
+  relationships?: Relationship[];
+}
+
+// What every generator receives (produced by DataModelParser)
+interface BoundedContextGenerationContext {
+  boundedContext: BoundedContext;   // Original context metadata
+  enums: EnumDefinition[];          // Merged: domain-level + context-level (context wins)
+  entities: Entity[];               // Shorthand for boundedContext.dataModel.entities
+  relationships: Relationship[];    // Shorthand for boundedContext.dataModel.relationships
+}
+```
+
+`DataModelParser.buildGenerationContexts(domain)` produces one `BoundedContextGenerationContext` per entry in `domain.boundedContexts`, merging enums and flattening the data model fields.
+
+---
+
 ## Architecture
 
 ### Component Layers
@@ -330,13 +380,15 @@ public class ProductDomainService : IProductDomainService
 ### Data Flow
 
 ```
-JSON Data Model
+DomainModel JSON (single file, one or many bounded contexts)
     ↓
-DataModelParser (validation via JSON Schema)
+DataModelParser.validate() (JSON Schema + business rules)
     ↓
-Orchestrator (dependency ordering)
+DataModelParser.buildGenerationContexts() → BoundedContextGenerationContext[]
     ↓
-Individual Generators
+Orchestrator (loops each BoundedContextGenerationContext)
+    ↓ (per bounded context)
+Individual Generators receive BoundedContextGenerationContext
     ↓ (for each entity)
 TypeMapper + NamingConventions (transformations)
     ↓
@@ -378,7 +430,7 @@ export abstract class BaseGenerator {
   ): Promise<void>;
   
   // Each generator implements this
-  abstract generate(model: DataModel): Promise<void>;
+  abstract generate(model: BoundedContextGenerationContext): Promise<void>;
 }
 ```
 
@@ -386,7 +438,7 @@ export abstract class BaseGenerator {
 
 ```typescript
 export class EntityGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     // 1. Extract context-specific info
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
@@ -632,10 +684,10 @@ interface QueryBuilderContext {
 **Implementation Pattern**:
 ```typescript
 export class QueryBuilderGenerator extends BaseGenerator {
-  async generate(model: DataModel, outputDir: string): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = `Inventorization.${contextName}`;
-    const domainProjectPath = path.join(outputDir, `${namespace}.Domain`);
+    const domainProjectPath = path.join(this.outputDir, `${namespace}.Domain`);
     const dataAccessDir = path.join(domainProjectPath, 'DataAccess');
     
     for (const entity of model.entities) {
@@ -644,7 +696,7 @@ export class QueryBuilderGenerator extends BaseGenerator {
         entityName: entity.name,
         generationStamp: this.generationStamp,
         generatedAt: new Date().toISOString(),
-        sourceFile: model.sourceFile
+        sourceFile: model.boundedContext.name
       };
       
       const filePath = path.join(dataAccessDir, `${entity.name}QueryBuilder.cs`);
@@ -1650,7 +1702,15 @@ Phase 13: Project files
 
 ```typescript
 export class Orchestrator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(domain: DomainModel): Promise<void> {
+    // Build a per-bounded-context flattened view (merges domain + context enums)
+    const contexts = this.parser.buildGenerationContexts(domain);
+    for (const ctx of contexts) {
+      await this.generateBoundedContext(ctx);
+    }
+  }
+
+  private async generateBoundedContext(model: BoundedContextGenerationContext): Promise<void> {
     const enabledSlots = new Set<string>(['core']);
     enabledSlots.add(this.resolvePresentationKind());
     enabledSlots.add(this.resolveDataLayerKind());
@@ -1698,15 +1758,20 @@ Configures the ownership value object and factory for the entire bounded context
 
 ```json
 {
-  "boundedContext": {
-    "name": "Commerce",
-    "namespace": "Inventorization.Commerce",
-    "ownership": {
-      "enabled": true,
-      "valueObject": "UserTenantOwnership",
-      "factory": "UserTenantOwnershipFactory"
+  "boundedContexts": [
+    {
+      "name": "Commerce",
+      "namespace": "Inventorization.Commerce",
+      "ownership": {
+        "enabled": true,
+        "valueObject": "UserTenantOwnership",
+        "factory": "UserTenantOwnershipFactory"
+      },
+      "dataModel": {
+        "entities": []
+      }
     }
-  }
+  ]
 }
 ```
 
@@ -1726,9 +1791,17 @@ Marks a specific entity as owned by a user/tenant:
 
 ```json
 {
-  "entities": [
-    { "name": "Category", "tableName": "Categories" },
-    { "name": "Order",    "tableName": "Orders", "owned": true }
+  "boundedContexts": [
+    {
+      "name": "Commerce",
+      "namespace": "Inventorization.Commerce",
+      "dataModel": {
+        "entities": [
+          { "name": "Category", "tableName": "Categories" },
+          { "name": "Order",    "tableName": "Orders", "owned": true }
+        ]
+      }
+    }
   ]
 }
 ```
@@ -1801,12 +1874,17 @@ Selected slots determine which generators are included in execution plan via reg
 
 ```json
 {
-  "boundedContext": {
-    "name": "Commerce",
-    "namespace": "Inventorization.Commerce",
-    "apiPort": 5042,
-    "dtoLayout": "class"
-  }
+  "boundedContexts": [
+    {
+      "name": "Commerce",
+      "namespace": "Inventorization.Commerce",
+      "apiPort": 5042,
+      "dtoLayout": "class",
+      "dataModel": {
+        "entities": []
+      }
+    }
+  ]
 }
 ```
 
@@ -1859,11 +1937,12 @@ Selected slots determine which generators are included in execution plan via reg
 JSON Schema validates structure; business rules validated in `DataModelParser`:
 
 ```typescript
-private validateBusinessRules(model: DataModel): void {
-  // Check entity name uniqueness
+private validateBusinessRules(domain: DomainModel): void {
+  // Check entity name uniqueness within each bounded context
   // Validate FK references point to existing entities
   // Ensure ManyToMany has junction entity
-  // Validate enum value uniqueness
+  // Validate enum value uniqueness (domain-level + context-level)
+  // Context-level enums override domain-level on name collision
   // etc.
 }
 ```
@@ -1883,7 +1962,7 @@ private validateBusinessRules(model: DataModel): void {
 ```typescript
 // src/generators/ValidatorGenerator.ts
 export class ValidatorGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const validatorsDir = path.join(
       `Inventorization.${model.boundedContext.name}.BL/Validators`
     );
@@ -1984,7 +2063,7 @@ Test each generator independently:
 ```typescript
 describe('EntityGenerator', () => {
   it('should generate immutable entity with validation', async () => {
-    const model: DataModel = { /* test data */ };
+    const model: BoundedContextGenerationContext = { /* test data */ };
     
     const generator = new EntityGenerator();
     await generator.generate(model);
@@ -2083,7 +2162,12 @@ The generator creates **Smart Enum classes** instead of traditional C# enums to 
 
 ### Data Model Specification
 
-Define enums in the `enums` array with numeric values:
+Enums live in the `DomainModel` JSON. They can be declared at two levels:
+
+- **Domain-level** (`enums` on the root): shared across all bounded contexts in the file.
+- **Context-level** (`enums` inside a `boundedContexts` entry): scoped to that context only.
+
+If the same enum name appears at both levels the context-level definition wins (override).
 
 ```json
 {
@@ -2097,6 +2181,15 @@ Define enums in the `enums` array with numeric values:
         { "name": "OutOfStock", "value": 2, "description": "Temporarily unavailable" },
         { "name": "Discontinued", "value": 3, "description": "No longer available" }
       ]
+    }
+  ],
+  "boundedContexts": [
+    {
+      "name": "Commerce",
+      "namespace": "Inventorization.Commerce",
+      "dataModel": {
+        "entities": []
+      }
     }
   ]
 }

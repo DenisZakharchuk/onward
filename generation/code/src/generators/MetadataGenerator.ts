@@ -3,12 +3,12 @@
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, Entity, Property, Relationship } from '../models/DataModel';
+import { BoundedContextGenerationContext, Entity, Property, Relationship } from '../models/DataModel';
 import { TypeMapper } from '../utils/TypeMapper';
 import * as path from 'path';
 
 export class MetadataGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
@@ -20,7 +20,7 @@ export class MetadataGenerator extends BaseGenerator {
   }
 
   private async generateDataModelMetadata(
-    model: DataModel,
+    model: BoundedContextGenerationContext,
     metaProjectPath: string,
     namespace: string,
     baseNamespace: string,
@@ -47,7 +47,7 @@ export class MetadataGenerator extends BaseGenerator {
   }
 
   private async generateDataModelRelationships(
-    model: DataModel,
+    model: BoundedContextGenerationContext,
     metaProjectPath: string,
     namespace: string,
     baseNamespace: string,
@@ -71,7 +71,7 @@ export class MetadataGenerator extends BaseGenerator {
     );
   }
 
-  private buildEntityMetadataContext(entity: Entity, model: DataModel): Record<string, unknown> {
+  private buildEntityMetadataContext(entity: Entity, model: BoundedContextGenerationContext): Record<string, unknown> {
     // Find all relationships involving this entity
     const entityRelationships = (model.relationships || []).filter(
       (r) => r.leftEntity === entity.name || r.rightEntity === entity.name
@@ -127,7 +127,7 @@ export class MetadataGenerator extends BaseGenerator {
     };
   }
 
-  private buildRelationshipMetadataContexts(model: DataModel): Array<Record<string, unknown>> {
+  private buildRelationshipMetadataContexts(model: BoundedContextGenerationContext): Array<Record<string, unknown>> {
     const relationships: Array<Record<string, unknown>> = [];
 
     // Junction entity relationships (ManyToMany)

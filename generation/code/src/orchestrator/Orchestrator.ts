@@ -3,10 +3,15 @@
  */
 
 import chalk from 'chalk';
-import { DataModel, GenerationMetadata } from '../models/DataModel';
+import {
+  DomainModel,
+  BoundedContextGenerationContext,
+  GenerationMetadata,
+} from '../models/DataModel';
 import { Blueprint } from '../models/Blueprint';
 import { IResultWriter } from '../abstractions/IResultWriter';
 import { IGeneratorExecutionContext } from '../abstractions/GeneratorADT';
+import { DataModelParser } from '../parser/DataModelParser';
 import { DtoGenerator } from '../generators/DtoGenerator';
 import { EntityGenerator } from '../generators/EntityGenerator';
 import { ConfigurationGenerator } from '../generators/ConfigurationGenerator';
@@ -68,9 +73,9 @@ export class Orchestrator {
   }
 
   /**
-   * Generate complete BoundedContext code
+   * Generate complete code for all bounded contexts in the domain model
    */
-  async generate(model: DataModel): Promise<void> {
+  async generate(domain: DomainModel): Promise<void> {
     console.log(chalk.blue('\n🚀 Starting code generation...\n'));
 
     // Generate unique stamp for this generation run
@@ -100,13 +105,34 @@ export class Orchestrator {
     console.log(chalk.gray(`  Generated At: ${generatedAt}`));
     console.log(chalk.gray(`  Source: ${sourceFile}\n`));
 
+    // Build a flattened generation context per bounded context
+    const parser = new DataModelParser();
+    const generationContexts = parser.buildGenerationContexts(domain);
+
+    console.log(chalk.blue(`  Bounded Contexts: ${generationContexts.length}\n`));
+
+    for (const ctx of generationContexts) {
+      console.log(chalk.blue(`\n📦 Generating: ${chalk.yellow(ctx.boundedContext.name)}\n`));
+      await this.generateBoundedContext(ctx, context);
+    }
+
+    console.log(chalk.green('\n✅ All bounded contexts generated.\n'));
+  }
+
+  /**
+   * Generate code for a single bounded context
+   */
+  private async generateBoundedContext(
+    ctx: BoundedContextGenerationContext,
+    context: IGeneratorExecutionContext
+  ): Promise<void> {
     this.initializeGenerators();
 
     // Create project directories
-    const projectPaths = this.getProjectPaths(model);
+    const projectPaths = this.getProjectPaths(ctx);
 
     if (!this.options.dryRun) {
-      await this.ensureDirectories(projectPaths, model);
+      await this.ensureDirectories(projectPaths, ctx);
     }
 
     const enabledSlots = new Set<string>(['core']);
@@ -123,21 +149,21 @@ export class Orchestrator {
       enabledSlots.add('tests');
     }
 
-    const executionPlan = this.registry.resolveExecutionPlan(model, context, enabledSlots);
+    const executionPlan = this.registry.resolveExecutionPlan(ctx, context, enabledSlots);
 
     for (const registration of executionPlan) {
       const generatorName = registration.generator.id;
       console.log(chalk.cyan(`  ⚙️  Running ${generatorName}...`));
 
       if (!this.options.dryRun) {
-        await registration.generator.generate(model, context);
+        await registration.generator.generate(ctx, context);
       } else {
         console.log(chalk.gray(`     (dry run - skipped)`));
       }
     }
 
     // Print summary
-    this.printSummary(model, projectPaths, generationStamp);
+    this.printSummary(ctx, projectPaths, context.metadata.generationStamp);
   }
 
   /**
@@ -161,7 +187,7 @@ export class Orchestrator {
       ambiguity: 'optional',
       requires: ['metadata'],
       provides: ['enums'],
-      applies: (model) => this.hasEnums(model),
+      applies: (ctx) => this.hasEnums(ctx),
     });
 
     this.registerLegacyGenerator(new EntityGenerator(), {
@@ -454,7 +480,7 @@ export class Orchestrator {
     generator: {
       setMetadata(metadata: GenerationMetadata): void;
       setWriter(writer: IResultWriter): void;
-      generate(model: DataModel): Promise<void>;
+      generate(ctx: BoundedContextGenerationContext): Promise<void>;
     },
     descriptor: LegacyGeneratorDescriptor & {
       dependsOn?: readonly string[];
@@ -487,8 +513,8 @@ export class Orchestrator {
   /**
    * Get project directory paths (relative to output directory)
    */
-  private getProjectPaths(model: DataModel) {
-    const contextName = model.boundedContext.name;
+  private getProjectPaths(ctx: BoundedContextGenerationContext) {
+    const contextName = ctx.boundedContext.name;
     const baseNamespace = this.options.baseNamespace!;
 
     return {
@@ -505,7 +531,7 @@ export class Orchestrator {
   /**
    * Ensure all project directories exist
    */
-  private async ensureDirectories(projectPaths: Record<string, string>, model: DataModel): Promise<void> {
+  private async ensureDirectories(projectPaths: Record<string, string>, ctx: BoundedContextGenerationContext): Promise<void> {
     for (const [key, dirPath] of Object.entries(projectPaths)) {
       await this.writer.ensureDirectory(dirPath as string);
 
@@ -539,31 +565,31 @@ export class Orchestrator {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Validators'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Mappers'));
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Instantiation'));
-      } else if (key === 'common' && this.hasEnums(model)) {
+      } else if (key === 'common' && this.hasEnums(ctx)) {
         await this.writer.ensureDirectory(path.join(dirPath as string, 'Enums'));
       }
     }
   }
 
   /**
-   * Check if model has enums
+   * Check if context has enums
    */
-  private hasEnums(model: DataModel): boolean {
-    return model.enums !== undefined && model.enums.length > 0;
+  private hasEnums(ctx: BoundedContextGenerationContext): boolean {
+    return ctx.enums !== undefined && ctx.enums.length > 0;
   }
 
   /**
    * Print generation summary
    */
-  private printSummary(model: DataModel, projectPaths: Record<string, string>, generationStamp: string): void {
+  private printSummary(ctx: BoundedContextGenerationContext, projectPaths: Record<string, string>, generationStamp: string): void {
     console.log(chalk.green('\n✅ Generation Summary:\n'));
 
     console.log(chalk.blue('  Generation:'));
     console.log(`    Stamp: ${chalk.yellow(generationStamp)}`);
-    console.log(`    BoundedContext: ${chalk.yellow(model.boundedContext.name)}`);
+    console.log(`    BoundedContext: ${chalk.yellow(ctx.boundedContext.name)}`);
 
-    const entityCount = model.entities.length;
-    const junctionCount = model.entities.filter((e) => e.isJunction).length;
+    const entityCount = ctx.entities.length;
+    const junctionCount = ctx.entities.filter((e) => e.isJunction).length;
     const regularCount = entityCount - junctionCount;
 
     console.log(chalk.blue('\n  Entities:'));

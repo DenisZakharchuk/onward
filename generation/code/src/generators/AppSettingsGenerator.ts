@@ -3,11 +3,11 @@
  */
 
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel } from '../models/DataModel';
+import { BoundedContextGenerationContext } from '../models/DataModel';
 import * as path from 'path';
 
 export class AppSettingsGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     const contextName = model.boundedContext.name;
     const baseNamespace = this.metadata?.baseNamespace || 'Inventorization';
 

@@ -1,12 +1,12 @@
 import * as path from 'path';
 import { BaseGenerator } from './BaseGenerator';
-import { DataModel, EnumDefinition, EnumValue } from '../models/DataModel';
+import { BoundedContextGenerationContext, EnumDefinition, EnumValue } from '../models/DataModel';
 
 /**
  * Generator for creating C# enum files in the Common project
  */
 export class EnumGenerator extends BaseGenerator {
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     if (!model.enums || model.enums.length === 0) {
       console.log('  No enums to generate');
       return;

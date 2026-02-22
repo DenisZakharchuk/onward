@@ -1,4 +1,4 @@
-import { DataModel, GenerationMetadata } from '../models/DataModel';
+import { BoundedContextGenerationContext, GenerationMetadata } from '../models/DataModel';
 import { Blueprint } from '../models/Blueprint';
 import { IGenerator } from './IGenerator';
 import { IResultWriter } from './IResultWriter';
@@ -97,7 +97,7 @@ export interface IComplexGenerator<TGenerators extends Record<string, IGenerator
 
 export interface IVariantSlot<TVariant> {
   init(generators: readonly TVariant[]): void;
-  select(model: DataModel): TVariant;
+  select(model: BoundedContextGenerationContext): TVariant;
 }
 
 export interface ICompositeSlot<TGenerators extends Record<string, unknown>> {

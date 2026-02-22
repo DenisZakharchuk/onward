@@ -12,6 +12,7 @@ import ora from 'ora';
 import { FileModelProvider } from './providers/FileModelProvider';
 import { FileBlueprintProvider } from './providers/FileBlueprintProvider';
 import { Blueprint } from './models/Blueprint';
+import { DomainModel } from './models/DataModel';
 import { FileResultWriter } from './writers/FileResultWriter';
 import { Orchestrator } from './orchestrator/Orchestrator';
 import * as path from 'path';
@@ -35,24 +36,25 @@ function resolveBlueprintDataLayer(blueprint: Blueprint): 'ef-core' | 'ado-net' 
 }
 
 function validateBlueprintCompatibility(
-  modelDtoLayout: 'class' | 'record' | undefined,
+  domain: DomainModel,
   blueprint?: Blueprint
-): 'class' | 'record' | undefined {
-  if (!blueprint) {
-    return modelDtoLayout;
-  }
+): void {
+  if (!blueprint) return;
 
   const blueprintDtoLayout = resolveBlueprintDtoLayout(blueprint);
 
-  if (modelDtoLayout && modelDtoLayout !== blueprintDtoLayout) {
-    throw new Error(
-      `Conflict detected for DTO layout: data model has '${modelDtoLayout}', ` +
-      `but blueprint requires '${blueprintDtoLayout}'.` +
-      `\nConflict policy is fail-on-conflict.`
-    );
+  for (const ctx of domain.boundedContexts) {
+    const modelDtoLayout = ctx.dtoLayout;
+    if (modelDtoLayout && modelDtoLayout !== blueprintDtoLayout) {
+      throw new Error(
+        `Conflict detected for DTO layout in '${ctx.name}': data model has '${modelDtoLayout}', ` +
+        `but blueprint requires '${blueprintDtoLayout}'.` +
+        `\nConflict policy is fail-on-conflict.`
+      );
+    }
+    // Apply resolved layout back to context
+    ctx.dtoLayout = blueprintDtoLayout;
   }
-
-  return blueprintDtoLayout;
 }
 
 async function generateCommand(dataModelPath: string, options: GenerateOptions) {
@@ -73,26 +75,26 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
     if (options.blueprint) {
       spinner.text = 'Validating blueprint...';
       blueprint = await blueprintProvider.load(options.blueprint);
-      model.boundedContext.dtoLayout = validateBlueprintCompatibility(model.boundedContext.dtoLayout, blueprint);
+      validateBlueprintCompatibility(model, blueprint);
     }
 
-    spinner.succeed(`Data model validated: ${chalk.green(model.boundedContext.name)}`);
+    spinner.succeed(`Data model validated: ${chalk.green(model.boundedContexts.map(c => c.name).join(', '))}`);
 
-    // Override namespace if provided
-    if (options.namespace) {
-      model.boundedContext.namespace = options.namespace;
-    } else if (options.baseNamespace) {
-      // Recompute namespace with custom base namespace
-      model.boundedContext.namespace = `${options.baseNamespace}.${model.boundedContext.name}`;
+    // Override namespace if provided — applies to each bounded context
+    for (const ctx of model.boundedContexts) {
+      if (options.namespace && model.boundedContexts.length === 1) {
+        ctx.namespace = options.namespace;
+      } else if (options.baseNamespace) {
+        ctx.namespace = `${options.baseNamespace}.${ctx.name}`;
+      }
     }
 
     console.log(chalk.blue('\nGeneration Settings:'));
-    console.log(`  BoundedContext: ${chalk.yellow(model.boundedContext.name)}`);
-    console.log(`  Namespace: ${chalk.yellow(model.boundedContext.namespace)}`);
+    console.log(`  Bounded Contexts: ${chalk.yellow(model.boundedContexts.map(c => c.name).join(', '))}`);
     console.log(`  Base Namespace: ${chalk.yellow(options.baseNamespace || 'Inventorization')}`);
     if (options.blueprint) {
       console.log(`  Blueprint: ${chalk.yellow(path.resolve(options.blueprint))}`);
-      console.log(`  DTO Layout (resolved): ${chalk.yellow(model.boundedContext.dtoLayout || 'class')}`);
+      console.log(`  DTO Layout (resolved): ${chalk.yellow(blueprint ? resolveBlueprintDtoLayout(blueprint) : 'class')}`);
       console.log(`  Presentation Kind: ${chalk.yellow(blueprint?.boundedContext.presentation.kind || 'controllers')}`);
       console.log(`  Data Layer: ${chalk.yellow(blueprint ? resolveBlueprintDataLayer(blueprint) : 'ef-core')}`);
     }
@@ -170,38 +172,31 @@ async function validateCommand(dataModelPath: string, blueprintPath?: string) {
       }
 
       blueprint = blueprintResult.blueprint;
-      validateBlueprintCompatibility(result.model?.boundedContext.dtoLayout, blueprint);
+      validateBlueprintCompatibility(result.model!, blueprint);
     }
 
     const model = result.model!;
     spinner.succeed(chalk.green('✅ Data model is valid!'));
 
-    console.log(chalk.blue('\nData Model Summary:'));
-    console.log(`  BoundedContext: ${chalk.yellow(model.boundedContext.name)}`);
-    console.log(`  Namespace: ${chalk.yellow(model.boundedContext.namespace)}`);
-    console.log(`  Entities: ${chalk.yellow(model.entities.length)}`);
-    console.log(`  Relationships: ${chalk.yellow(model.relationships?.length || 0)}`);
-    console.log(`  Enums: ${chalk.yellow(model.enums?.length || 0)}`);
-    if (blueprintPath && blueprint) {
-      console.log(`  Blueprint: ${chalk.yellow(path.resolve(blueprintPath))}`);
-      console.log(`  DTO Layout (resolved): ${chalk.yellow(resolveBlueprintDtoLayout(blueprint))}`);
-      console.log(`  Presentation: ${chalk.yellow(blueprint.boundedContext.presentation.kind)}`);
-      console.log(`  Data Layer: ${chalk.yellow(resolveBlueprintDataLayer(blueprint))}`);
-    }
+    console.log(chalk.blue('\nDomain Model Summary:'));
+    console.log(`  Bounded Contexts: ${chalk.yellow(model.boundedContexts.length)}`);
+    console.log(`  Shared Enums: ${chalk.yellow(model.enums?.length || 0)}`);
 
-    console.log(chalk.blue('\nEntities:'));
-    model.entities.forEach((entity) => {
-      console.log(
-        `  - ${chalk.yellow(entity.name)} (${entity.properties.length} properties${entity.isJunction ? ', junction' : ''})`
-      );
-    });
+    model.boundedContexts.forEach((ctx) => {
+      console.log(chalk.blue(`\n  [${ctx.name}]`));
+      console.log(`    Namespace: ${chalk.yellow(ctx.namespace)}`);
+      console.log(`    Entities: ${chalk.yellow(ctx.dataModel.entities.length)}`);
+      console.log(`    Relationships: ${chalk.yellow(ctx.dataModel.relationships?.length || 0)}`);
+      console.log(`    Context Enums: ${chalk.yellow(ctx.enums?.length || 0)}`);
 
-    if (model.enums && model.enums.length > 0) {
-      console.log(chalk.blue('\nEnums:'));
-      model.enums.forEach((enumDef) => {
-        console.log(`  - ${chalk.yellow(enumDef.name)} (${enumDef.values.length} values)`);
+      ctx.dataModel.entities.forEach((entity) => {
+        console.log(
+          `      - ${chalk.yellow(entity.name)} (${
+            entity.properties.length
+          } properties${entity.isJunction ? ', junction' : ''})`
+        );
       });
-    }
+    });
   } catch (error) {
     spinner.fail('Validation failed');
     console.error(chalk.red('\n❌ Error:'), error instanceof Error ? error.message : error);

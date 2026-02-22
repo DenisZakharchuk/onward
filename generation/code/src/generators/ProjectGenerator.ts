@@ -1,5 +1,5 @@
 import Handlebars from 'handlebars';
-import { DataModel } from '../models/DataModel';
+import { BoundedContextGenerationContext } from '../models/DataModel';
 import { BaseGenerator } from './BaseGenerator';
 import { FileManager } from '../utils/FileManager';
 import path from 'path';
@@ -30,7 +30,7 @@ export class ProjectGenerator extends BaseGenerator {
   private diCsprojTemplate!: HandlebarsTemplateDelegate;
   private globalUsingsTemplate!: HandlebarsTemplateDelegate;
 
-  async generate(model: DataModel): Promise<void> {
+  async generate(model: BoundedContextGenerationContext): Promise<void> {
     if (!this.writer || !this.metadata) {
       throw new Error('Writer and metadata must be set before generation');
     }
@@ -79,7 +79,7 @@ export class ProjectGenerator extends BaseGenerator {
     projectType: 'meta' | 'common' | 'dto' | 'bl' | 'api' | 'tests' | 'di',
     contextName: string,
     template: HandlebarsTemplateDelegate,
-    model: DataModel
+    model: BoundedContextGenerationContext
   ): Promise<void> {
     const projectSuffix = this.getProjectSuffix(projectType);
     const projectName = `${this.metadata!.baseNamespace}.${contextName}.${projectSuffix}`;
