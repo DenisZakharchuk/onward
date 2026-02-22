@@ -1705,9 +1705,11 @@ export class Orchestrator {
   async generate(domain: DomainModel): Promise<void> {
     // Build a per-bounded-context flattened view (merges domain + context enums)
     const contexts = this.parser.buildGenerationContexts(domain);
-    for (const ctx of contexts) {
-      await this.generateBoundedContext(ctx);
-    }
+
+    // contextScheduler controls how many bounded contexts run simultaneously
+    await this.contextScheduler.run(
+      contexts.map((ctx) => async () => this.generateBoundedContext(ctx))
+    );
   }
 
   private async generateBoundedContext(model: BoundedContextGenerationContext): Promise<void> {
@@ -1716,19 +1718,99 @@ export class Orchestrator {
     enabledSlots.add(this.resolveDataLayerKind());
     if (!this.options.skipTests) enabledSlots.add('tests');
 
-    if (this.resolvePresentationKind() === 'grpc') {
-      throw new Error('Blueprint presentation kind "grpc" is not implemented yet.');
-    }
-
     // Resolve validated execution plan (phase + dependency order)
     const executionPlan = this.registry.resolveExecutionPlan(model, context, enabledSlots);
 
-    for (const registration of executionPlan) {
-      await registration.generator.generate(model, context);
+    // Group by phase — phases must run sequentially; tasks within a phase are independent
+    const phaseGroups = Orchestrator.groupByPhase(executionPlan);
+    for (const group of phaseGroups) {
+      // generatorScheduler controls how many generators within a phase run simultaneously
+      await this.generatorScheduler.run(
+        group.map((r) => () => r.generator.generate(model, context))
+      );
     }
   }
 }
 ```
+
+---
+
+## Execution Scheduling
+
+### Isolation by Design
+
+All concurrency knowledge is isolated in two classes behind the `IExecutionScheduler` interface:
+
+```typescript
+// src/abstractions/IExecutionScheduler.ts
+export interface IExecutionScheduler {
+  /**
+   * Run all tasks with the configured concurrency policy.
+   * Resolves when every task completes.
+   */
+  run(tasks: ReadonlyArray<() => Promise<void>>): Promise<void>;
+}
+```
+
+The `Orchestrator`, generators, and all application logic depend **only** on this interface — they never import `p-limit` or any concurrency primitive directly.
+
+### Implementations
+
+| Class | Behaviour | Default? |
+|---|---|---|
+| `SequentialScheduler` | Runs tasks one at a time (`for await` loop) | ✅ Yes |
+| `ConcurrentScheduler(n)` | Runs up to `n` tasks simultaneously via `p-limit` | No — opt-in via `--concurrency` |
+
+### Two Independent Parallelism Levels
+
+The `Orchestrator` holds two scheduler instances:
+
+| Field | Controls |
+|---|---|
+| `contextScheduler` | Outer loop — how many **bounded contexts** generate simultaneously |
+| `generatorScheduler` | Inner loop — how many **generators within a single phase** run simultaneously |
+
+Phase groups always remain sequential (phase 1 completes before phase 2 begins). Only tasks inside the same phase batch are eligible for concurrency because they write to non-overlapping output directories.
+
+### Why Same-Phase Generators Are Safe to Parallelize
+
+Every generator writes exclusively to its own project subdirectory:
+
+| Generator | Output path |
+|---|---|
+| `EntityGenerator` | `BC.BL/Entities/` |
+| `ConfigurationGenerator` | `BC.BL/EntityConfigurations/` |
+| `DtoGenerator` | `BC.DTO/DTO/{E}/` |
+| `ControllerGenerator` | `BC.API/Controllers/` |
+
+No two generators share an output file, so concurrent writes within a phase are race-condition-free.
+
+### CLI Usage
+
+```bash
+# Sequential (default) — preserves existing behaviour
+node dist/cli.js generate data.json --output-dir ../backend
+
+# Concurrent — up to 4 tasks in parallel at each level
+node dist/cli.js generate data.json --output-dir ../backend --concurrency 4
+```
+
+### Wiring in the Composition Root
+
+```typescript
+// cli.ts  (composition root)
+const scheduler = options.concurrency !== undefined
+  ? new ConcurrentScheduler(options.concurrency)
+  : new SequentialScheduler();
+
+const orchestrator = new Orchestrator(resultWriter, {
+  // ...
+  contextScheduler: scheduler,
+  generatorScheduler: scheduler,
+});
+```
+
+A single scheduler instance is shared across both levels. If different limits are ever required (for example, allow 8 concurrent generators but only 2 contexts), the `OrchestratorOptions` accepts two independent `IExecutionScheduler` values so the calling site can pass different implementations.
 
 ---
 

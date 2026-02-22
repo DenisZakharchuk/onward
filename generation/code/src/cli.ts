@@ -15,6 +15,8 @@ import { Blueprint } from './models/Blueprint';
 import { DomainModel } from './models/DataModel';
 import { FileResultWriter } from './writers/FileResultWriter';
 import { Orchestrator } from './orchestrator/Orchestrator';
+import { SequentialScheduler } from './orchestrator/SequentialScheduler';
+import { ConcurrentScheduler } from './orchestrator/ConcurrentScheduler';
 import * as path from 'path';
 
 interface GenerateOptions {
@@ -25,6 +27,8 @@ interface GenerateOptions {
   skipTests: boolean;
   dryRun: boolean;
   force: boolean;
+  /** Max number of tasks running simultaneously. Undefined = sequential (default). */
+  concurrency?: number;
 }
 
 function resolveBlueprintDtoLayout(blueprint: Blueprint): 'class' | 'record' {
@@ -101,7 +105,10 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
     console.log(`  Output Directory: ${chalk.yellow(outputDir)}`);
     console.log(`  Skip Tests: ${chalk.yellow(options.skipTests)}`);
     console.log(`  Dry Run: ${chalk.yellow(options.dryRun)}`);
-    console.log(`  Force Overwrite: ${chalk.yellow(options.force)}\n`);
+    console.log(`  Force Overwrite: ${chalk.yellow(options.force)}`);
+    console.log(
+      `  Concurrency: ${chalk.yellow(options.concurrency !== undefined ? options.concurrency : 'sequential')}\n`
+    );
 
     if (options.dryRun) {
       console.log(chalk.yellow('🔍 DRY RUN - No files will be written\n'));
@@ -109,6 +116,11 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
 
     // Generate code with dependency injection
     spinner.start('Generating code...');
+
+    const scheduler = options.concurrency !== undefined
+      ? new ConcurrentScheduler(options.concurrency)
+      : new SequentialScheduler();
+
     const orchestrator = new Orchestrator(resultWriter, {
       skipTests: options.skipTests,
       dryRun: options.dryRun,
@@ -116,6 +128,8 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
       sourceFile: path.basename(dataModelPath),
       baseNamespace: options.baseNamespace,
       blueprint,
+      contextScheduler: scheduler,
+      generatorScheduler: scheduler,
     });
 
     await orchestrator.generate(model);
@@ -253,6 +267,12 @@ yargs(hideBin(process.argv))
           describe: 'Force overwrite of existing .generated.cs files',
           type: 'boolean',
           default: true,
+        })
+        .option('concurrency', {
+          alias: 'c',
+          describe:
+            'Max number of tasks (bounded contexts or generators within a phase) that run simultaneously. Omit for sequential execution.',
+          type: 'number',
         });
     },
     (argv) => {

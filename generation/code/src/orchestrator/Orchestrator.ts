@@ -36,8 +36,10 @@ import * as path from 'path';
 import { DiGenerator } from '../generators/DiGenerator';
 import { ApiProgramGenerator } from '../generators/ApiProgramGenerator';
 import { TestGenerator } from '../generators/TestGenerator';
-import { GeneratorRegistry } from './GeneratorRegistry';
+import { GeneratorRegistry, GeneratorRegistration } from './GeneratorRegistry';
 import { LegacyGeneratorAdapter, LegacyGeneratorDescriptor } from './LegacyGeneratorAdapter';
+import { IExecutionScheduler } from '../abstractions/IExecutionScheduler';
+import { SequentialScheduler } from './SequentialScheduler';
 import { MinimalApiProgramGenerator } from '../generators/MinimalApiProgramGenerator';
 import { MinimalApiEndpointsGenerator } from '../generators/MinimalApiEndpointsGenerator';
 import { AdoNetDataAccessGenerator } from '../generators/AdoNetDataAccessGenerator';
@@ -53,16 +55,24 @@ export interface OrchestratorOptions {
   sourceFile?: string;  // Name of source data model file
   baseNamespace?: string;  // Base namespace prefix (default: 'Inventorization')
   blueprint?: Blueprint;
+  /** Controls how many bounded contexts are generated simultaneously. Default: sequential. */
+  contextScheduler?: IExecutionScheduler;
+  /** Controls how many generators within a single phase run simultaneously. Default: sequential. */
+  generatorScheduler?: IExecutionScheduler;
 }
 
 export class Orchestrator {
   private options: OrchestratorOptions;
   private registry: GeneratorRegistry;
   private writer: IResultWriter;
+  private readonly contextScheduler: IExecutionScheduler;
+  private readonly generatorScheduler: IExecutionScheduler;
 
   constructor(writer: IResultWriter, options: OrchestratorOptions = {}) {
     this.writer = writer;
     this.registry = new GeneratorRegistry();
+    this.contextScheduler = options.contextScheduler ?? new SequentialScheduler();
+    this.generatorScheduler = options.generatorScheduler ?? new SequentialScheduler();
     this.options = {
       ...options,
       skipTests: options.skipTests ?? false,
@@ -70,6 +80,23 @@ export class Orchestrator {
       force: options.force ?? true,
       baseNamespace: options.baseNamespace ?? 'Inventorization',
     };
+  }
+
+  /**
+   * Groups an execution plan (already phase-sorted) into batches by phase number.
+   * Generators within the same phase have no declared dependencies on each other
+   * and write to distinct output directories, so they are safe to run concurrently.
+   */
+  private static groupByPhase(plan: GeneratorRegistration[]): GeneratorRegistration[][] {
+    const groups = new Map<number, GeneratorRegistration[]>();
+    for (const registration of plan) {
+      const phase = registration.generator.phase;
+      if (!groups.has(phase)) groups.set(phase, []);
+      groups.get(phase)!.push(registration);
+    }
+    // Return groups in ascending phase order (Map insertion order is preserved because
+    // the plan is already sorted by phase).
+    return Array.from(groups.values());
   }
 
   /**
@@ -111,10 +138,12 @@ export class Orchestrator {
 
     console.log(chalk.blue(`  Bounded Contexts: ${generationContexts.length}\n`));
 
-    for (const ctx of generationContexts) {
-      console.log(chalk.blue(`\n📦 Generating: ${chalk.yellow(ctx.boundedContext.name)}\n`));
-      await this.generateBoundedContext(ctx, context);
-    }
+    await this.contextScheduler.run(
+      generationContexts.map((ctx) => async () => {
+        console.log(chalk.blue(`\n📦 Generating: ${chalk.yellow(ctx.boundedContext.name)}\n`));
+        await this.generateBoundedContext(ctx, context);
+      })
+    );
 
     console.log(chalk.green('\n✅ All bounded contexts generated.\n'));
   }
@@ -150,16 +179,21 @@ export class Orchestrator {
     }
 
     const executionPlan = this.registry.resolveExecutionPlan(ctx, context, enabledSlots);
+    const phaseGroups = Orchestrator.groupByPhase(executionPlan);
 
-    for (const registration of executionPlan) {
-      const generatorName = registration.generator.id;
-      console.log(chalk.cyan(`  ⚙️  Running ${generatorName}...`));
+    for (const group of phaseGroups) {
+      await this.generatorScheduler.run(
+        group.map((registration) => async () => {
+          const generatorName = registration.generator.id;
+          console.log(chalk.cyan(`  ⚙️  Running ${generatorName}...`));
 
-      if (!this.options.dryRun) {
-        await registration.generator.generate(ctx, context);
-      } else {
-        console.log(chalk.gray(`     (dry run - skipped)`));
-      }
+          if (!this.options.dryRun) {
+            await registration.generator.generate(ctx, context);
+          } else {
+            console.log(chalk.gray(`     (dry run - skipped)`));
+          }
+        })
+      );
     }
 
     // Print summary
