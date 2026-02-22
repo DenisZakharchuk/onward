@@ -81,6 +81,8 @@ export class Orchestrator {
   async generate(domain: DomainModel): Promise<void> {
     this.logger.info('\n🚀 Starting code generation...\n');
 
+    const runStart = Date.now();
+
     // Generate unique stamp for this generation run
     const generationStamp = GenerationStamp.create();
     const generatedAt = GenerationStamp.getTimestamp();
@@ -107,6 +109,8 @@ export class Orchestrator {
     this.logger.detail('Generation Stamp', generationStamp);
     this.logger.detail('Generated At', generatedAt);
     this.logger.detail('Source', sourceFile);
+    this.logger.detail('Context scheduler', this.contextScheduler.description);
+    this.logger.detail('Generator scheduler', this.generatorScheduler.description);
 
     // Build a flattened generation context per bounded context
     const parser = new DataModelParser();
@@ -121,7 +125,8 @@ export class Orchestrator {
       })
     );
 
-    this.logger.success('\n✅ All bounded contexts generated.\n');
+    const totalElapsed = Date.now() - runStart;
+    this.logger.success(`\n✅ All bounded contexts generated. (${Orchestrator.formatElapsed(totalElapsed)})\n`);
   }
 
   /**
@@ -131,6 +136,7 @@ export class Orchestrator {
     ctx: BoundedContextGenerationContext,
     context: IGeneratorExecutionContext
   ): Promise<void> {
+    const ctxStart = Date.now();
     this.initializeGenerators();
 
     // Create project directories
@@ -173,7 +179,7 @@ export class Orchestrator {
     }
 
     // Print summary
-    this.printSummary(ctx, projectPaths, context.metadata.generationStamp);
+    this.printSummary(ctx, projectPaths, context.metadata.generationStamp, Date.now() - ctxStart);
   }
 
   /**
@@ -270,14 +276,24 @@ export class Orchestrator {
   }
 
   /**
+   * Format a millisecond duration for display.
+   * < 1 000 ms  →  "234 ms"
+   * ≥ 1 000 ms  →  "1.23 s"
+   */
+  private static formatElapsed(ms: number): string {
+    return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(2)} s`;
+  }
+
+  /**
    * Print generation summary
    */
-  private printSummary(ctx: BoundedContextGenerationContext, projectPaths: Record<string, string>, generationStamp: string): void {
+  private printSummary(ctx: BoundedContextGenerationContext, projectPaths: Record<string, string>, generationStamp: string, elapsedMs: number): void {
     this.logger.success('\n✅ Generation Summary:\n');
 
     this.logger.info('  Generation:');
     this.logger.detail('  Stamp', generationStamp);
     this.logger.detail('  BoundedContext', ctx.boundedContext.name);
+    this.logger.detail('  Time', Orchestrator.formatElapsed(elapsedMs));
 
     const entityCount = ctx.entities.length;
     const junctionCount = ctx.entities.filter((e) => e.isJunction).length;

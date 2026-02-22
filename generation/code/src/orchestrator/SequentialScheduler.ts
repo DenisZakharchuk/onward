@@ -10,6 +10,8 @@ const SEQUENTIAL_SLOT: SlotInfo = { index: 1, total: 1 };
  * behaviour and carries zero extra dependencies.
  */
 export class SequentialScheduler implements IExecutionScheduler {
+  readonly description = 'sequential';
+
   async run(tasks: ReadonlyArray<(slot: SlotInfo) => Promise<void>>): Promise<void> {
     for (const task of tasks) {
       await task(SEQUENTIAL_SLOT);

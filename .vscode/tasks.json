@@ -246,6 +246,32 @@
       }
     },
     {
+      "label": "Generator: Generate (concurrent)",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "generate",
+        "${input:dataModelPath}",
+        "--output-dir",
+        "${workspaceFolder}/backend",
+        "--blueprint",
+        "${input:blueprintPath}",
+        "--concurrency",
+        "${input:concurrency}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/generation/code"
+      },
+      "dependsOn": ["Generator: Build"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "generation"
+      }
+    },
+    {
       "label": "Generator: Generate (dry-run)",
       "type": "shell",
       "command": "node",
@@ -258,6 +284,33 @@
         "--blueprint",
         "${input:blueprintPath}",
         "--dry-run"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/generation/code"
+      },
+      "dependsOn": ["Generator: Build"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "generation"
+      }
+    },
+    {
+      "label": "Generator: Generate (dry-run, concurrent)",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "generate",
+        "${input:dataModelPath}",
+        "--output-dir",
+        "${workspaceFolder}/backend",
+        "--blueprint",
+        "${input:blueprintPath}",
+        "--dry-run",
+        "--concurrency",
+        "${input:concurrency}"
       ],
       "options": {
         "cwd": "${workspaceFolder}/generation/code"
@@ -303,6 +356,12 @@
       "type": "promptString",
       "description": "Path to blueprint JSON file (relative to generation/code or absolute)",
       "default": "examples/default-blueprint.json"
+    },
+    {
+      "id": "concurrency",
+      "type": "promptString",
+      "description": "Max tasks running simultaneously (passed as --concurrency). Recommended: number of logical CPU cores.",
+      "default": "4"
     }
   ]
 }

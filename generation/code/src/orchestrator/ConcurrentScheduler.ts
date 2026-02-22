@@ -18,6 +18,7 @@ import { IExecutionScheduler, SlotInfo } from '../abstractions/IExecutionSchedul
 export class ConcurrentScheduler implements IExecutionScheduler {
   private readonly limiter: ReturnType<typeof pLimit>;
   private readonly concurrency: number;
+  readonly description: string;
 
   constructor(concurrency: number) {
     if (concurrency < 1) {
@@ -25,6 +26,7 @@ export class ConcurrentScheduler implements IExecutionScheduler {
     }
     this.concurrency = concurrency;
     this.limiter = pLimit(concurrency);
+    this.description = `concurrent (n=${concurrency})`;
   }
 
   async run(tasks: ReadonlyArray<(slot: SlotInfo) => Promise<void>>): Promise<void> {

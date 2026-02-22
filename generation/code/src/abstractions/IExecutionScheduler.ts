@@ -13,6 +13,13 @@ import { SlotInfo } from './SlotInfo';
  */
 export interface IExecutionScheduler {
   /**
+   * Human-readable label describing the active execution strategy.
+   * Used by loggers to display which scheduler is in effect.
+   * @example 'sequential' | 'concurrent (n=4)'
+   */
+  readonly description: string;
+
+  /**
    * Run all tasks in the batch according to the scheduler's concurrency policy.
    * Each task receives a {@link SlotInfo} identifying the slot it ran in.
    * Resolves when every task in the batch has completed.
