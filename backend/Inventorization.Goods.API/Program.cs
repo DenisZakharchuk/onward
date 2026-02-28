@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Inventorization.Base.Abstractions;
-using Inventorization.Base.DataAccess;
+using Onward.Base.Abstractions;
+using Onward.Base.DataAccess;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,11 +48,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<Inventorization.Goods.BL.DbContexts.GoodsDbContext>());
 
 // Generic repository registration
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Inventorization.Base.DataAccess.BaseRepository<>));
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Onward.Base.DataAccess.BaseRepository<>));
 
 // UnitOfWork registration
 builder.Services.AddScoped<Inventorization.Goods.BL.DataAccess.IGoodsUnitOfWork, Inventorization.Goods.BL.DataAccess.GoodsUnitOfWork>();
-builder.Services.AddScoped<Inventorization.Base.DataAccess.IUnitOfWork>(sp => sp.GetRequiredService<Inventorization.Goods.BL.DataAccess.IGoodsUnitOfWork>());
+builder.Services.AddScoped<Onward.Base.DataAccess.IUnitOfWork>(sp => sp.GetRequiredService<Inventorization.Goods.BL.DataAccess.IGoodsUnitOfWork>());
 
 // ===== Mappers, Creators, Modifiers, SearchProviders, Validators =====
 // Good entity abstractions
@@ -79,10 +79,10 @@ builder.Services.AddScoped<Inventorization.Goods.BL.Mappers.Projection.IGoodProj
     Inventorization.Goods.BL.Mappers.Projection.GoodProjectionMapper>();
 
 // Projection expression builder for transformations
-builder.Services.AddScoped<Inventorization.Base.Services.ProjectionExpressionBuilder>();
+builder.Services.AddScoped<Onward.Base.Services.ProjectionExpressionBuilder>();
 
 // Search query validator
-builder.Services.AddScoped<IValidator<Inventorization.Base.ADTs.SearchQuery>, 
+builder.Services.AddScoped<IValidator<Onward.Base.ADTs.SearchQuery>, 
     Inventorization.Goods.BL.Validators.GoodSearchQueryValidator>();
 
 // Search service (concrete type for dual method support)

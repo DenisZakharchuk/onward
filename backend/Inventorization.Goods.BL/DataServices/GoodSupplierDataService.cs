@@ -17,7 +17,7 @@ public interface IGoodSupplierDataService : IDataService<GoodSupplier, CreateGoo
 public class GoodSupplierDataService : DataServiceBase<GoodSupplier, CreateGoodSupplierDTO, UpdateGoodSupplierDTO, DeleteGoodSupplierDTO, InitGoodSupplierDTO, GoodSupplierDetailsDTO, GoodSupplierSearchDTO>, IGoodSupplierDataService
 {
     public GoodSupplierDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<GoodSupplier> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<GoodSupplier, CreateGoodSupplierDTO, UpdateGoodSupplierDTO, DeleteGoodSupplierDTO, InitGoodSupplierDTO, GoodSupplierDetailsDTO, GoodSupplierSearchDTO>> logger)

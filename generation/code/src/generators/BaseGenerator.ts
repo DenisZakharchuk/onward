@@ -8,12 +8,14 @@ import { FileManager } from '../utils/FileManager';
 import { BoundedContextGenerationContext, GenerationMetadata } from '../models/DataModel';
 import { IGenerator } from '../abstractions/IGenerator';
 import { IResultWriter } from '../abstractions/IResultWriter';
+import { Blueprint } from '../models/Blueprint';
 
 export abstract class BaseGenerator implements IGenerator {
   protected templates: Map<string, HandlebarsTemplateDelegate> = new Map();
   protected templateDir: string;
   protected metadata?: GenerationMetadata;
   protected writer?: IResultWriter;
+  protected blueprint?: Blueprint;
 
   constructor(templateDir?: string) {
     this.templateDir = templateDir || path.join(__dirname, '../../templates');
@@ -32,6 +34,13 @@ export abstract class BaseGenerator implements IGenerator {
    */
   setMetadata(metadata: GenerationMetadata): void {
     this.metadata = metadata;
+  }
+
+  /**
+   * Set blueprint (called by Orchestrator / LegacyGeneratorAdapter before generate)
+   */
+  setBlueprint(blueprint: Blueprint | undefined): void {
+    this.blueprint = blueprint;
   }
 
   /**

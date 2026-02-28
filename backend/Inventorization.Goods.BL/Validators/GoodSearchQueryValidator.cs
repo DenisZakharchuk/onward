@@ -1,6 +1,6 @@
-using Inventorization.Base.Abstractions;
-using Inventorization.Base.ADTs;
-using Inventorization.Base.DTOs;
+using Onward.Base.Abstractions;
+using Onward.Base.ADTs;
+using Onward.Base.DTOs;
 using Inventorization.Goods.BL.Entities;
 
 namespace Inventorization.Goods.BL.Validators;

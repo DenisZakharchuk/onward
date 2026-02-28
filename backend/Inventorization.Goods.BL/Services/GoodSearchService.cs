@@ -1,7 +1,7 @@
-using Inventorization.Base.Abstractions;
-using Inventorization.Base.ADTs;
-using Inventorization.Base.DataAccess;
-using Inventorization.Base.Services;
+using Onward.Base.Abstractions;
+using Onward.Base.ADTs;
+using Onward.Base.DataAccess;
+using Onward.Base.Services;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.DTO.ADTs;
 using Microsoft.Extensions.Logging;

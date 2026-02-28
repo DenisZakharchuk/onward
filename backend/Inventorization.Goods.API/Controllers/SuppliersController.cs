@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using InventorySystem.API.Base.Controllers;
+using Onward.Base.API.Controllers;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.BL.DataServices;
 using Inventorization.Goods.DTO.DTO.Supplier;
@@ -16,7 +16,7 @@ namespace Inventorization.Goods.API.Controllers;
 [Authorize]
 public class SuppliersController : DataController<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, InitSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO, ISupplierDataService>
 {
-    public SuppliersController(ISupplierDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
+    public SuppliersController(ISupplierDataService service, ILogger<Onward.Base.API.Controllers.ServiceController> logger) 
         : base(service, logger)
     {
     }

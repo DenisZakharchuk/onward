@@ -1,5 +1,5 @@
-using Inventorization.Base.DataAccess;
-using Inventorization.Base.Services;
+using Onward.Base.DataAccess;
+using Onward.Base.Services;
 using Inventorization.Goods.BL.Entities;
 using Microsoft.Extensions.Logging;
 

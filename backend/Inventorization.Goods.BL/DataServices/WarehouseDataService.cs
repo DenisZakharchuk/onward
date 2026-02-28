@@ -17,7 +17,7 @@ public interface IWarehouseDataService : IDataService<Warehouse, CreateWarehouse
 public class WarehouseDataService : DataServiceBase<Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO, DeleteWarehouseDTO, InitWarehouseDTO, WarehouseDetailsDTO, WarehouseSearchDTO>, IWarehouseDataService
 {
     public WarehouseDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Warehouse> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO, DeleteWarehouseDTO, InitWarehouseDTO, WarehouseDetailsDTO, WarehouseSearchDTO>> logger)

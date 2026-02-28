@@ -10,17 +10,17 @@ global using System.Threading;
 global using System.Threading.Tasks;
 
 {{#if (eq projectType 'meta')}}
-global using {{baseNamespace}}.Base.Models;
+global using Onward.Base.Models;
 {{/if}}
 
 {{#if (eq projectType 'dto')}}
-global using {{baseNamespace}}.Base.DTOs;
+global using Onward.Base.DTOs;
 global using {{namespace}}.Meta;
 {{/if}}
 
 {{#if (eq projectType 'bl')}}
-global using {{baseNamespace}}.Base.DataAccess;
-global using {{baseNamespace}}.Base.Abstractions;
+global using Onward.Base.DataAccess;
+global using Onward.Base.Abstractions;
 global using {{namespace}}.Meta;
 global using {{namespace}}.DTO;
 global using Microsoft.EntityFrameworkCore;
@@ -29,7 +29,7 @@ global using Microsoft.EntityFrameworkCore;
 {{#if (eq projectType 'api')}}
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.Authorization;
-global using {{baseNamespace}}.Base.DTOs;
+global using Onward.Base.DTOs;
 global using {{namespace}}.Meta;
 global using {{namespace}}.DTO;
 global using {{namespace}}.BL;
@@ -41,10 +41,10 @@ global using FluentAssertions;
 global using Moq;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
-global using {{baseNamespace}}.Base.Abstractions;
-global using {{baseNamespace}}.Base.DataAccess;
-global using {{baseNamespace}}.Base.Services;
-global using {{baseNamespace}}.Base.ADTs;
+global using Onward.Base.Abstractions;
+global using Onward.Base.DataAccess;
+global using Onward.Base.Services;
+global using Onward.Base.ADTs;
 global using {{namespace}}.BL;
 global using {{namespace}}.DTO;
 global using {{namespace}}.Common.Enums;

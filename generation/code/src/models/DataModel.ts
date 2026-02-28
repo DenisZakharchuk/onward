@@ -67,6 +67,12 @@ export interface BoundedContext {
    */
   ownership?: OwnershipConfig;
   /**
+   * Auth model configuration.
+   * Declares which auth provider this bounded context uses and optionally pre-seeds
+   * roles and permissions during generation.  Used by 'perContext' and 'perDomain' auth modes.
+   */
+  authModel?: AuthModelConfig;
+  /**
    * Enum definitions local to this bounded context.
    * At generation time they are merged with the domain-level DomainModel.enums.
    */
@@ -88,6 +94,23 @@ export interface OwnershipConfig {
    * Defaults to '<valueObject>Factory' when omitted.
    */
   factory?: string;
+}
+
+/**
+ * Configures which auth provider backs this bounded context.
+ * Currently only 'Onward.Auth' is supported; additional providers may be added later.
+ */
+export interface AuthModelConfig {
+  /** Auth provider to use. */
+  provider: 'Onward.Auth';
+  /** Role names that must exist in the auth system for this context. */
+  roles?: string[];
+  /**
+   * Permission map:  resource → action[] 
+   * E.g. `{ "Product": ["Read", "Write", "Delete"] }`.
+   * Used to pre-seed permissions when generating auth setup scripts.
+   */
+  permissions?: Record<string, string[]>;
 }
 
 export interface EnumDefinition {

@@ -17,7 +17,7 @@ public interface ICategoryDataService : IDataService<Category, CreateCategoryDTO
 public class CategoryDataService : DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>, ICategoryDataService
 {
     public CategoryDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Category> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<Category, CreateCategoryDTO, UpdateCategoryDTO, DeleteCategoryDTO, InitCategoryDTO, CategoryDetailsDTO, CategorySearchDTO>> logger)

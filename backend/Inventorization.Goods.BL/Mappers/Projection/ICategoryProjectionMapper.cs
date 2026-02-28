@@ -1,4 +1,4 @@
-using Inventorization.Base.Abstractions;
+using Onward.Base.Abstractions;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.DTO.ADTs;
 

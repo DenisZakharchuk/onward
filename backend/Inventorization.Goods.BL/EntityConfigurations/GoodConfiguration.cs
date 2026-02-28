@@ -1,4 +1,4 @@
-using Inventorization.Base.DataAccess;
+using Onward.Base.DataAccess;
 using Inventorization.Goods.BL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

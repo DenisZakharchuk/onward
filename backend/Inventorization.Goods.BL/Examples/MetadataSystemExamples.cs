@@ -9,9 +9,9 @@
  * Copy these patterns when implementing new entities.
  */
 
-using Inventorization.Base.Abstractions;
-using Inventorization.Base.DTOs;
-using Inventorization.Base.Models;
+using Onward.Base.Abstractions;
+using Onward.Base.DTOs;
+using Onward.Base.Models;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.DTO.DTO.Good;
 using Microsoft.EntityFrameworkCore;
@@ -70,7 +70,7 @@ public class HybridEntityConfiguration : IEntityTypeConfiguration<Good>
 /// </summary>
 public class PureMetadataValidator : IValidator<CreateGoodDTO>
 {
-    public async Task<Inventorization.Base.Abstractions.ValidationResult> ValidateAsync(
+    public async Task<Onward.Base.Abstractions.ValidationResult> ValidateAsync(
         CreateGoodDTO dto, 
         CancellationToken cancellationToken = default)
     {
@@ -84,11 +84,11 @@ public class PureMetadataValidator : IValidator<CreateGoodDTO>
 
         if (!result.IsValid)
         {
-            return Inventorization.Base.Abstractions.ValidationResult.WithErrors(
+            return Onward.Base.Abstractions.ValidationResult.WithErrors(
                 result.Errors.ToArray());
         }
 
-        return await Task.FromResult(Inventorization.Base.Abstractions.ValidationResult.Ok());
+        return await Task.FromResult(Onward.Base.Abstractions.ValidationResult.Ok());
     }
 }
 
@@ -97,7 +97,7 @@ public class PureMetadataValidator : IValidator<CreateGoodDTO>
 /// </summary>
 public class HybridValidator : IValidator<UpdateGoodDTO>
 {
-    public async Task<Inventorization.Base.Abstractions.ValidationResult> ValidateAsync(
+    public async Task<Onward.Base.Abstractions.ValidationResult> ValidateAsync(
         UpdateGoodDTO dto, 
         CancellationToken cancellationToken = default)
     {
@@ -124,11 +124,11 @@ public class HybridValidator : IValidator<UpdateGoodDTO>
         // Return result
         if (errors.Any())
         {
-            return Inventorization.Base.Abstractions.ValidationResult.WithErrors(
+            return Onward.Base.Abstractions.ValidationResult.WithErrors(
                 errors.ToArray());
         }
 
-        return await Task.FromResult(Inventorization.Base.Abstractions.ValidationResult.Ok());
+        return await Task.FromResult(Onward.Base.Abstractions.ValidationResult.Ok());
     }
 }
 
@@ -146,7 +146,7 @@ public class GenericMetadataValidator<TEntity, TDto> : IValidator<TDto>
         _metadata = metadata;
     }
 
-    public async Task<Inventorization.Base.Abstractions.ValidationResult> ValidateAsync(
+    public async Task<Onward.Base.Abstractions.ValidationResult> ValidateAsync(
         TDto dto, 
         CancellationToken cancellationToken = default)
     {
@@ -154,11 +154,11 @@ public class GenericMetadataValidator<TEntity, TDto> : IValidator<TDto>
 
         if (!result.IsValid)
         {
-            return Inventorization.Base.Abstractions.ValidationResult.WithErrors(
+            return Onward.Base.Abstractions.ValidationResult.WithErrors(
                 result.Errors.ToArray());
         }
 
-        return await Task.FromResult(Inventorization.Base.Abstractions.ValidationResult.Ok());
+        return await Task.FromResult(Onward.Base.Abstractions.ValidationResult.Ok());
     }
 }
 

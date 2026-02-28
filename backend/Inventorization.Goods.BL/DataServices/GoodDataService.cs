@@ -17,7 +17,7 @@ public interface IGoodDataService : IDataService<Good, CreateGoodDTO, UpdateGood
 public class GoodDataService : DataServiceBase<Good, CreateGoodDTO, UpdateGoodDTO, DeleteGoodDTO, InitGoodDTO, GoodDetailsDTO, GoodSearchDTO>, IGoodDataService
 {
     public GoodDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Good> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<Good, CreateGoodDTO, UpdateGoodDTO, DeleteGoodDTO, InitGoodDTO, GoodDetailsDTO, GoodSearchDTO>> logger)

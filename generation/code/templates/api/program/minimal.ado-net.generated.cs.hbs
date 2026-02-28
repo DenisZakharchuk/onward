@@ -5,10 +5,8 @@
 //     Source: {{sourceFile}}
 // </auto-generated>
 
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
+using Onward.Base.AspNetCore.Extensions;
 using {{namespace}}.DI;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,32 +16,13 @@ var connectionString = builder.Configuration.GetConnectionString("{{contextName}
 
 builder.Services.Add{{contextName}}Services(connectionString);
 
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
-var issuer = jwtSettings["Issuer"] ?? "Inventorization.Auth";
-var audience = jwtSettings["Audience"] ?? "Inventorization.Client";
+// ===== Authentication =====
+{{#if authorizationEnabled}}
+builder.Services.AddOnwardJwtAuth(builder.Configuration);
+{{else}}
+builder.Services.AddOnwardAnonymousAuth();
+{{/if}}
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ClockSkew = TimeSpan.Zero
-    };
-});
-
-builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -53,6 +32,12 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "{{contextDescription}}"
     });
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+{{#if authorizationEnabled}}
+    c.AddOnwardJwtSecurity();
+{{/if}}
 });
 
 var app = builder.Build();
@@ -63,8 +48,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseOnwardAuth();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "{{contextName}}" }))
    .WithName("Health")

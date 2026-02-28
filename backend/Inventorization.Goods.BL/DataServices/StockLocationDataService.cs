@@ -17,7 +17,7 @@ public interface IStockLocationDataService : IDataService<StockLocation, CreateS
 public class StockLocationDataService : DataServiceBase<StockLocation, CreateStockLocationDTO, UpdateStockLocationDTO, DeleteStockLocationDTO, InitStockLocationDTO, StockLocationDetailsDTO, StockLocationSearchDTO>, IStockLocationDataService
 {
     public StockLocationDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<StockLocation> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<StockLocation, CreateStockLocationDTO, UpdateStockLocationDTO, DeleteStockLocationDTO, InitStockLocationDTO, StockLocationDetailsDTO, StockLocationSearchDTO>> logger)

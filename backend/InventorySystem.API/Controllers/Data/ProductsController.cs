@@ -2,7 +2,7 @@ using InventorySystem.Business.Abstractions.Services;
 using InventorySystem.DataAccess.Models;
 using InventorySystem.DTOs.DTO.Product;
 using Microsoft.AspNetCore.Mvc;
-using InventorySystem.API.Base.Controllers;
+using Onward.Base.API.Controllers;
 using Inventorization.Base.DTOs;
 
 namespace InventorySystem.API.Controllers.Data;

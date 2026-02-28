@@ -4,6 +4,7 @@
 
 import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext } from '../models/DataModel';
+import { AuthModeResolver } from '../utils/AuthModeResolver';
 import { NamingConventions } from '../utils/NamingConventions';
 import * as path from 'path';
 
@@ -32,6 +33,7 @@ export class QueryControllerGenerator extends BaseGenerator {
         projectionName: `${entity.name}Projection`,
         routePrefix,
         description: entity.description || entity.name,
+        authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
       };
 
       const filePath = path.join(controllersDir, `${entityNamePlural}QueryController.cs`);

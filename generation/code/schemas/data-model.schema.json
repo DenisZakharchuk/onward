@@ -111,6 +111,32 @@
             }
           }
         },
+        "authModel": {
+          "type": "object",
+          "description": "Auth provider configuration for this bounded context",
+          "required": ["provider"],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["Onward.Auth"],
+              "description": "Auth provider to use"
+            },
+            "roles": {
+              "type": "array",
+              "description": "Role names that must exist in the auth system for this context",
+              "items": { "type": "string" }
+            },
+            "permissions": {
+              "type": "object",
+              "description": "Permission map: resource → action[] (e.g. { \"Product\": [\"Read\", \"Write\"] })",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
         "enums": {
           "type": "array",
           "description": "Context-level enum definitions (merged with domain-level enums; context-level wins on name collision)",

@@ -17,7 +17,7 @@ public interface IPurchaseOrderItemDataService : IDataService<PurchaseOrderItem,
 public class PurchaseOrderItemDataService : DataServiceBase<PurchaseOrderItem, CreatePurchaseOrderItemDTO, UpdatePurchaseOrderItemDTO, DeletePurchaseOrderItemDTO, InitPurchaseOrderItemDTO, PurchaseOrderItemDetailsDTO, PurchaseOrderItemSearchDTO>, IPurchaseOrderItemDataService
 {
     public PurchaseOrderItemDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<PurchaseOrderItem> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<PurchaseOrderItem, CreatePurchaseOrderItemDTO, UpdatePurchaseOrderItemDTO, DeletePurchaseOrderItemDTO, InitPurchaseOrderItemDTO, PurchaseOrderItemDetailsDTO, PurchaseOrderItemSearchDTO>> logger)

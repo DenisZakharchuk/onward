@@ -50,6 +50,10 @@ export class LegacyGeneratorAdapter implements IControlledGenerator<BoundedConte
   async generate(ctx: BoundedContextGenerationContext, context: IGeneratorExecutionContext): Promise<void> {
     this.legacyGenerator.setMetadata(context.metadata);
     this.legacyGenerator.setWriter(context.writer);
+    // Pass blueprint to BaseGenerator subclasses if they support it
+    if (context.blueprint && 'setBlueprint' in this.legacyGenerator) {
+      (this.legacyGenerator as unknown as { setBlueprint: (b: typeof context.blueprint) => void }).setBlueprint(context.blueprint);
+    }
     await this.legacyGenerator.generate(ctx);
   }
 }

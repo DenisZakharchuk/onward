@@ -17,7 +17,7 @@ public interface ISupplierDataService : IDataService<Supplier, CreateSupplierDTO
 public class SupplierDataService : DataServiceBase<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, InitSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>, ISupplierDataService
 {
     public SupplierDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<Supplier> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<Supplier, CreateSupplierDTO, UpdateSupplierDTO, DeleteSupplierDTO, InitSupplierDTO, SupplierDetailsDTO, SupplierSearchDTO>> logger)

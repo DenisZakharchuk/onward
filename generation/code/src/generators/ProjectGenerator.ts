@@ -198,13 +198,11 @@ export class ProjectGenerator extends BaseGenerator {
       }
       
       case 'api': {
-        const apiAspNetCoreRef = hasOwnership
-          ? `\n    <ProjectReference Include="../${baseNamespace}.Base.AspNetCore/${baseNamespace}.Base.AspNetCore.csproj" />`
-          : '';
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />${apiAspNetCoreRef}
-    <ProjectReference Include="../InventorySystem.API.Base/InventorySystem.API.Base.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../${baseNamespace}.Base.AspNetCore/${baseNamespace}.Base.AspNetCore.csproj" />
+    <ProjectReference Include="../Onward.Base.API/Onward.Base.API.csproj" />
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
@@ -213,8 +211,7 @@ export class ProjectGenerator extends BaseGenerator {
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>`;
       }
       

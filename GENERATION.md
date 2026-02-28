@@ -431,14 +431,18 @@ All generators extend `BaseGenerator` and implement:
 export abstract class BaseGenerator {
   protected templates: Map<string, HandlebarsTemplateDelegate>;
   protected templateDir: string;
-  
+  protected blueprint?: Blueprint;          // set by LegacyGeneratorAdapter before generate()
+
+  /** Called by the orchestrator / adapter to inject the Blueprint before generate() */
+  setBlueprint(blueprint: Blueprint | undefined): void;
+
   // Template loading and caching
   protected async loadTemplate(name: string | readonly string[]): Promise<HandlebarsTemplateDelegate>;
   protected async resolveTemplateName(name: string | readonly string[]): Promise<string>;
-  
+
   // Rendering
   protected async renderTemplate(name: string | readonly string[], context: unknown): Promise<string>;
-  
+
   // Write to file
   protected async writeRenderedTemplate(
     templateName: string | readonly string[],
@@ -446,7 +450,7 @@ export abstract class BaseGenerator {
     outputPath: string,
     overwrite: boolean
   ): Promise<void>;
-  
+
   // Each generator implements this
   abstract generate(model: BoundedContextGenerationContext): Promise<void>;
 }
@@ -2041,6 +2045,11 @@ When `owned: true` the generator produces:
 - `dataService.dataAccess.ado.dialect`: `pgsql` (ADO path)
 - `dataService.dataAccess.entities`: `immutable`
 - `dataService.domain`: `default`
+- `authorization.mode`: `perDomain | perContext | none` (default: `perDomain`)
+  - `perDomain` — JWT bearer auth, delegates identity to the external `Onward.Auth` service
+  - `perContext` — JWT bearer auth, auth entities live in the bounded context's own database
+  - `none` — no authentication (`[AllowAnonymous]` on all controllers)
+- `authorization.authServiceUrl` *(perDomain only, optional)* — URL of the auth service for documentation
 
 ### Execution Slot Resolution
 
@@ -2051,6 +2060,126 @@ Orchestrator maps blueprint to slot activation:
 - Tests slot: enabled unless `skipTests`
 
 Selected slots determine which generators are included in execution plan via registry filtering.
+
+### Generated API `.csproj` Properties
+
+All generated API projects include:
+
+```xml
+<PropertyGroup>
+  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  <NoWarn>$(NoWarn);1591</NoWarn>   <!-- suppress missing XML comment warnings -->
+</PropertyGroup>
+```
+
+And always reference both `Onward.Base` and `Onward.Base.AspNetCore`:
+
+```xml
+<ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
+<ProjectReference Include="../Onward.Base.AspNetCore/Onward.Base.AspNetCore.csproj" />
+<ProjectReference Include="../Onward.Base.API/Onward.Base.API.csproj" />
+```
+
+`Onward.Base.AspNetCore` provides `AddOnwardJwtAuth`, `AddOnwardAnonymousAuth`, `UseOnwardAuth`, `AddOnwardJwtSecurity`, and `[OnwardAuthorize]`, so the API `.csproj` does **not** need a direct `Microsoft.AspNetCore.Authentication.JwtBearer` package reference — it comes transitively.
+
+`Onward.Base.API` (formerly `InventorySystem.API.Base`) provides `BaseQueryController<T, TProjection>` and `DataController<T>` base classes.
+
+### Swagger XML Documentation
+
+All generated `Program.cs` files register the XML file from the assembly's output directory:
+
+```csharp
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { ... });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
+```
+
+This automatically populates Swagger UI with `<summary>` and `<remarks>` from generated controller XML docs.
+
+---
+
+## Authorization Mode System
+
+The blueprint's `authorization` field controls how JWT authentication is wired into generated APIs.
+
+### Blueprint Field
+
+```json
+{
+  "version": "1",
+  "boundedContext": {
+    "presentation": { "kind": "controllers" },
+    "dataService": { "dto": "class", "uow": "injected", "dataAccess": { "orm": { "kind": "ef-core", "provider": "npgsql" } }, "domain": "default" },
+    "authorization": {
+      "mode": "perDomain",
+      "authServiceUrl": "http://localhost:5012"
+    }
+  }
+}
+```
+
+| Mode | `authorizationEnabled` | Effect |
+|---|---|---|
+| `perDomain` (default) | `true` | `AddOnwardJwtAuth`, `[OnwardAuthorize]` on all controllers |
+| `perContext` | `true` | Same as `perDomain` but implies auth entities are local to the BC's database |
+| `none` | `false` | `AddOnwardAnonymousAuth`, `[AllowAnonymous]` on all controllers |
+
+When `authorization` is absent the default blueprint value `{ mode: 'perDomain' }` is used.
+
+### AuthModeResolver
+
+`src/utils/AuthModeResolver.ts` is the single authoritative resolver:
+
+```typescript
+AuthModeResolver.resolveMode(blueprint)         // → 'perDomain' | 'perContext' | 'none'
+AuthModeResolver.isAuthorizationEnabled(blueprint) // → true | false
+```
+
+All generators that build Program.cs or controller contexts call `AuthModeResolver.isAuthorizationEnabled(this.blueprint)` and expose the result as `authorizationEnabled` in the Handlebars context.
+
+### Affected Generators
+
+| Generator | Context property added |
+|---|---|
+| `ApiProgramGenerator` | `authorizationEnabled` |
+| `MinimalApiProgramGenerator` | `authorizationEnabled` |
+| `AdoNetApiProgramGenerator` | `authorizationEnabled` |
+| `AdoNetMinimalApiProgramGenerator` | `authorizationEnabled` |
+| `ControllerGenerator` | `authorizationEnabled` (per entity) |
+| `QueryControllerGenerator` | `authorizationEnabled` (per entity) |
+
+### Blueprint → Generator Pipeline
+
+```
+Blueprint.authorization.mode
+       ↓
+AuthModeResolver.isAuthorizationEnabled(this.blueprint)
+       ↓
+Handlebars context: { authorizationEnabled: true/false }
+       ↓
+{{#if authorizationEnabled}}
+  [OnwardAuthorize]               // or AddOnwardJwtAuth in Program.cs
+{{else}}
+  [AllowAnonymous]                // or AddOnwardAnonymousAuth in Program.cs
+{{/if}}
+```
+
+### Blueprint is Injected via `setBlueprint()`
+
+`LegacyGeneratorAdapter` duck-type-calls `setBlueprint(context.blueprint)` before invoking `generate()`, so all concrete generators have access to `this.blueprint` without requiring constructor changes:
+
+```typescript
+// LegacyGeneratorAdapter.generate()
+if (context.blueprint && 'setBlueprint' in this.legacyGenerator) {
+  (this.legacyGenerator as { setBlueprint: (b: Blueprint) => void })
+    .setBlueprint(context.blueprint);
+}
+await this.legacyGenerator.generate(model);
+```
 
 ---
 
@@ -2145,6 +2274,10 @@ private validateBusinessRules(domain: DomainModel): void {
 4. **Export from the generators barrel** (`src/generators/index.ts`) — all 29 concrete generators are re-exported from this file so `GeneratorRegistrar` and tests never need individual import paths
 5. **Register in `GeneratorRegistrar`** (`src/orchestrator/GeneratorRegistrar.ts`) with phase, dependencies, and optional slot — this is the only file that instantiates concrete generators
 6. **Update types** if new context structure needed
+7. **Add `authorizationEnabled`** to your template context if the new generator produces files that vary by auth mode:
+   ```typescript
+   authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint)
+   ```
 
 ```typescript
 // src/generators/ValidatorGenerator.ts
@@ -2243,32 +2376,75 @@ Inventorization.{Context}.DTO/
 
 ## Testing Strategy
 
-### Generator Unit Tests
+### Test Infrastructure
 
-Test each generator independently:
+The generator uses **Jest + ts-jest** for unit tests. The setup lives in:
+
+| File | Purpose |
+|---|---|
+| `jest.config.js` | Configures Jest with `ts-jest` transform and `tests/` root |
+| `tsconfig.test.json` | Extends base tsconfig with relaxed `noUnusedLocals` for test files |
+ | `tests/` | All test files (mirrors `src/` structure) |
+
+Run tests:
+```bash
+npm test
+```
+
+### AuthModeResolver Unit Tests
+
+`tests/utils/AuthModeResolver.test.ts` covers all three modes and edge cases:
 
 ```typescript
-describe('EntityGenerator', () => {
-  it('should generate immutable entity with validation', async () => {
-    const model: BoundedContextGenerationContext = { /* test data */ };
-    
-    const generator = new EntityGenerator();
-    await generator.generate(model);
-    
-    const content = await fs.readFile('/tmp/test/.../Product.generated.cs', 'utf-8');
-    expect(content).toContain('public partial class Product');
-    expect(content).toContain('private set');
+describe('AuthModeResolver.isAuthorizationEnabled', () => {
+  it('is true when blueprint is undefined (defaults to perDomain)', () => {
+    expect(AuthModeResolver.isAuthorizationEnabled(undefined)).toBe(true);
+  });
+  it('is false for none mode', () => {
+    expect(AuthModeResolver.isAuthorizationEnabled(blueprintWithMode('none'))).toBe(false);
   });
 });
 ```
+
+### Generator Unit Tests
+
+Generator tests spy on `BaseGenerator.writeRenderedTemplate` to capture the template context without touching the filesystem:
+
+```typescript
+describe('ApiProgramGenerator — authorizationEnabled in template context', () => {
+  beforeEach(() => {
+    jest
+      .spyOn(BaseGenerator.prototype as any, 'writeRenderedTemplate')
+      .mockImplementation(async (_templates, context) => {
+        capturedContext = context;
+      });
+  });
+
+  it('authorizationEnabled=false when mode is none', async () => {
+    generator.setBlueprint(blueprintWithMode('none'));
+    await generator.generate(stubModel);
+    expect(capturedContext.authorizationEnabled).toBe(false);
+  });
+});
+```
+
+Current test suites:
+
+| File | Tests | Covers |
+|---|---|---|
+| `tests/utils/AuthModeResolver.test.ts` | 10 | `resolveMode` + `isAuthorizationEnabled` for all modes |
+| `tests/generators/ApiProgramGenerator.test.ts` | 4 | `authorizationEnabled` in context per mode |
+| `tests/generators/ControllerGenerator.test.ts` | 5 | Per-entity `authorizationEnabled` + junction-entity skip |
 
 ### Integration Tests
 
 Test full generation pipeline:
 
 ```bash
-npm start generate examples/test-model.json -- --output-dir /tmp/test
-dotnet build /tmp/test/Inventorization.Test.Domain
+node dist/cli.js generate examples/simple-bounded-context.json \
+  --output-dir /tmp/test-output \
+  --blueprint examples/default-blueprint.json
+dotnet build /tmp/test-output/Onward.Test.API
 # Should compile without errors
 ```
 

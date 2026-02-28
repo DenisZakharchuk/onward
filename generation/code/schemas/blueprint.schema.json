@@ -107,6 +107,27 @@
             }
           },
           "additionalProperties": false
+        },
+        "authorization": {
+          "type": "object",
+          "description": "Authorization strategy for this bounded context. Defaults to perDomain when absent.",
+          "required": ["mode"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["perDomain", "perContext", "none"],
+              "description": "perDomain: JWT validated via Onward.Auth service; perContext: auth entities generated inside this context; none: no auth infrastructure"
+            },
+            "authServiceUrl": {
+              "type": "string",
+              "description": "Base URL of the Onward.Auth service — required when mode is perDomain",
+              "format": "uri"
+            }
+          },
+          "if": {
+            "properties": { "mode": { "const": "perDomain" } }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

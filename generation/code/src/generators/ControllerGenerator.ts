@@ -4,6 +4,7 @@
 
 import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext, Entity } from '../models/DataModel';
+import { AuthModeResolver } from '../utils/AuthModeResolver';
 import * as path from 'path';
 
 export class ControllerGenerator extends BaseGenerator {
@@ -46,6 +47,7 @@ export class ControllerGenerator extends BaseGenerator {
       pluralEntityName,
       isOwned,
       ownershipValueObject,
+      authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
     };
 
     const filePath = path.join(controllersDir, `${pluralEntityName}Controller.cs`);

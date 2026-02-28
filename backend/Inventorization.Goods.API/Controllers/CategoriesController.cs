@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using InventorySystem.API.Base.Controllers;
-using Inventorization.Base.Abstractions;
+using Onward.Base.API.Controllers;
+using Onward.Base.Abstractions;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.BL.DataServices;
 using Inventorization.Goods.DTO.DTO.Category;
@@ -19,7 +19,7 @@ public class CategoriesController : DataController<Category, CreateCategoryDTO, 
 {
     public CategoriesController(
         ICategoryDataService service,
-        ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
+        ILogger<Onward.Base.API.Controllers.ServiceController> logger) 
         : base(service, logger)
     {
     }

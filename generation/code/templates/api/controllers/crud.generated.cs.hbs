@@ -5,14 +5,18 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+{{#if authorizationEnabled}}
+using Onward.Base.AspNetCore.Authorization;
+{{else}}
 using Microsoft.AspNetCore.Authorization;
+{{/if}}
 using {{namespace}}.BL.Entities;
 using {{namespace}}.DTO.{{entityName}};
 using {{namespace}}.BL.DataServices;
-using InventorySystem.API.Base.Controllers;
+using Onward.Base.API.Controllers;
 {{#if isOwned}}
-using {{baseNamespace}}.Base.Abstractions;
-using {{baseNamespace}}.Base.Ownership;
+using Onward.Base.Abstractions;
+using Onward.Base.Ownership;
 {{/if}}
 
 namespace {{namespace}}.API.Controllers;
@@ -22,7 +26,11 @@ namespace {{namespace}}.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+{{#if authorizationEnabled}}
+[OnwardAuthorize]
+{{else}}
+[AllowAnonymous]
+{{/if}}
 public partial class {{pluralEntityName}}Controller : DataController<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, I{{entityName}}DataService>
 {
 {{#if isOwned}}

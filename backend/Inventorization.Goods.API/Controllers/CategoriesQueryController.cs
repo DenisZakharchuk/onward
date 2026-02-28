@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using InventorySystem.API.Base.Controllers;
-using Inventorization.Base.Abstractions;
+using Onward.Base.API.Controllers;
+using Onward.Base.Abstractions;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.DTO.ADTs;
 

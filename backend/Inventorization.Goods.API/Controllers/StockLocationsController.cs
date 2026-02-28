@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using InventorySystem.API.Base.Controllers;
+using Onward.Base.API.Controllers;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.BL.DataServices;
 using Inventorization.Goods.DTO.DTO.StockLocation;
@@ -16,7 +16,7 @@ namespace Inventorization.Goods.API.Controllers;
 [Authorize]
 public class StockLocationsController : DataController<StockLocation, CreateStockLocationDTO, UpdateStockLocationDTO, DeleteStockLocationDTO, InitStockLocationDTO, StockLocationDetailsDTO, StockLocationSearchDTO, IStockLocationDataService>
 {
-    public StockLocationsController(IStockLocationDataService service, ILogger<InventorySystem.API.Base.Controllers.ServiceController> logger) 
+    public StockLocationsController(IStockLocationDataService service, ILogger<Onward.Base.API.Controllers.ServiceController> logger) 
         : base(service, logger)
     {
     }

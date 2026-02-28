@@ -8,10 +8,14 @@
 //     Custom endpoints can be added in a separate partial class file.
 // </auto-generated>
 
+{{#if authorizationEnabled}}
+using Onward.Base.AspNetCore.Authorization;
+{{else}}
 using Microsoft.AspNetCore.Authorization;
+{{/if}}
 using Microsoft.AspNetCore.Mvc;
-using InventorySystem.API.Base.Controllers;
-using {{baseNamespace}}.Base.Abstractions;
+using Onward.Base.API.Controllers;
+using Onward.Base.Abstractions;
 using {{namespace}}.BL.Entities;
 using {{namespace}}.DTO.ADTs;
 
@@ -23,7 +27,7 @@ namespace {{namespace}}.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("{{routePrefix}}")]
-[AllowAnonymous]
+{{#if authorizationEnabled}}[OnwardAuthorize]{{else}}[AllowAnonymous]{{/if}}
 public class {{entityNamePlural}}QueryController : BaseQueryController<{{entityName}}, {{projectionName}}>
 {
     public {{entityNamePlural}}QueryController(
@@ -32,6 +36,4 @@ public class {{entityNamePlural}}QueryController : BaseQueryController<{{entityN
         : base(searchService, logger)
     {
     }
-    
-    // Add custom query endpoints here if needed
 }

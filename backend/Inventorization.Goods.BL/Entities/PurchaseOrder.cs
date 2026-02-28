@@ -1,4 +1,4 @@
-using Inventorization.Base.Models;
+using Onward.Base.Models;
 using Inventorization.Goods.Common.Enums;
 
 namespace Inventorization.Goods.BL.Entities;

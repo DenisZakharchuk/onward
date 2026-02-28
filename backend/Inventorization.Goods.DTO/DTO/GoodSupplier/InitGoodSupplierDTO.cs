@@ -7,7 +7,7 @@ public record InitGoodSupplierDTO(
     decimal SupplierPrice,
     int LeadTimeDays,
     bool IsPreferred
-) : Inventorization.Base.DTOs.InitDTO(Id)
+) : Onward.Base.DTOs.InitDTO(Id)
 {
     public InitGoodSupplierDTO() : this(Guid.Empty, Guid.Empty, Guid.Empty, 0, 0, false)
     {

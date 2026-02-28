@@ -17,7 +17,7 @@ public interface IStockItemDataService : IDataService<StockItem, CreateStockItem
 public class StockItemDataService : DataServiceBase<StockItem, CreateStockItemDTO, UpdateStockItemDTO, DeleteStockItemDTO, InitStockItemDTO, StockItemDetailsDTO, StockItemSearchDTO>, IStockItemDataService
 {
     public StockItemDataService(
-        Inventorization.Base.DataAccess.IUnitOfWork unitOfWork,
+        Onward.Base.DataAccess.IUnitOfWork unitOfWork,
         IRepository<StockItem> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<StockItem, CreateStockItemDTO, UpdateStockItemDTO, DeleteStockItemDTO, InitStockItemDTO, StockItemDetailsDTO, StockItemSearchDTO>> logger)

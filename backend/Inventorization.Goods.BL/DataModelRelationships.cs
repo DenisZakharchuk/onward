@@ -1,5 +1,5 @@
-using Inventorization.Base.Abstractions;
-using Inventorization.Base.Models;
+using Onward.Base.Abstractions;
+using Onward.Base.Models;
 using Inventorization.Goods.BL.Entities;
 
 namespace Inventorization.Goods.BL;

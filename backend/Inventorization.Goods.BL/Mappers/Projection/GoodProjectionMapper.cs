@@ -1,5 +1,5 @@
-using Inventorization.Base.Abstractions;
-using Inventorization.Base.ADTs;
+using Onward.Base.Abstractions;
+using Onward.Base.ADTs;
 using Inventorization.Goods.BL.Entities;
 using Inventorization.Goods.DTO.ADTs;
 using System.Linq.Expressions;

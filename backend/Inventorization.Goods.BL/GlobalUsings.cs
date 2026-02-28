@@ -1,7 +1,7 @@
-global using Inventorization.Base.Abstractions;
-global using Inventorization.Base.DataAccess;
-global using Inventorization.Base.Models;
-global using Inventorization.Base.Services;
+global using Onward.Base.Abstractions;
+global using Onward.Base.DataAccess;
+global using Onward.Base.Models;
+global using Onward.Base.Services;
 global using Inventorization.Goods.DTO;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Logging;
