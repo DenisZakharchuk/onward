@@ -118,10 +118,11 @@
               "enum": ["perDomain", "perContext", "none"],
               "description": "perDomain: JWT validated via Onward.Auth service; perContext: auth entities generated inside this context; none: no auth infrastructure"
             },
-            "authServiceUrl": {
+            "authMode": {
               "type": "string",
-              "description": "Base URL of the Onward.Auth service — required when mode is perDomain",
-              "format": "uri"
+              "enum": ["local", "online"],
+              "default": "local",
+              "description": "local (default): validate JWT locally only, emits AddOnwardJwtAuth; online: also introspects each token against the Auth Service at runtime, emits AddOnwardOnlineAuth. Only applies when mode is perDomain."
             }
           },
           "if": {

@@ -37,7 +37,7 @@ public class AuthController : ControllerBase
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         _logger.LogInformation("Login attempt for email: {Email} from IP: {IpAddress}", request.Email, ipAddress);
 
-        var result = await _authenticationService.LoginAsync(request.Email, request.Password, ipAddress);
+        var result = await _authenticationService.LoginAsync(request.Email, request.Password, ipAddress, request.TenantId);
 
         if (!result.IsSuccess)
         {

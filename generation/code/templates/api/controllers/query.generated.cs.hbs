@@ -27,7 +27,7 @@ namespace {{namespace}}.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("{{routePrefix}}")]
-{{#if authorizationEnabled}}[OnwardAuthorize]{{else}}[AllowAnonymous]{{/if}}
+{{#if authorizationEnabled}}{{#if entityPermissions.read}}[OnwardAuthorize("{{entityName}}", "Read")]{{else}}[OnwardAuthorize]{{/if}}{{else}}[AllowAnonymous]{{/if}}
 public class {{entityNamePlural}}QueryController : BaseQueryController<{{entityName}}, {{projectionName}}>
 {
     public {{entityNamePlural}}QueryController(

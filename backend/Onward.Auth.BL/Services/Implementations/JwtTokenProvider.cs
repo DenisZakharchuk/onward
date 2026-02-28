@@ -24,7 +24,7 @@ public class JwtTokenProvider : IJwtTokenProvider
         _logger = logger;
     }
 
-    public string CreateAccessToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions)
+    public string CreateAccessToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions, string? tenantId = null)
     {
         try
         {
@@ -33,10 +33,14 @@ public class JwtTokenProvider : IJwtTokenProvider
 
             var claims = new List<Claim>
             {
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Email, user.Email),
                 new("name", user.FullName)
             };
+
+            if (!string.IsNullOrWhiteSpace(tenantId))
+                claims.Add(new Claim("tenant_id", tenantId));
 
             foreach (var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -109,7 +113,12 @@ public class JwtTokenProvider : IJwtTokenProvider
 /// </summary>
 public interface IJwtTokenProvider
 {
-    string CreateAccessToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions);
+    /// <summary>
+    /// Creates a signed JWT access token. Embeds a unique <c>jti</c> claim and an
+    /// optional <c>tenant_id</c> claim when <paramref name="tenantId"/> is supplied.
+    /// </summary>
+    string CreateAccessToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions, string? tenantId = null);
+
     string CreateRefreshToken();
     ClaimsPrincipal? ValidateToken(string token);
 }

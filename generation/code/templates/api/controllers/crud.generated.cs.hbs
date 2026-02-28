@@ -27,7 +27,8 @@ namespace {{namespace}}.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 {{#if authorizationEnabled}}
-[OnwardAuthorize]
+{{!-- Class-level resource guard: scoped to entity when permissions map defines this entity. --}}
+{{#if entityPermissions.hasPermissions}}[OnwardAuthorize("{{entityName}}")]{{else}}[OnwardAuthorize]{{/if}}
 {{else}}
 [AllowAnonymous]
 {{/if}}

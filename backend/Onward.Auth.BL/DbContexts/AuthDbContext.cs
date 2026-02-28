@@ -18,6 +18,7 @@ public class AuthDbContext : DbContext
     public DbSet<UserRole> UserRoles { get; set; } = null!;
     public DbSet<RolePermission> RolePermissions { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+    public DbSet<BlacklistedToken> BlacklistedTokens { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

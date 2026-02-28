@@ -20,6 +20,8 @@ export class ApiProgramGenerator extends BaseGenerator {
       contextName,
       contextDescription: model.boundedContext.description || `${contextName} API`,
       authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
+      onlineAuthEnabled: AuthModeResolver.isOnlineAuth(this.blueprint),
+      onlineAuth: AuthModeResolver.resolveOnlineAuthConfig(this.blueprint, model.boundedContext),
     };
 
     const filePath = path.join(apiProjectPath, 'Program.cs');

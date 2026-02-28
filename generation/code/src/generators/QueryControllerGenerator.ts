@@ -25,6 +25,14 @@ export class QueryControllerGenerator extends BaseGenerator {
       const entityNamePlural = this.pluralize(entity.name);
       const routePrefix = `api/${NamingConventions.toCamelCase(entityNamePlural)}/query`;
 
+      const perms = (model.boundedContext.authModel?.permissions?.[entity.name] ?? []).map(p => p.toLowerCase());
+      const entityPermissions = {
+        hasPermissions: perms.length > 0,
+        read: perms.includes('read'),
+        write: perms.includes('write'),
+        delete: perms.includes('delete'),
+      };
+
       const context = {
         namespace,
         baseNamespace,
@@ -34,6 +42,7 @@ export class QueryControllerGenerator extends BaseGenerator {
         routePrefix,
         description: entity.description || entity.name,
         authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
+        entityPermissions,
       };
 
       const filePath = path.join(controllersDir, `${entityNamePlural}QueryController.cs`);

@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Onward.Auth.BL.Entities;
 using Onward.Auth.BL.Services.Abstractions;
-using Microsoft.Extensions.Logging;
+using Onward.Base.Auth;
 
 namespace Onward.Auth.BL.Services.Implementations;
 
@@ -13,6 +15,7 @@ public class TokenRotationService : ITokenRotationService
     private readonly IRefreshTokenRepository _tokenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IRolePermissionService _rolePermissionService;
+    private readonly OnwardJwtSettings _settings;
     private readonly ILogger<TokenRotationService> _logger;
 
     public TokenRotationService(
@@ -20,12 +23,14 @@ public class TokenRotationService : ITokenRotationService
         IRefreshTokenRepository tokenRepository,
         IUserRepository userRepository,
         IRolePermissionService rolePermissionService,
+        IOptions<OnwardJwtSettings> options,
         ILogger<TokenRotationService> logger)
     {
         _jwtTokenProvider = jwtTokenProvider;
         _tokenRepository = tokenRepository;
         _userRepository = userRepository;
         _rolePermissionService = rolePermissionService;
+        _settings = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger;
     }
 
@@ -71,7 +76,7 @@ public class TokenRotationService : ITokenRotationService
         var newRefreshToken = new RefreshToken(
             userId: oldToken.UserId,
             token: newRefreshTokenValue,
-            expiryDate: DateTime.UtcNow.AddDays(int.Parse("7")), // From config
+            expiryDate: DateTime.UtcNow.AddDays(_settings.RefreshTokenExpirationDays),
             family: oldToken.Family, // Same family for chain tracking
             ipAddress: ipAddress
         );

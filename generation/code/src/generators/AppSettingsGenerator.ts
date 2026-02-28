@@ -4,6 +4,7 @@
 
 import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext } from '../models/DataModel';
+import { AuthModeResolver } from '../utils/AuthModeResolver';
 import * as path from 'path';
 
 export class AppSettingsGenerator extends BaseGenerator {
@@ -18,6 +19,8 @@ export class AppSettingsGenerator extends BaseGenerator {
     const dbPort = model.boundedContext.dbPort ?? 5432;
     const apiPort = model.boundedContext.apiPort ?? 5000;
     const jwt = model.boundedContext.jwt;
+    const onlineAuthEnabled = AuthModeResolver.isOnlineAuth(this.blueprint);
+    const onlineAuth = AuthModeResolver.resolveOnlineAuthConfig(this.blueprint, model.boundedContext);
 
     const context = {
       contextName,
@@ -25,6 +28,8 @@ export class AppSettingsGenerator extends BaseGenerator {
       dbPort,
       apiPort,
       jwt,
+      onlineAuthEnabled,
+      onlineAuth,
     };
 
     // Write appsettings.json — skip if already exists; regenerate with --force

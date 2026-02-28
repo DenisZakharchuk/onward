@@ -25,7 +25,15 @@ export class ControllerGenerator extends BaseGenerator {
         continue;
       }
 
-      await this.generateController(entity, controllersDir, namespace, baseNamespace, isContextOwned, ownershipValueObject);
+      const perms = (model.boundedContext.authModel?.permissions?.[entity.name] ?? []).map(p => p.toLowerCase());
+      const entityPermissions = {
+        hasPermissions: perms.length > 0,
+        read: perms.includes('read'),
+        write: perms.includes('write'),
+        delete: perms.includes('delete'),
+      };
+
+      await this.generateController(entity, controllersDir, namespace, baseNamespace, isContextOwned, ownershipValueObject, entityPermissions);
     }
   }
 
@@ -35,7 +43,8 @@ export class ControllerGenerator extends BaseGenerator {
     namespace: string,
     baseNamespace: string,
     isContextOwned: boolean = false,
-    ownershipValueObject: string = 'UserTenantOwnership'
+    ownershipValueObject: string = 'UserTenantOwnership',
+    entityPermissions: { hasPermissions: boolean; read: boolean; write: boolean; delete: boolean } = { hasPermissions: false, read: false, write: false, delete: false }
   ): Promise<void> {
     const pluralEntityName = this.pluralize(entity.name);
     const isOwned = entity.owned === true && isContextOwned;
@@ -48,6 +57,7 @@ export class ControllerGenerator extends BaseGenerator {
       isOwned,
       ownershipValueObject,
       authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
+      entityPermissions,
     };
 
     const filePath = path.join(controllersDir, `${pluralEntityName}Controller.cs`);

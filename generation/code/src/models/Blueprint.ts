@@ -20,8 +20,13 @@ export type AuthorizationMode = 'perDomain' | 'perContext' | 'none';
 /** Authorization config when mode is 'perDomain' — delegates to Onward.Auth. */
 export interface BlueprintAuthorizationPerDomain {
   mode: 'perDomain';
-  /** Base URL of the Onward.Auth service (used to call /api/auth/validate). */
-  authServiceUrl?: string;
+  /**
+   * Auth strategy for this bounded context.
+   * - 'local'  (default) — validates JWT signature/lifetime locally only; emits AddOnwardJwtAuth.
+   * - 'online' — additionally introspects each token against the Auth Service at runtime;
+   *              emits AddOnwardOnlineAuth. Requires authModel.onlineAuth in the data model.
+   */
+  authMode?: 'local' | 'online';
 }
 
 /** Authorization config when mode is 'perContext' — auth entities generated inside this bounded context. */

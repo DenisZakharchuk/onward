@@ -2049,7 +2049,9 @@ When `owned: true` the generator produces:
   - `perDomain` — JWT bearer auth, delegates identity to the external `Onward.Auth` service
   - `perContext` — JWT bearer auth, auth entities live in the bounded context's own database
   - `none` — no authentication (`[AllowAnonymous]` on all controllers)
-- `authorization.authServiceUrl` *(perDomain only, optional)* — URL of the auth service for documentation
+- `authorization.authMode` *(perDomain only, optional)* — `local` (default) | `online`
+  - `local` — validates JWT signature and lifetime locally; emits `AddOnwardJwtAuth`
+  - `online` — also introspects each token against the Auth Service at runtime; emits `AddOnwardOnlineAuth`; requires `authModel.onlineAuth` in the data model
 
 ### Execution Slot Resolution
 
@@ -2108,6 +2110,13 @@ The blueprint's `authorization` field controls how JWT authentication is wired i
 
 ### Blueprint Field
 
+Two orthogonal decisions are made separately:
+
+| Blueprint field | Controls |
+|---|---|
+| `authorization.mode` | Whether auth infrastructure is generated at all (`perDomain \| perContext \| none`) |
+| `authorization.authMode` | **(perDomain only)** Whether tokens are validated locally or also introspected online (`local \| online`) |
+
 ```json
 {
   "version": "1",
@@ -2116,55 +2125,126 @@ The blueprint's `authorization` field controls how JWT authentication is wired i
     "dataService": { "dto": "class", "uow": "injected", "dataAccess": { "orm": { "kind": "ef-core", "provider": "npgsql" } }, "domain": "default" },
     "authorization": {
       "mode": "perDomain",
-      "authServiceUrl": "http://localhost:5012"
+      "authMode": "online"
     }
   }
 }
 ```
 
-| Mode | `authorizationEnabled` | Effect |
-|---|---|---|
-| `perDomain` (default) | `true` | `AddOnwardJwtAuth`, `[OnwardAuthorize]` on all controllers |
-| `perContext` | `true` | Same as `perDomain` but implies auth entities are local to the BC's database |
-| `none` | `false` | `AddOnwardAnonymousAuth`, `[AllowAnonymous]` on all controllers |
+| `mode` | `authMode` | `authorizationEnabled` | Generated Program.cs call | Controller attribute |
+|---|---|---|---|---|
+| `perDomain` (default) | `local` (default) | `true` | `AddOnwardJwtAuth` | `[OnwardAuthorize]` / `[OnwardAuthorize("Entity")]` |
+| `perDomain` | `online` | `true` | `AddOnwardOnlineAuth` | same as above |
+| `perContext` | *(n/a)* | `true` | `AddOnwardJwtAuth` | `[OnwardAuthorize]` |
+| `none` | *(n/a)* | `false` | `AddOnwardAnonymousAuth` | `[AllowAnonymous]` |
 
-When `authorization` is absent the default blueprint value `{ mode: 'perDomain' }` is used.
+When `authorization` is absent the default `{ mode: 'perDomain', authMode: 'local' }` is used.
+
+### Online Auth — Data Model Requirement
+
+When `authMode: 'online'` the data model **must** supply `authModel.onlineAuth.authServiceUrl`.
+All other fields are optional with defaults:
+
+```json
+"authModel": {
+  "provider": "Onward.Auth",
+  "onlineAuth": {
+    "authServiceUrl": "http://auth-service:5012",
+    "cacheTtlSeconds": 30,
+    "failOpen": false,
+    "transport": "Http",
+    "timeoutSeconds": 5
+  }
+}
+```
+
+This drives the generated `appsettings.json` `"OnlineAuth"` section consumed by `AddOnwardOnlineAuth(builder.Configuration)`.
+
+### Per-Entity Permission Attributes
+
+When `authModel.permissions` is populated the controller class-level attribute becomes resource-scoped, and query controllers gain a `"Read"` action guard:
+
+```json
+"permissions": {
+  "Product": ["Read", "Write", "Delete"],
+  "Order":   ["Read", "Write"]
+}
+```
+
+Generated output:
+- `ProductsController` → `[OnwardAuthorize("Product")]`
+- `ProductsQueryController` → `[OnwardAuthorize("Product", "Read")]`
+- Entities **not listed** in the permissions map → plain `[OnwardAuthorize]` (backwards-compatible fallback)
 
 ### AuthModeResolver
 
 `src/utils/AuthModeResolver.ts` is the single authoritative resolver:
 
 ```typescript
-AuthModeResolver.resolveMode(blueprint)         // → 'perDomain' | 'perContext' | 'none'
-AuthModeResolver.isAuthorizationEnabled(blueprint) // → true | false
+AuthModeResolver.resolveMode(blueprint)                           // → 'perDomain' | 'perContext' | 'none'
+AuthModeResolver.isAuthorizationEnabled(blueprint)                // → true | false
+AuthModeResolver.isOnlineAuth(blueprint)                          // → true only when mode='perDomain' && authMode='online'
+AuthModeResolver.resolveOnlineAuthConfig(blueprint, bc)           // → ResolvedOnlineAuthConfig (all defaults applied)
 ```
 
-All generators that build Program.cs or controller contexts call `AuthModeResolver.isAuthorizationEnabled(this.blueprint)` and expose the result as `authorizationEnabled` in the Handlebars context.
+Exported type:
+```typescript
+export interface ResolvedOnlineAuthConfig {
+  authServiceUrl: string;
+  cacheTtlSeconds: number;  // default 30
+  failOpen: boolean;        // default false
+  transport: 'Http' | 'Grpc'; // default 'Http'
+  timeoutSeconds: number;   // default 5
+}
+```
 
 ### Affected Generators
 
-| Generator | Context property added |
+| Generator | Context properties added |
 |---|---|
-| `ApiProgramGenerator` | `authorizationEnabled` |
-| `MinimalApiProgramGenerator` | `authorizationEnabled` |
-| `AdoNetApiProgramGenerator` | `authorizationEnabled` |
-| `AdoNetMinimalApiProgramGenerator` | `authorizationEnabled` |
-| `ControllerGenerator` | `authorizationEnabled` (per entity) |
-| `QueryControllerGenerator` | `authorizationEnabled` (per entity) |
+| `ApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
+| `MinimalApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
+| `AdoNetApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
+| `AdoNetMinimalApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
+| `AppSettingsGenerator` | `onlineAuthEnabled`, `onlineAuth` |
+| `ControllerGenerator` | `authorizationEnabled`, `entityPermissions` (per entity) |
+| `QueryControllerGenerator` | `authorizationEnabled`, `entityPermissions` (per entity) |
+
+`entityPermissions` shape:
+```typescript
+{
+  hasPermissions: boolean;  // true when permissions map has an entry for this entity
+  read: boolean;
+  write: boolean;
+  delete: boolean;
+}
+```
 
 ### Blueprint → Generator Pipeline
 
 ```
-Blueprint.authorization.mode
-       ↓
-AuthModeResolver.isAuthorizationEnabled(this.blueprint)
-       ↓
-Handlebars context: { authorizationEnabled: true/false }
-       ↓
+Blueprint.authorization.mode + authMode   DataModel.authModel.permissions
+                ↓                                      ↓
+ AuthModeResolver.isAuthorizationEnabled()      entityPermissions{}
+ AuthModeResolver.isOnlineAuth()                       ↓
+ AuthModeResolver.resolveOnlineAuthConfig()    Handlebars: entityPermissions.hasPermissions
+                ↓
+Handlebars context: { authorizationEnabled, onlineAuthEnabled, onlineAuth }
+                ↓
 {{#if authorizationEnabled}}
-  [OnwardAuthorize]               // or AddOnwardJwtAuth in Program.cs
+  {{#if onlineAuthEnabled}}
+    AddOnwardOnlineAuth(builder.Configuration);   // Program.cs
+  {{else}}
+    AddOnwardJwtAuth(builder.Configuration);
+  {{/if}}
+  {{#if entityPermissions.hasPermissions}}
+    [OnwardAuthorize("EntityName")]                // Controller
+  {{else}}
+    [OnwardAuthorize]
+  {{/if}}
 {{else}}
-  [AllowAnonymous]                // or AddOnwardAnonymousAuth in Program.cs
+  AddOnwardAnonymousAuth();                       // Program.cs
+  [AllowAnonymous]                                // Controller
 {{/if}}
 ```
 
@@ -2274,9 +2354,19 @@ private validateBusinessRules(domain: DomainModel): void {
 4. **Export from the generators barrel** (`src/generators/index.ts`) — all 29 concrete generators are re-exported from this file so `GeneratorRegistrar` and tests never need individual import paths
 5. **Register in `GeneratorRegistrar`** (`src/orchestrator/GeneratorRegistrar.ts`) with phase, dependencies, and optional slot — this is the only file that instantiates concrete generators
 6. **Update types** if new context structure needed
-7. **Add `authorizationEnabled`** to your template context if the new generator produces files that vary by auth mode:
+7. **Add auth context fields** to your template context if the new generator produces files that vary by auth mode:
    ```typescript
-   authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint)
+   authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
+   onlineAuthEnabled:    AuthModeResolver.isOnlineAuth(this.blueprint),
+   onlineAuth:           AuthModeResolver.resolveOnlineAuthConfig(this.blueprint, model.boundedContext),
+   // Per-entity permission resolution (ControllerGenerator pattern):
+   entityPermissions: {
+     hasPermissions: perms.length > 0,
+     read:   perms.includes('read'),
+     write:  perms.includes('write'),
+     delete: perms.includes('delete'),
+   }
+   // where: const perms = (model.boundedContext.authModel?.permissions?.[entity.name] ?? []).map(p => p.toLowerCase())
    ```
 
 ```typescript
@@ -2404,6 +2494,19 @@ describe('AuthModeResolver.isAuthorizationEnabled', () => {
     expect(AuthModeResolver.isAuthorizationEnabled(blueprintWithMode('none'))).toBe(false);
   });
 });
+
+describe('AuthModeResolver.isOnlineAuth', () => {
+  it('is false for local perDomain (default)', () => {
+    expect(AuthModeResolver.isOnlineAuth(blueprintWithMode('perDomain'))).toBe(false);
+  });
+  it('is true only when mode=perDomain AND authMode=online', () => {
+    const bp = { ...blueprintWithMode('perDomain'), boundedContext: { ...blueprintWithMode('perDomain').boundedContext, authorization: { mode: 'perDomain', authMode: 'online' } } };
+    expect(AuthModeResolver.isOnlineAuth(bp as any)).toBe(true);
+  });
+  it('is false when mode=perContext even with authMode=online', () => {
+    expect(AuthModeResolver.isOnlineAuth(blueprintWithMode('perContext'))).toBe(false);
+  });
+});
 ```
 
 ### Generator Unit Tests
@@ -2411,7 +2514,7 @@ describe('AuthModeResolver.isAuthorizationEnabled', () => {
 Generator tests spy on `BaseGenerator.writeRenderedTemplate` to capture the template context without touching the filesystem:
 
 ```typescript
-describe('ApiProgramGenerator — authorizationEnabled in template context', () => {
+describe('ApiProgramGenerator — auth context fields', () => {
   beforeEach(() => {
     jest
       .spyOn(BaseGenerator.prototype as any, 'writeRenderedTemplate')
@@ -2420,10 +2523,18 @@ describe('ApiProgramGenerator — authorizationEnabled in template context', () 
       });
   });
 
-  it('authorizationEnabled=false when mode is none', async () => {
+  it('authorizationEnabled=false + onlineAuthEnabled=false when mode is none', async () => {
     generator.setBlueprint(blueprintWithMode('none'));
     await generator.generate(stubModel);
     expect(capturedContext.authorizationEnabled).toBe(false);
+    expect(capturedContext.onlineAuthEnabled).toBe(false);
+  });
+
+  it('onlineAuthEnabled=true when mode=perDomain + authMode=online', async () => {
+    generator.setBlueprint(onlineBlueprint);
+    await generator.generate(stubModelWithOnlineAuth);
+    expect(capturedContext.onlineAuthEnabled).toBe(true);
+    expect(capturedContext.onlineAuth.authServiceUrl).toBe('http://auth-service:5012');
   });
 });
 ```
@@ -2432,9 +2543,10 @@ Current test suites:
 
 | File | Tests | Covers |
 |---|---|---|
-| `tests/utils/AuthModeResolver.test.ts` | 10 | `resolveMode` + `isAuthorizationEnabled` for all modes |
-| `tests/generators/ApiProgramGenerator.test.ts` | 4 | `authorizationEnabled` in context per mode |
-| `tests/generators/ControllerGenerator.test.ts` | 5 | Per-entity `authorizationEnabled` + junction-entity skip |
+| `tests/utils/AuthModeResolver.test.ts` | 13 | `resolveMode`, `isAuthorizationEnabled`, `isOnlineAuth`, `resolveOnlineAuthConfig` for all modes |
+| `tests/generators/ApiProgramGenerator.test.ts` | 6 | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` in context per mode |
+| `tests/generators/ControllerGenerator.test.ts` | 8 | Per-entity `authorizationEnabled`, `entityPermissions` resolution, junction-entity skip |
+| `tests/generators/AppSettingsGenerator.test.ts` | 4 | `onlineAuthEnabled` flag + `onlineAuth` defaults applied correctly |
 
 ### Integration Tests
 

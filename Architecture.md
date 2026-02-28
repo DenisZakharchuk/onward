@@ -7,7 +7,9 @@
 
 # Frontend
  It's regular dashboard application. 
- It has authorization user story. For now it has local authorization (using AuthService microservice).
+ It has authorization user story. It supports two per-bounded-context auth modes:
+ - **Local** (default) — JWT signature and lifetime validated locally via `Onward.Auth` issued tokens; uses `AddOnwardJwtAuth`.
+ - **Online** — additionally introspects each token in real-time against the `Onward.Auth` service (token revocation, user block/unblock, multi-tenant); uses `AddOnwardOnlineAuth`.
  It has set of list views and form views for entities of the DataModel;
  Business loic layer is implemented in separate abstractions in "services" folder. They are injected where they needed with provide-use pattern
  
@@ -15,7 +17,7 @@
  Microservice arhiteture. Each microservice has 
  - separate, dedicated DB (if it's needed). 
  - restfull API implemented in controllers
- - API can require authorization (using bearer JWT auth method), or allow anonymous authorization (for example for AuthoService)
+ - API can require authorization (using bearer JWT auth method in one of two modes — Local or Online), or allow anonymous authorization (for example for AuthService)
  - swagger
  - business logic layer implemented in separate project
  We need to have separate microservice (with dedicated Data Storage) for each set of interconnected entities
@@ -3722,6 +3724,123 @@ builder.Services.AddScoped<IValidator<EntityReferencesDTO>, EntityReferencesVali
 
 ### Documentation
 - Document all abstractions and expected extension points in code and markdown.
+
+---
+
+## API Authorization Modes
+
+Every generated API project uses `Onward.Base.AspNetCore` for auth wiring. The mode is configured in the **blueprint** (`authorization.authMode`) and the **data model** (`authModel.onlineAuth`).
+
+### Mode 1 — Local (default)
+
+JWT signature and lifetime are validated locally. Token revocation and user-block state are **not** checked at runtime.
+
+```csharp
+// Program.cs (generated)
+builder.Services.AddOnwardJwtAuth(builder.Configuration);
+```
+
+```json
+// appsettings.json (generated) — only JwtSettings needed
+{
+  "JwtSettings": {
+    "SecretKey": "...",
+    "Issuer": "Inventorization.Auth",
+    "Audience": "Inventorization.Client",
+    "ExpirationMinutes": 60
+  }
+}
+```
+
+Blueprint:
+```json
+{ "authorization": { "mode": "perDomain" } }
+// or explicitly:
+{ "authorization": { "mode": "perDomain", "authMode": "local" } }
+```
+
+### Mode 2 — Online
+
+Validates JWT locally **and** calls `POST /api/tokens/introspect` on the `Onward.Auth` service for every request to check:
+- Token has not been revoked (JTI blacklist)
+- User is not blocked
+- Fresh roles/permissions are injected into the identity
+
+Results are cached per-JTI in `IMemoryCache` with a configurable TTL to avoid per-request latency.
+
+```csharp
+// Program.cs (generated)
+builder.Services.AddOnwardOnlineAuth(builder.Configuration);
+```
+
+```json
+// appsettings.json (generated)
+{
+  "JwtSettings": { "SecretKey": "...", "Issuer": "...", "Audience": "...", "ExpirationMinutes": 60 },
+  "OnlineAuth": {
+    "AuthServiceBaseUrl": "http://auth-service:5012",
+    "CacheTtlSeconds": 30,
+    "FailOpen": false,
+    "Transport": "Http",
+    "TimeoutSeconds": 5
+  }
+}
+```
+
+Blueprint:
+```json
+{ "authorization": { "mode": "perDomain", "authMode": "online" } }
+```
+
+Data model (required when authMode is online):
+```json
+"authModel": {
+  "provider": "Onward.Auth",
+  "onlineAuth": { "authServiceUrl": "http://auth-service:5012" }
+}
+```
+
+### Per-Resource Authorization Attributes
+
+When `authModel.permissions` is set in the data model, generated controllers carry resource-scoped authorize attributes instead of the blanket `[OnwardAuthorize]`:
+
+```json
+"authModel": {
+  "provider": "Onward.Auth",
+  "permissions": {
+    "Product": ["Read", "Write", "Delete"],
+    "Order":   ["Read", "Write"]
+  }
+}
+```
+
+| Generated class | Attribute |
+|---|---|
+| `ProductsController` | `[OnwardAuthorize("Product")]` |
+| `ProductsQueryController` | `[OnwardAuthorize("Product", "Read")]` |
+| Entity not in map | `[OnwardAuthorize]` (plain fallback) |
+
+### Mode Selection Summary
+
+| Scenario | Blueprint `authMode` | `appsettings` extra section |
+|---|---|---|
+| Standard JWT, no revocation | `local` (default) | none |
+| Revocation, user-block, multi-tenant enforcement | `online` | `OnlineAuth { ... }` |
+| Auth entities inside this BC | set `mode: perContext` | standard JwtSettings |
+| Public / no auth required | set `mode: none` | none |
+
+### `Onward.Base.AspNetCore` Extension Methods Reference
+
+```csharp
+// Available in Onward.Base.AspNetCore.Extensions:
+services.AddOnwardJwtAuth(configuration);         // Local mode
+services.AddOnwardOnlineAuth(configuration);       // Online mode (superset)
+services.AddOnwardAnonymousAuth();                 // No auth
+app.UseOnwardAuth();                               // Applies middleware (both modes)
+c.AddOnwardJwtSecurity();                          // Swagger JWT security scheme
+```
+
+Note: API `.csproj` files must reference `Onward.Base.AspNetCore` — they do **not** need a direct `Microsoft.AspNetCore.Authentication.JwtBearer` package reference as it comes transitively.
 
 ---
 

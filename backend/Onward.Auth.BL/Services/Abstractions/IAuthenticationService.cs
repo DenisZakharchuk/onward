@@ -14,12 +14,14 @@ public interface IAuthenticationService
     /// <param name="email">User email</param>
     /// <param name="password">User password</param>
     /// <param name="ipAddress">Client IP address</param>
+    /// <param name="tenantId">Optional tenant context to embed as <c>tenant_id</c> claim in the access token.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Service result with login response containing access token and refresh token</returns>
     Task<ServiceResult<LoginResponseDTO>> LoginAsync(
         string email,
         string password,
         string ipAddress,
+        string? tenantId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

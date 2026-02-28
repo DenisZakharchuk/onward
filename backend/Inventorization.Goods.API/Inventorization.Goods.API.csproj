@@ -19,8 +19,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Inventorization.Goods.BL\Inventorization.Goods.BL.csproj" />
     <ProjectReference Include="..\Inventorization.Goods.DTO\Inventorization.Goods.DTO.csproj" />
-    <ProjectReference Include="../Onward.Base.API/Onward.Base.API.csproj" />
+    <ProjectReference Include="..\Onward.Base.API\Onward.Base.API.csproj" />
     <ProjectReference Include="..\Onward.Base\Onward.Base.csproj" />
+    <ProjectReference Include="..\Onward.Base.AspNetCore\Onward.Base.AspNetCore.csproj" />
   </ItemGroup>
 
 </Project>

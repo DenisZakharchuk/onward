@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "boundedContext": {
+    "common": {
+      "enums": "SmartEnums"
+    },
+    "presentation": {
+      "kind": "controllers"
+    },
+    "dataService": {
+      "dto": "class",
+      "uow": "injected",
+      "dataAccess": {
+        "orm": {
+          "kind": "ef-core",
+          "provider": "npgsql"
+        },
+        "entities": "immutable"
+      },
+      "domain": "default"
+    },
+    "authorization": {
+      "mode": "perDomain",
+      "authMode": "online"
+    }
+  }
+}

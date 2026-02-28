@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Onward.Base.API.Controllers;
 using Onward.Auth.BL.Entities;
+using Onward.Auth.DTO.DTO.Auth;
 using Onward.Auth.DTO.DTO.User;
 using Onward.Auth.BL.DataServices;
+using Onward.Auth.BL.Services.Abstractions;
 using Onward.Base.DTOs;
 using Onward.Base.Abstractions;
 
@@ -21,14 +23,17 @@ public class UsersController
       IRelationController<Role>
 {
     private readonly UserRoleRelationHandler _roleHandler;
+    private readonly IUserAdminService _userAdminService;
 
     public UsersController(
         IUserDataService service,
         IRelationshipManager<User, Role> roleRelationshipManager,
+        IUserAdminService userAdminService,
         ILogger<UsersController> logger) 
         : base(service, logger)
     {
         _roleHandler = new UserRoleRelationHandler(roleRelationshipManager, logger);
+        _userAdminService = userAdminService;
     }
 
     // All CRUD methods inherited from DataController:
@@ -76,6 +81,40 @@ public class UsersController
         return _roleHandler.HandleUpdateMultipleRelationshipsAsync(changes, "Roles", cancellationToken);
     }
 
+    // ── Block / Unblock ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Blocks a user account, deactivates it, and revokes all active refresh tokens.
+    /// Any subsequent introspection of JTIs issued to this user will return inactive.
+    /// </summary>
+    [HttpPatch("{id}/block")]
+    [ProducesResponseType(typeof(ServiceResult<bool>), 200)]
+    [ProducesResponseType(typeof(ServiceResult<bool>), 400)]
+    [ProducesResponseType(typeof(ServiceResult<bool>), 404)]
+    public async Task<ActionResult<ServiceResult<bool>>> BlockUser(
+        Guid id,
+        [FromBody] BlockUserDTO request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _userAdminService.BlockUserAsync(id, request.Reason, cancellationToken);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Unblocks a previously blocked user account. The user can log in again immediately.
+    /// </summary>
+    [HttpDelete("{id}/block")]
+    [ProducesResponseType(typeof(ServiceResult<bool>), 200)]
+    [ProducesResponseType(typeof(ServiceResult<bool>), 400)]
+    [ProducesResponseType(typeof(ServiceResult<bool>), 404)]
+    public async Task<ActionResult<ServiceResult<bool>>> UnblockUser(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _userAdminService.UnblockUserAsync(id, cancellationToken);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
     // Nested handler class for role relationships
     private class UserRoleRelationHandler : DataRelationHandler<User, Role>
     {
@@ -83,4 +122,3 @@ public class UsersController
             : base(manager, logger) { }
     }
 }
-

@@ -97,6 +97,23 @@ export interface OwnershipConfig {
 }
 
 /**
+ * Runtime configuration for online auth introspection against Onward.Auth service.
+ * Only required when blueprint.authorization.authMode is 'online'.
+ */
+export interface OnlineAuthConfig {
+  /** Base URL of the Onward.Auth service.  E.g. 'http://auth-service:5012'. */
+  authServiceUrl: string;
+  /** Per-JTI cache TTL in seconds (0 = disabled). Defaults to 30. */
+  cacheTtlSeconds?: number;
+  /** When true, a failed introspection call allows the request through. Defaults to false. */
+  failOpen?: boolean;
+  /** Transport adapter to use when calling the Auth Service. Defaults to 'Http'. */
+  transport?: 'Http' | 'Grpc';
+  /** HTTP/gRPC timeout in seconds. Defaults to 5. */
+  timeoutSeconds?: number;
+}
+
+/**
  * Configures which auth provider backs this bounded context.
  * Currently only 'Onward.Auth' is supported; additional providers may be added later.
  */
@@ -106,11 +123,17 @@ export interface AuthModelConfig {
   /** Role names that must exist in the auth system for this context. */
   roles?: string[];
   /**
-   * Permission map:  resource → action[] 
+   * Permission map:  resource → action[]
    * E.g. `{ "Product": ["Read", "Write", "Delete"] }`.
-   * Used to pre-seed permissions when generating auth setup scripts.
+   * Used to generate per-action [OnwardAuthorize("Resource", "Action")] attributes
+   * on controller methods.  Falls back to plain [OnwardAuthorize] when absent for an entity.
    */
   permissions?: Record<string, string[]>;
+  /**
+   * Online-auth tuning.  Required when blueprint.authorization.authMode is 'online'.
+   * Drives AddOnwardOnlineAuth() registration and the generated OnlineAuth appsettings section.
+   */
+  onlineAuth?: OnlineAuthConfig;
 }
 
 export interface EnumDefinition {

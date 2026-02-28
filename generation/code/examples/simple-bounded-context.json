@@ -49,6 +49,23 @@
         "valueObject": "UserTenantOwnership",
         "factory": "UserTenantOwnershipFactory"
       },
+      "authModel": {
+        "provider": "Onward.Auth",
+        "roles": ["Admin", "Manager", "Viewer"],
+        "permissions": {
+          "Category": ["Read", "Write", "Delete"],
+          "Product": ["Read", "Write", "Delete"],
+          "Order": ["Read", "Write"],
+          "OrderItem": ["Read"]
+        },
+        "onlineAuth": {
+          "authServiceUrl": "http://auth-service:5012",
+          "cacheTtlSeconds": 30,
+          "failOpen": false,
+          "transport": "Http",
+          "timeoutSeconds": 5
+        }
+      },
       "dataModel": {
         "entities": [
           {

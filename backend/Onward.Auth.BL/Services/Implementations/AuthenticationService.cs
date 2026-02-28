@@ -50,6 +50,7 @@ public class AuthenticationService : IAuthenticationService
         string email,
         string password,
         string ipAddress,
+        string? tenantId = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -88,7 +89,7 @@ public class AuthenticationService : IAuthenticationService
             var permissions = await _rolePermissionService.GetUserPermissionsAsync(user.Id, cancellationToken);
 
             // Generate tokens
-            var accessToken = _jwtTokenProvider.CreateAccessToken(user, roles, permissions);
+            var accessToken = _jwtTokenProvider.CreateAccessToken(user, roles, permissions, tenantId);
             var refreshTokenValue = _jwtTokenProvider.CreateRefreshToken();
 
             // Create refresh token entity

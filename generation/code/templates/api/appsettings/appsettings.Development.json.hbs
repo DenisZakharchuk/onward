@@ -14,5 +14,12 @@
     "Issuer": "{{jwt.issuer}}.Dev",
     "Audience": "{{jwt.audience}}.Dev",
     "ExpirationMinutes": {{#if jwt.devExpirationMinutes}}{{jwt.devExpirationMinutes}}{{else}}{{jwt.expirationMinutes}}{{/if}}
+  }{{/if}}{{#if onlineAuthEnabled}},
+  "OnlineAuth": {
+    "AuthServiceBaseUrl": "{{onlineAuth.authServiceUrl}}",
+    "CacheTtlSeconds": {{onlineAuth.cacheTtlSeconds}},
+    "FailOpen": {{onlineAuth.failOpen}},
+    "Transport": "{{onlineAuth.transport}}",
+    "TimeoutSeconds": {{onlineAuth.timeoutSeconds}}
   }{{/if}}
 }

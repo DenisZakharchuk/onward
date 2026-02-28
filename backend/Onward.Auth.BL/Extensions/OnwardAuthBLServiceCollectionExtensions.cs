@@ -120,6 +120,11 @@ public static class OnwardAuthBLServiceCollectionExtensions
         services.AddScoped<IOnwardAuthorizationService, AuthorizationService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
 
+        // ===== Online-auth: Blacklist, Introspection, User Admin =====
+        services.AddScoped<ITokenBlacklist, PostgresTokenBlacklist>();
+        services.AddScoped<ITokenIntrospectionService, TokenIntrospectionService>();
+        services.AddScoped<IUserAdminService, UserAdminService>();
+
         return services;
     }
 }

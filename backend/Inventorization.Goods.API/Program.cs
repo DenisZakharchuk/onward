@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 using Onward.Base.Abstractions;
+using Onward.Base.AspNetCore.Extensions;
 using Onward.Base.DataAccess;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,32 +14,9 @@ builder.Services.AddDbContext<Inventorization.Goods.BL.DbContexts.GoodsDbContext
     options.UseNpgsql(connectionString));
 
 // ===== JWT Authentication Configuration =====
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
-var issuer = jwtSettings["Issuer"] ?? "Inventorization.Auth";
-var audience = jwtSettings["Audience"] ?? "Inventorization.Client";
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ClockSkew = TimeSpan.Zero
-    };
-});
-
-builder.Services.AddAuthorization();
+// Migrated from inline setup to shared Onward.Base.AspNetCore extension
+// for consistency with Commerce API and automatic pickup of JwtSettings changes.
+builder.Services.AddOnwardJwtAuth(builder.Configuration);
 
 // ===== Repository & UnitOfWork Registration =====
 // Register DbContext as both specific type and base DbContext for repositories

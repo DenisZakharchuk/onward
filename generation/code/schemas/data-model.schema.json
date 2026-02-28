@@ -133,6 +133,41 @@
                 "type": "array",
                 "items": { "type": "string" }
               }
+            },
+            "onlineAuth": {
+              "type": "object",
+              "description": "Runtime configuration for online token introspection. Required when blueprint.authorization.authMode is 'online'.",
+              "required": ["authServiceUrl"],
+              "properties": {
+                "authServiceUrl": {
+                  "type": "string",
+                  "description": "Base URL of the Onward.Auth service (e.g. http://auth-service:5012)"
+                },
+                "cacheTtlSeconds": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 30,
+                  "description": "Per-JTI cache TTL in seconds. 0 disables the cache."
+                },
+                "failOpen": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "When true, a failed introspection call allows the request through instead of rejecting it."
+                },
+                "transport": {
+                  "type": "string",
+                  "enum": ["Http", "Grpc"],
+                  "default": "Http",
+                  "description": "Transport adapter to use when calling the Auth Service."
+                },
+                "timeoutSeconds": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "default": 5,
+                  "description": "HTTP/gRPC call timeout in seconds."
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false

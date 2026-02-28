@@ -18,7 +18,11 @@ builder.Services.Add{{contextName}}Services(connectionString);
 
 // ===== Authentication =====
 {{#if authorizationEnabled}}
+{{#if onlineAuthEnabled}}
+builder.Services.AddOnwardOnlineAuth(builder.Configuration);
+{{else}}
 builder.Services.AddOnwardJwtAuth(builder.Configuration);
+{{/if}}
 {{else}}
 builder.Services.AddOnwardAnonymousAuth();
 {{/if}}
