@@ -71,6 +71,7 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Logout and revoke refresh token
+    /// 
     /// </summary>
     [HttpPost("logout")]
     [Authorize]
