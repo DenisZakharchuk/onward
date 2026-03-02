@@ -1,324 +1,357 @@
-# Inventorization Dashboard
+# Onward
 
-An inventory management system with microservices architecture built with .NET 8 backend and Vue.js 3 + Quasar frontend.
+A microservices platform framework built with .NET 8 backend services, Vue 3 + Quasar frontend, and a TypeScript code generator that scaffolds entire bounded contexts from a JSON data model.
 
-## Project Structure
+*Inventorization (goods, categories, suppliers, stock) is used as a concrete example domain to drive real implementation — it is not the goal of the project.*
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Repository Structure](#repository-structure)
+3. [Technology Stack](#technology-stack)
+4. [Bounded Contexts (Microservices)](#bounded-contexts-microservices)
+5. [Code Generator](#code-generator)
+6. [Authentication & Authorization](#authentication--authorization)
+7. [Infrastructure](#infrastructure)
+8. [Getting Started](#getting-started)
+9. [Running Services](#running-services)
+10. [Database Migrations](#database-migrations)
+11. [Testing](#testing)
+12. [Key Documentation](#key-documentation)
+
+---
+
+## Overview
+
+Onward is a framework for building independently deployable bounded-context microservices. Each service owns a dedicated PostgreSQL database, exposes a RESTful API with Swagger, and produces structured audit logs to MongoDB.
+
+The core value is the **metadata-first, code-generation** approach. A data model JSON file describes entities, relationships, and architecture slots; the TypeScript generator scaffolds the full microservice (solution projects, EF Core entities, CRUD services, ADT-based query layer, DI wiring, tests, and more) from Handlebars templates.
+
+The inventorization domain (Auth, Goods) serves as the working reference implementation — a real, non-trivial bounded context that exercises every feature of the framework and generator.
+
+---
+
+## Repository Structure
 
 ```
 onward/
-├── backend/                           # .NET Backend Microservices
-│   ├── Inventorization.Base/          # Shared base abstractions and DTOs
-│   ├── Inventorization.Auth.API/      # Auth microservice API (port 5012)
-│   ├── Inventorization.Auth.BL/   # Auth domain logic and entities
-│   ├── Inventorization.Auth.DTO/      # Auth data transfer objects
-│   ├── Inventorization.Goods.API/     # Goods microservice API (port 5022)
-│   ├── Inventorization.Goods.BL/  # Goods domain logic and entities
-│   └── Inventorization.Goods.DTO/     # Goods data transfer objects
-├── frontend/                          # Vue.js 3 + Quasar Frontend
-│   └── quasar/                        # Quasar application
-└── docker-compose.yml                 # Infrastructure services
+├── backend/                              # All .NET projects (single solution: onward.sln)
+│   ├── Onward.Base/                      # Shared abstractions (DTOs, interfaces, base classes)
+│   ├── Onward.Base.API/                  # Shared API base classes (DataController, BaseQueryController)
+│   ├── Onward.Base.AspNetCore/           # ASP.NET middleware, JWT auth, gRPC client, policy engine
+│   │
+│   ├── Onward.Auth.API/                  # Auth service — port 5012
+│   ├── Onward.Auth.BL/                   # Auth domain (Users, Roles, Permissions, RefreshTokens)
+│   ├── Onward.Auth.DTO/                  # Auth DTOs
+│   ├── Onward.Auth.API.Tests/            # Auth unit tests
+│   │
+│   ├── Inventorization.Goods.API/        # Goods service — port 5022
+│   ├── Inventorization.Goods.BL/         # Goods domain (Goods, Categories, Suppliers, …)
+│   ├── Inventorization.Goods.DTO/        # Goods DTOs
+│   ├── Inventorization.Goods.Common/     # Goods enums / constants
+│   └── Inventorization.Goods.API.Tests/  # Goods unit tests
+│
+├── frontend/
+│   └── quasar/                           # Vue 3 + Quasar + TypeScript SPA
+│
+├── generation/
+│   └── code/                             # TypeScript BoundedContext code generator
+│       ├── src/                          # Generator source (generators, utils, templates)
+│       ├── templates/                    # Handlebars templates (.hbs)
+│       ├── examples/                     # Example data-model + blueprint JSON files
+│       └── schemas/                      # JSON Schema for data-model + blueprint validation
+│
+├── Architecture.md                       # Comprehensive backend architecture rules
+├── GENERATION.md                         # Code generator patterns and template guide
+├── docker-compose.yml                    # Infrastructure containers
+└── onward.sln                            # .NET solution file
 ```
 
-## Architecture
-
-This project follows **microservices architecture** with:
-- **Bounded Contexts**: Auth, Goods (each with dedicated API, Domain, and DTO projects)
-- **Database per Service**: Separate PostgreSQL databases for each microservice
-- **JWT Authentication**: Token-based auth via Auth microservice
-- **Entity Framework Core**: Code-first with migrations
-- **Message Broker**: For inter-service communication
-- **Audit Logging**: MongoDB-based audit trail
-
-See [Architecture.md](Architecture.md) for complete architectural guidelines.
-
-## Features
-
-- **Authentication & Authorization**: User management, roles, permissions
-- **Product Management**: Goods, categories, suppliers
-- **Inventory Tracking**: Stock locations, warehouse management
-- **Purchase Orders**: PO management and items
-- **Audit Logging**: Complete audit trail in MongoDB
-- **Swagger Documentation**: Auto-generated API docs for each service
+---
 
 ## Technology Stack
 
 ### Backend
-- .NET 8 ASP.NET Core Web API
-- Entity Framework Core with PostgreSQL
-- JWT Bearer Authentication
-- FluentValidation for DTO validation
-- Swagger/OpenAPI
-- MongoDB for audit logs
+| Concern | Technology |
+|---|---|
+| Runtime | .NET 8 / ASP.NET Core |
+| ORM | Entity Framework Core 8 (Npgsql) |
+| Primary DB | PostgreSQL 16 (one database per bounded context) |
+| Audit DB | MongoDB 7.0 |
+| Auth | JWT Bearer (`Microsoft.AspNetCore.Authentication.JwtBearer`) |
+| Online introspection | HTTP or gRPC (`Grpc.AspNetCore 2.65.0`) |
+| API docs | Swagger / Swashbuckle |
+| Tests | xUnit + FluentAssertions + Moq + EF Core InMemory |
 
 ### Frontend
-- Vue.js 3 with TypeScript
-- Quasar Framework
-- Vite for fast development
-- Vue Router
-- Axios for HTTP requests
+| Concern | Technology |
+|---|---|
+| Framework | Vue 3 (Composition API) + TypeScript |
+| UI Kit | Quasar Framework |
+| Build | Vite |
+| HTTP | Axios |
+
+### Code Generator
+| Concern | Technology |
+|---|---|
+| Language | TypeScript (Node.js) |
+| Templates | Handlebars |
+| Validation | AJV (JSON Schema) |
+| CLI | yargs |
 
 ### Infrastructure
-- PostgreSQL 16 (Auth DB, Goods DB)
-- MongoDB 7.0 (Audit logs)
-- Docker & Docker Compose
-- PgAdmin for DB management
-- Mongo Express for MongoDB management
+| Service | Port | Purpose |
+|---|---|---|
+| `postgres-auth` | 5432 | Auth service database |
+| `postgres-goods` | 5433 | Goods service database |
+| `pgadmin` | 5050 | PostgreSQL UI |
+| `mongodb` | 27017 | Audit log storage |
+| `mongo-express` | 8081 | MongoDB UI |
 
-## Getting Started
+---
 
-### Prerequisites
-- .NET 8 SDK
-- Node.js 18+ and npm
-- Docker and Docker Compose
-- Visual Studio Code (recommended)
+## Bounded Contexts (Microservices)
 
-### Quick Start
+### Auth Service — `Onward.Auth.API` (port 5012)
 
-1. **Start all services** (easiest):
+Manages identity: users, roles, permissions, and JWT issuance/revocation.
+
+Key capabilities:
+- `POST /api/auth/login` — issue access + refresh tokens
+- `POST /api/auth/refresh` — rotate refresh token
+- `POST /api/tokens/introspect` — per-request token introspection for online mode
+- gRPC `AuthIntrospection.IntrospectToken` — high-throughput introspection over gRPC
+- Full CRUD for Users, Roles, Permissions with many-to-many relationship managers
+- Swagger: `http://localhost:5012/swagger`
+
+### Goods Service — `Inventorization.Goods.API` (port 5022)
+
+Reference implementation of a domain bounded context (goods, categories, suppliers, stock locations, purchase orders). Demonstrates all generator output patterns in production-quality code.
+
+Key capabilities:
+- CRUD + ADT-based semantic query endpoints for every entity
+- JWT authentication via `perDomain/local` mode
+- Swagger: `http://localhost:5022/swagger`
+
+---
+
+## Code Generator
+
+The generator (`generation/code/`) scaffolds a complete bounded context from two JSON files:
+
+| Input | Purpose |
+|---|---|
+| **Data model** (`*.json`) | Entities, properties, relationships, auth model |
+| **Blueprint** (`*.json`) | Architecture slots (ORM kind, DTO style, auth mode, API style) |
+
+### What Gets Generated
+
+For every bounded context and each entity inside it:
+
+- Solution projects: `.DTO`, `.BL`, `.Common`, `.Meta`, `.API`, `.DI`, `.API.Tests`
+- `GlobalUsings.cs`, `.csproj` files with correct references and NuGet packages
+- EF Core entities (immutability pattern), `DbContext`, `IEntityTypeConfiguration<T>` classes
+- `UnitOfWork` inheriting `UnitOfWorkBase<TDbContext>`
+- `DataServiceBase`-derived data services + creator / modifier / mapper / search-provider abstractions
+- `DataController<…>` and `BaseQueryController<…>` concrete controllers
+- ADT-based query layer: `QueryBuilder`, `SearchService`, `ProjectionMapper`, `SearchQueryValidator`
+- DI extension: `Add{Context}Services(IServiceCollection, IConfiguration)`
+- `appsettings.json` / `appsettings.Development.json` with per-service connection strings
+- Auth endpoints (`AuthController`, auth DTOs, `I{Context}AuthenticationService` interface) when `mode: "perContext"`
+- Full xUnit test suite (~211+ tests per entity set)
+
+### CLI Usage
+
 ```bash
-# Using VS Code Task
-Run Task: "Start All"
+cd generation/code
+npm run build
+
+# Dry run (preview, no files written)
+node dist/cli.js generate examples/simple-bounded-context.json \
+  --output-dir ../../backend \
+  --blueprint examples/default-blueprint.json \
+  --dry-run
+
+# Generate
+node dist/cli.js generate examples/simple-bounded-context.json \
+  --output-dir ../../backend \
+  --blueprint examples/default-blueprint.json
+
+# Validate data model only
+node dist/cli.js validate examples/simple-bounded-context.json
 ```
 
-Or manually:
+Or use VS Code tasks: **Generator: Build**, **Generator: Generate**, **Generator: Generate (dry-run)**.
 
-### Infrastructure Setup
+See [GENERATION.md](GENERATION.md) for the full template and generator guide.
 
-1. Start Docker daemon (Docker Desktop or systemctl)
+---
 
-2. Start infrastructure services:
+## Authentication & Authorization
+
+### Auth Modes (configured per bounded context in the blueprint)
+
+| Blueprint `mode` / `authMode` | Behaviour | `Program.cs` call |
+|---|---|---|
+| `perDomain` / `local` *(default)* | JWT validated locally | `AddOnwardJwtAuth` |
+| `perDomain` / `online` | JWT validated + per-request introspection against Auth service | `AddOnwardOnlineAuth` |
+| `perContext` | BC issues its own tokens; auth endpoints generated in the BC | `AddOnwardJwtAuth` + `PerContextAuthEndpointsGenerator` |
+| `none` | All endpoints `[AllowAnonymous]` | `AddOnwardAnonymousAuth` |
+
+### Online Introspection Transport
+
+```json
+"OnlineAuth": {
+  "AuthServiceBaseUrl": "http://auth-service:5012",
+  "Transport": "Http",       // or "Grpc"
+  "CacheTtlSeconds": 30,
+  "FailOpen": false
+}
+```
+
+Both HTTP and gRPC transports are wrapped with `CachedAuthIntrospectionClient` for per-JTI TTL caching.
+
+### `[OnwardAuthorize]` Attribute
+
+```csharp
+[OnwardAuthorize]                          // any authenticated user
+[OnwardAuthorize("Product")]               // any action on Product resource
+[OnwardAuthorize("Product", "Read")]       // specific action guard
+```
+
+The attribute sets `Policy = "Resource.Action"`. `OnwardPermissionPolicyProvider` resolves this at runtime; `OnwardPermissionAuthorizationHandler` evaluates Admin-bypass → role claims → permission claims.
+
+### Tenant Scoping (opt-in)
+
+```csharp
+builder.Services.AddOnwardTenantScoping();
+// + implement ITenantScopeFilter<TEntity> and register it
+```
+
+`DataServiceBase.SearchAsync` applies the registered `ITenantScopeFilter<TEntity>` automatically when a `tenant_id` JWT claim is present.
+
+---
+
+## Infrastructure
+
+Start all containers:
+
 ```bash
 docker compose up -d
 ```
 
-This starts:
-- PostgreSQL Auth: `localhost:5432`
-- PostgreSQL Goods: `localhost:5433`
-- MongoDB: `localhost:27017`
-- PgAdmin: `http://localhost:5050`
-- Mongo Express: `http://localhost:8081`
+| URL | Service |
+|---|---|
+| `localhost:5432` | PostgreSQL — Auth DB |
+| `localhost:5433` | PostgreSQL — Goods DB |
+| `http://localhost:5050` | PgAdmin (admin@example.com / admin) |
+| `localhost:27017` | MongoDB (admin / admin123) |
+| `http://localhost:8081` | Mongo Express |
 
-### Backend Setup
+---
 
-Each microservice can be started independently:
+## Getting Started
 
-**Auth Service:**
+### Prerequisites
+
+- .NET 8 SDK
+- Node.js 20+ and npm
+- Docker and Docker Compose
+- VS Code (recommended — tasks and launch configs included)
+
+### Full Stack (one command)
+
+Open the workspace in VS Code and run the **Start All** task, which starts infrastructure, Auth service, Goods service, and the frontend in the correct order.
+
+### Manual Setup
+
+**1. Start infrastructure**
 ```bash
-cd backend/Inventorization.Auth.API
-dotnet run
+docker compose up -d
 ```
-API: `http://localhost:5012`
-Swagger: `http://localhost:5012/swagger`
 
-**Goods Service:**
+**2. Start backend services**
 ```bash
-cd backend/Inventorization.Goods.API
-dotnet run
+# Auth service
+ASPNETCORE_URLS=http://localhost:5012 dotnet run --project backend/Onward.Auth.API
+
+# Goods service (separate terminal)
+ASPNETCORE_URLS=http://localhost:5022 dotnet run --project backend/Inventorization.Goods.API
 ```
-API: `http://localhost:5022`
-Swagger: `http://localhost:5022/swagger`
 
-Or use VS Code tasks: "Start Auth Service", "Start Goods Service", or "Start Backend" (starts all)
-
-### Frontend Setup
-
-1. Navigate to the Quasar frontend directory:
+**3. Start frontend**
 ```bash
 cd frontend/quasar
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Start the development server:
-```bash
 npm run dev
 ```
 
-Or use VS Code task: "Start Frontend"
+---
 
-The frontend will be available at `http://localhost:9000` (Quasar default).
+## Running Services
 
-## API Services & Endpoints
+| VS Code Task | What it does |
+|---|---|
+| `Start Infra` | `docker compose up -d` |
+| `Start Auth Service` | `dotnet run` on port 5012 (depends on Infra) |
+| `Start Goods Service` | `dotnet run` on port 5022 (depends on Infra) |
+| `Start Backend` | Both services in parallel |
+| `Start Frontend` | `npm run dev` in `frontend/quasar` |
+| `Start All` | Everything above |
+| `Debug Auth Service` | Auth service in Debug mode |
+| `Debug Goods Service` | Goods service in Debug mode |
+| `Stop Infra` | `docker compose down` |
+| `Generator: Build` | Build the TypeScript generator |
+| `Generator: Generate` | Run the generator (prompts for paths) |
+| `Generator: Generate (dry-run)` | Preview generation output without writing files |
+| `Generator: Validate` | Validate a data model JSON file |
 
-### Auth Service (Port 5012)
+---
 
-**Authentication:**
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and get JWT token
-- `POST /api/auth/refresh` - Refresh access token
-- `POST /api/auth/revoke` - Revoke refresh token
+## Database Migrations
 
-**Users:**
-- `GET /api/users/search` - Search users (paginated)
-- `GET /api/users/{id}` - Get user by ID
-- `POST /api/users` - Create user
-- `PUT /api/users/{id}` - Update user
-- `DELETE /api/users/{id}` - Delete user
-
-**Roles & Permissions:**
-- `GET /api/roles/search` - Search roles
-- `POST /api/roles` - Create role
-- `PUT /api/roles/{id}` - Update role
-- `DELETE /api/roles/{id}` - Delete role
-- Similar endpoints for permissions
-
-### Goods Service (Port 5022)
-
-**Product Management:**
-- `GET /api/goods/search` - Search goods (paginated)
-- `GET /api/goods/{id}` - Get product details
-- `POST /api/goods` - Create product
-- `PUT /api/goods/{id}` - Update product
-- `DELETE /api/goods/{id}` - Delete product
-
-**Categories:**
-- `GET /api/categories/search` - Search categories
-- `GET /api/categories/{id}` - Get category
-- CRUD operations similar to goods
-
-**Suppliers, Warehouses, Stock, Purchase Orders:**
-- Similar RESTful endpoints for each entity
-
-All endpoints support:
-- Pagination via SearchDTO
-- Filtering and sorting
-- JWT authentication (where required)
-
-See Swagger docs for complete API reference:
-- Auth: `http://localhost:5012/swagger`
-- Goods: `http://localhost:5022/swagger`
-
-## Development Workflow
-
-### Adding a New Entity to a Bounded Context
-
-Follow the established pattern (see [Architecture.md](Architecture.md) for details):
-
-1. **Create Entity** in BL/Entities with immutability pattern
-2. **Create DTOs** (Create, Update, Delete, Details, Search) in DTO project
-3. **Create Entity Configuration** in BL/EntityConfigurations
-4. **Create Mapper** implementing `IMapper<TEntity, TDetailsDTO>`
-5. **Create Creator** implementing `IEntityCreator<TCreateDTO, TEntity>`
-6. **Create Modifier** implementing `IEntityModifier<TEntity, TUpdateDTO>`
-7. **Create Validator** for DTOs using FluentValidation
-8. **Add Controller** extending DataController
-9. **Register Services** in Program.cs
-10. **Create Migration** and update database
-
-### Adding a New Microservice (Bounded Context)
-
-1. Create three projects:
-   - `Inventorization.[Context].DTO` (class library)
-   - `Inventorization.[Context].Domain` (class library)
-   - `Inventorization.[Context].API` (ASP.NET web app)
-   - `Inventorization.[Context].API.Tests` (test project)
-
-2. Add PostgreSQL service to docker-compose.yml
-
-3. Configure connection strings and JWT settings
-
-4. Add VS Code tasks for the new service
-
-5. Reference `Inventorization.Base` for shared abstractions
-
-### Database Migrations
-
-**Auth Service:**
 ```bash
-cd backend/Inventorization.Auth.BL
-dotnet ef migrations add MigrationName --startup-project ../Inventorization.Auth.API
-dotnet ef database update --startup-project ../Inventorization.Auth.API
-```
+# Auth service
+cd backend/Onward.Auth.BL
+dotnet ef migrations add <Name> --startup-project ../Onward.Auth.API
+dotnet ef database update --startup-project ../Onward.Auth.API
 
-**Goods Service:**
-```bash
+# Goods service
 cd backend/Inventorization.Goods.BL
-dotnet ef migrations add MigrationName --startup-project ../Inventorization.Goods.API
+dotnet ef migrations add <Name> --startup-project ../Inventorization.Goods.API
 dotnet ef database update --startup-project ../Inventorization.Goods.API
 ```
 
+---
+
 ## Testing
 
-### Running Tests
-
 ```bash
-# All tests
-dotnet test
+# All projects
+dotnet test onward.sln
 
-# Specific test project
-cd backend/Inventorization.Goods.API.Tests
-dotnet test
+# Single test project
+dotnet test backend/Inventorization.Goods.API.Tests
+
+# With coverage
+dotnet test /p:CollectCoverage=true
 ```
 
-### Manual Testing via Swagger
+Tests use xUnit + FluentAssertions, Moq, and EF Core InMemory (no mocked `IQueryable`).
 
-1. Start the infrastructure and services
-2. Navigate to Swagger UI:
-   - Auth: http://localhost:5012/swagger
-   - Goods: http://localhost:5022/swagger
-3. Test authentication flow:
-   - Register a user via `/api/auth/register`
-   - Login via `/api/auth/login` to get JWT token
-   - Click "Authorize" in Swagger and paste the token
-   - Test protected endpoints
+---
 
-## Database Management
+## Key Documentation
 
-**PostgreSQL (via PgAdmin):**
-1. Open http://localhost:5050
-2. Login: admin@example.com / admin
-3. Add servers:
-   - Auth DB: postgres-auth:5432
-   - Goods DB: postgres-goods:5432
+| Document | Contents |
+|---|---|
+| [Architecture.md](Architecture.md) | Complete backend rules: entity patterns, base classes, DI, testing, relationship managers, auth infrastructure, query architecture |
+| [GENERATION.md](GENERATION.md) | Code generator internals: template guide, blueprint schema, generator pipeline, auth mode system |
+| [CONTROLLER_ARCHITECTURE.md](CONTROLLER_ARCHITECTURE.md) | `DataController<…>` and `BaseQueryController<…>` design |
+| [METADATA_SYSTEM.md](METADATA_SYSTEM.md) | `DataModelMetadata`, `DataModelRelationships`, metadata-driven validation |
+| [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md) | Current development status and in-progress work |
+| [QUICKSTART.md](QUICKSTART.md) | Minimal steps to get running |
 
-**MongoDB (via Mongo Express):**
-1. Open http://localhost:8081
-2. Browse `inventorydb` database
-3. View audit logs in `AuditLogs` collection
 
-## Project Status & Next Steps
-
-See [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md) for current development status and pending tasks.
-
-## Additional Documentation
-
-- **[Architecture.md](Architecture.md)** - Complete architectural guidelines and patterns
-- **[CONTROLLER_ARCHITECTURE.md](CONTROLLER_ARCHITECTURE.md)** - Controller design patterns
-- **[METADATA_SYSTEM.md](METADATA_SYSTEM.md)** - Metadata and relationship management
-- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
-
-## Contributing
-
-When contributing to this project:
-1. Follow the architectural guidelines in Architecture.md
-2. Maintain the established patterns
-3. Add unit tests for new features
-4. Update documentation as needed
-5. Test with all microservices running
-
-## License
-
-This project is for educational and development purposes.
-
-This project is set up with placeholder abstractions for the data layer. The next steps would be:
-
-1. **Database Implementation**: Replace in-memory repositories with actual database implementation (EF Core, Dapper, etc.)
-2. **Authentication**: Add user authentication and authorization
-3. **Reporting**: Add inventory reports and analytics
-4. **Search & Filtering**: Enhanced product search and filtering capabilities
-5. **Audit Trail**: Track changes and user actions
-6. **API Validation**: Add comprehensive input validation
-7. **Error Handling**: Implement global error handling and logging
-8. **Unit Tests**: Add unit tests for business logic
-9. **Integration Tests**: Add API integration tests
-
-## License
-
-This is a pet project for learning purposes.
-
-## Contributing
-
-Feel free to fork and experiment with this project!

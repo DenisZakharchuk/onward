@@ -2135,7 +2135,7 @@ Two orthogonal decisions are made separately:
 |---|---|---|---|---|
 | `perDomain` (default) | `local` (default) | `true` | `AddOnwardJwtAuth` | `[OnwardAuthorize]` / `[OnwardAuthorize("Entity")]` |
 | `perDomain` | `online` | `true` | `AddOnwardOnlineAuth` | same as above |
-| `perContext` | *(n/a)* | `true` | `AddOnwardJwtAuth` | `[OnwardAuthorize]` |
+| `perContext` | *(n/a)* | `true` | `AddOnwardJwtAuth` + auth endpoints generated via `PerContextAuthEndpointsGenerator` | `[OnwardAuthorize]` |
 | `none` | *(n/a)* | `false` | `AddOnwardAnonymousAuth` | `[AllowAnonymous]` |
 
 When `authorization` is absent the default `{ mode: 'perDomain', authMode: 'local' }` is used.
@@ -2159,6 +2159,8 @@ All other fields are optional with defaults:
 ```
 
 This drives the generated `appsettings.json` `"OnlineAuth"` section consumed by `AddOnwardOnlineAuth(builder.Configuration)`.
+
+When `transport: "Grpc"`, `AddOnwardOnlineAuth` wires `GrpcAuthIntrospectionClient` (uses the generated `AuthIntrospection.AuthIntrospectionClient` gRPC stub) rather than the default HTTP client. Both implementations are wrapped with `CachedAuthIntrospectionClient` for TTL-based result caching.
 
 ### Per-Entity Permission Attributes
 
@@ -2184,6 +2186,7 @@ Generated output:
 AuthModeResolver.resolveMode(blueprint)                           // → 'perDomain' | 'perContext' | 'none'
 AuthModeResolver.isAuthorizationEnabled(blueprint)                // → true | false
 AuthModeResolver.isOnlineAuth(blueprint)                          // → true only when mode='perDomain' && authMode='online'
+AuthModeResolver.isPerContextAuth(blueprint)                      // → true only when mode='perContext'
 AuthModeResolver.resolveOnlineAuthConfig(blueprint, bc)           // → ResolvedOnlineAuthConfig (all defaults applied)
 ```
 
@@ -2202,13 +2205,14 @@ export interface ResolvedOnlineAuthConfig {
 
 | Generator | Context properties added |
 |---|---|
-| `ApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
+| `ApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth`, `isPerContextAuth` |
 | `MinimalApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
 | `AdoNetApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
 | `AdoNetMinimalApiProgramGenerator` | `authorizationEnabled`, `onlineAuthEnabled`, `onlineAuth` |
 | `AppSettingsGenerator` | `onlineAuthEnabled`, `onlineAuth` |
 | `ControllerGenerator` | `authorizationEnabled`, `entityPermissions` (per entity) |
 | `QueryControllerGenerator` | `authorizationEnabled`, `entityPermissions` (per entity) |
+| `PerContextAuthEndpointsGenerator` | *(skips silently unless `mode = 'perContext'`)*; emits AuthController + DTOs + service interface |
 
 `entityPermissions` shape:
 ```typescript
@@ -2219,6 +2223,18 @@ export interface ResolvedOnlineAuthConfig {
   delete: boolean;
 }
 ```
+
+### Per-Context Auth Templates
+
+When `authorization.mode = "perContext"`, `PerContextAuthEndpointsGenerator` emits three files using Handlebars templates located in `generation/code/templates/api/auth/`:
+
+| Template file | Output path | Content |
+|---|---|---|
+| `per-context-auth-controller.generated.cs.hbs` | `{Context}.API/Controllers/AuthController.cs` | `POST /api/auth/login` (AllowAnonymous), `POST /api/auth/refresh` (AllowAnonymous), `POST /api/auth/logout` (Authorize); injects `I{{contextName}}AuthenticationService` |
+| `per-context-auth-dtos.generated.cs.hbs` | `{Context}.DTO/DTO/Auth/{Context}AuthDTOs.cs` | `{{contextName}}LoginRequestDTO`, `{{contextName}}LoginResponseDTO`, `{{contextName}}RefreshTokenRequestDTO` |
+| `per-context-auth-service-interface.generated.cs.hbs` | `{Context}.BL/Services/Abstractions/I{Context}AuthenticationService.cs` | Service interface with `LoginAsync`, `RefreshTokenAsync`, `LogoutAsync` — implement manually with domain logic |
+
+All three are regeneration-safe (generated files). Add token-issuing and password-hashing logic in a hand-written implementation class.
 
 ### Blueprint → Generator Pipeline
 

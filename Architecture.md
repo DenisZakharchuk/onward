@@ -3800,6 +3800,54 @@ Data model (required when authMode is online):
 }
 ```
 
+#### gRPC Transport for Online Introspection
+
+By default online mode calls the Auth service over HTTP. Set `Transport: "Grpc"` to use gRPC instead:
+
+```json
+// appsettings.json
+"OnlineAuth": {
+  "AuthServiceBaseUrl": "http://auth-service:5012",
+  "Transport": "Grpc",
+  "CacheTtlSeconds": 30
+}
+```
+
+gRPC wiring is automatic — `AddOnwardOnlineAuth` selects `GrpcAuthIntrospectionClient` (wraps the generated `AuthIntrospection.AuthIntrospectionClient` with a `CachedAuthIntrospectionClient`) when `Transport = "Grpc"`.  
+The server exposes the `AuthIntrospection.IntrospectToken` RPC via `app.MapGrpcService<AuthIntrospectionGrpcService>()` in `Onward.Auth.API/Program.cs`.
+
+**Proto locations**
+- Server: `Onward.Auth.API/Proto/auth.proto` (namespace `Onward.Auth.API.GrpcProto`)
+- Client: `Onward.Base.AspNetCore/Proto/auth.proto` (namespace `Onward.Base.AspNetCore.GrpcProto`)
+
+---
+
+### Mode 3 — Per-Context
+
+Auth entities (users, tokens) live inside the bounded context's own database. The context issues and validates its own JWTs.
+
+```csharp
+// Program.cs (generated)
+builder.Services.AddOnwardJwtAuth(builder.Configuration);
+```
+
+Blueprint:
+```json
+{ "authorization": { "mode": "perContext" } }
+```
+
+The code generator (`PerContextAuthEndpointsGenerator`) emits three files for `perContext` mode:
+
+| Generated file | Content |
+|---|---|
+| `{Context}.API/Controllers/AuthController.cs` | `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout` |
+| `{Context}.DTO/DTO/Auth/{Context}AuthDTOs.cs` | `{Context}LoginRequestDTO`, `{Context}LoginResponseDTO`, `{Context}RefreshTokenRequestDTO` |
+| `{Context}.BL/Services/Abstractions/I{Context}AuthenticationService.cs` | Service interface (`LoginAsync`, `RefreshTokenAsync`, `LogoutAsync`) — implement with custom logic |
+
+> The service interface is intentionally **not** generated with an implementation. Add business logic (password hashing, JWT issuing, refresh-token rotation) in a hand-written class that implements `I{Context}AuthenticationService` and register it in the DI project.
+
+---
+
 ### Per-Resource Authorization Attributes
 
 When `authModel.permissions` is set in the data model, generated controllers carry resource-scoped authorize attributes instead of the blanket `[OnwardAuthorize]`:
@@ -3820,14 +3868,66 @@ When `authModel.permissions` is set in the data model, generated controllers car
 | `ProductsQueryController` | `[OnwardAuthorize("Product", "Read")]` |
 | Entity not in map | `[OnwardAuthorize]` (plain fallback) |
 
+### Policy Infrastructure — How `[OnwardAuthorize]` Is Enforced
+
+`[OnwardAuthorize("Resource", "Action")]` sets `Policy = "Resource.Action"` on the endpoint. Three classes wire this into ASP.NET Core's policy engine:
+
+| Class | Location | Role |
+|---|---|---|
+| `OnwardPermissionRequirement` | `Onward.Base.AspNetCore/Authorization/` | `IAuthorizationRequirement` record — holds `Resource` + `Action`; exposes `PermissionString` (`"Resource.Action"`) |
+| `OnwardPermissionPolicyProvider` | `Onward.Base.AspNetCore/Authorization/` | `IAuthorizationPolicyProvider` — resolves any `"Word.Word"` policy name to an `OnwardPermissionRequirement` at runtime; delegates other names to the default provider |
+| `OnwardPermissionAuthorizationHandler` | `Onward.Base.AspNetCore/Authorization/` | `AuthorizationHandler<OnwardPermissionRequirement>` — passes Admins unconditionally; otherwise checks `role` claims then `permissions` claims for `"Resource.Action"` |
+
+All three are registered automatically inside every `AddOnward*Auth()` call — no manual wiring required.
+
+---
+
+### Tenant Scoping (opt-in)
+
+Multi-tenant bounded contexts can opt in to automatic per-tenant query filtering:
+
+```csharp
+// Program.cs
+builder.Services.AddOnwardTenantScoping();
+```
+
+This registers:
+- `TenantScopeActionFilter` (global MVC filter) — reads `tenant_id` claim from the JWT and stores it in `HttpContext.Items["Onward.TenantId"]`.
+- `ITenantContext` → `HttpContextTenantContext` (scoped) — exposes `CurrentTenantId` to the domain layer.
+
+To apply scoping to an entity, implement `ITenantScopeFilter<TEntity>` and register it:
+
+```csharp
+// Onward.Base/DataAccess/ITenantScopeFilter.cs
+public interface ITenantScopeFilter<TEntity>
+{
+    IQueryable<TEntity> Apply(IQueryable<TEntity> query, string tenantId);
+}
+
+// Example
+public class OrderTenantScopeFilter : ITenantScopeFilter<Order>
+{
+    public IQueryable<Order> Apply(IQueryable<Order> query, string tenantId)
+        => query.Where(o => o.TenantId == tenantId);
+}
+
+// DI
+builder.Services.AddScoped<ITenantScopeFilter<Order>, OrderTenantScopeFilter>();
+```
+
+`DataServiceBase.SearchAsync` calls `ApplyTenantScope()` automatically before applying any other filters. If `ITenantContext` is not registered (no `AddOnwardTenantScoping()`) or no `ITenantScopeFilter<TEntity>` is registered, scoping is silently skipped (null-object pattern).
+
+---
+
 ### Mode Selection Summary
 
-| Scenario | Blueprint `authMode` | `appsettings` extra section |
+| Scenario | Blueprint `mode` / `authMode` | `appsettings` extra section |
 |---|---|---|
-| Standard JWT, no revocation | `local` (default) | none |
-| Revocation, user-block, multi-tenant enforcement | `online` | `OnlineAuth { ... }` |
-| Auth entities inside this BC | set `mode: perContext` | standard JwtSettings |
-| Public / no auth required | set `mode: none` | none |
+| Standard JWT, no revocation | `mode: perDomain` / `authMode: local` (default) | none |
+| Revocation, user-block, multi-tenant enforcement | `mode: perDomain` / `authMode: online` | `OnlineAuth { ... }` |
+| Online via gRPC transport | `mode: perDomain` / `authMode: online` + `Transport: Grpc` | `OnlineAuth { Transport: "Grpc", ... }` |
+| Auth entities inside this BC | `mode: perContext` | standard JwtSettings |
+| Public / no auth required | `mode: none` | none |
 
 ### `Onward.Base.AspNetCore` Extension Methods Reference
 
