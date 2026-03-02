@@ -45,11 +45,13 @@ export class ProjectionDtoGenerator extends BaseGenerator {
     // Get related entities for nested projections
     const relatedEntities = this.getRelatedEntities(entity, relationships);
 
-    // Build base properties from BaseEntity (Id, CreatedAt, UpdatedAt)
+    // Build base properties from BaseEntity (Id/pkName, CreatedAt, UpdatedAt)
+    const pkName = entity.pk?.name ?? 'Id';
+    const pkCSharpType = TypeMapper.toCSharpType(entity.pk?.type ?? 'Guid', false);
     const baseProperties = [
       {
-        name: 'Id',
-        type: 'Guid?',
+        name: pkName,
+        type: `${pkCSharpType}?`,
         jsonPropertyName: 'id',
         description: 'Unique identifier',
       },

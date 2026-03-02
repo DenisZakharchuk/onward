@@ -18,7 +18,7 @@ namespace {{namespace}}.DTO.{{entityName}};
 /// <summary>
 /// DTO for updating an existing {{entityName}}
 /// </summary>
-public class Update{{entityName}}DTO : UpdateDTO
+public class Update{{entityName}}DTO : UpdateDTO<{{pkType}}>
 {
     {{#each properties}}
     {{#if description}}

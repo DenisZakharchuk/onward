@@ -69,7 +69,7 @@ public class {{entityName}}SearchServiceTests
 
         Expression<Func<{{entityName}}, {{projectionName}}>> projection = entity => new {{projectionName}}
         {
-            Id = entity.Id
+            Id = entity.{{pkName}}
         };
         projectionMapper.Setup(m => m.GetProjectionExpression(It.IsAny<ProjectionRequest?>())).Returns(projection);
 

@@ -296,6 +296,25 @@
           "description": "When true, entity extends OwnedBaseEntity<TOwnership>. Requires boundedContext.ownership.enabled = true.",
           "default": false
         },
+        "pk": {
+          "type": "object",
+          "description": "Primary key configuration. Defaults to { name: 'Id', type: 'Guid' }.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "C# property name for the primary key (PascalCase).",
+              "pattern": "^[A-Z][a-zA-Z0-9]*$",
+              "default": "Id"
+            },
+            "type": {
+              "type": "string",
+              "description": "C# type for the primary key.",
+              "enum": ["Guid", "int", "long", "string"],
+              "default": "Guid"
+            }
+          },
+          "additionalProperties": false
+        },
         "properties": {
           "type": "array",
           "description": "Entity properties",

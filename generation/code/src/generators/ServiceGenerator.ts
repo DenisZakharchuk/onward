@@ -36,12 +36,14 @@ export class ServiceGenerator extends BaseGenerator {
     ownershipValueObject: string = 'UserTenantOwnership'
   ): Promise<void> {
     const isOwned = entity.owned === true && isContextOwned;
+    const pkType = entity.pk?.type ?? 'Guid';
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
       isOwned,
       ownershipValueObject,
+      pkType,
     };
 
     const filePath = path.join(servicesDir, `${entity.name}DataService.cs`);

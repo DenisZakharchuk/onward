@@ -47,6 +47,8 @@ export class TestGenerator extends BaseGenerator {
         namespace,
         contextName,
         entityName: entity.name,
+        pkType: entity.pk?.type ?? 'Guid',
+        pkName: entity.pk?.name ?? 'Id',
         projectionName: `${entity.name}Projection`,
         searchServiceName: `${entity.name}SearchService`,
         dataServiceName: NamingConventions.toDataServiceClassName(entity.name),

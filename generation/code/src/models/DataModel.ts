@@ -162,6 +162,17 @@ export interface Entity {
    * Requires boundedContext.ownership.enabled = true.
    */
   owned?: boolean;
+  /**
+   * Primary key configuration. Defaults to { name: 'Id', type: 'Guid' }.
+   * - name: C# property name (PascalCase). Defaults to 'Id'.
+   * - type: C# type. One of 'Guid' | 'int' | 'long' | 'string'. Defaults to 'Guid'.
+   * When name is 'Id', the entity extends BaseEntity<type>.
+   * When name differs from 'Id', the entity implements IEntity<type> and declares the property inline.
+   */
+  pk?: {
+    name?: string;
+    type?: 'Guid' | 'int' | 'long' | 'string';
+  };
   properties: Property[];
   indexes?: Index[];
 }

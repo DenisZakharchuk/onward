@@ -17,16 +17,17 @@ namespace Onward.Base.API.Controllers;
 /// <typeparam name="TDetailsDTO">DTO for responses</typeparam>
 /// <typeparam name="TSearchDTO">DTO for search/filtering operations</typeparam>
 /// <typeparam name="TService">Data service implementation</typeparam>
-public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TService>
+/// <typeparam name="TKey">Primary key type</typeparam>
+public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TService, TKey>
     : ServiceController
     where TEntity : class
     where TCreateDTO : class
-    where TUpdateDTO : BaseDTO
-    where TDeleteDTO : BaseDTO
-    where TInitDTO : InitDTO
-    where TDetailsDTO : BaseDTO
+    where TUpdateDTO : BaseDTO<TKey>
+    where TDeleteDTO : BaseDTO<TKey>
+    where TInitDTO : InitDTO<TKey>
+    where TDetailsDTO : BaseDTO<TKey>
     where TSearchDTO : class
-    where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TKey>
 {
     protected readonly TService DataService;
 
@@ -77,7 +78,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
     /// HTTP GET /{controller}/{id}
     /// </summary>
     [HttpGet("{id}")]
-    public virtual async Task<ActionResult<ServiceResult<TDetailsDTO>>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<ActionResult<ServiceResult<TDetailsDTO>>> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
         LogOperationStart(nameof(GetByIdAsync), new { id });
 
@@ -144,7 +145,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
     /// </summary>
     [HttpPut("{id}")]
     public virtual async Task<ActionResult<ServiceResult<TDetailsDTO>>> UpdateAsync(
-        Guid id,
+        TKey id,
         [FromBody] TUpdateDTO dto,
         CancellationToken cancellationToken = default)
     {
@@ -158,7 +159,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
         try
         {
             // Validate that the ID in the route matches the DTO
-            if (dto.Id != id)
+            if (!EqualityComparer<TKey>.Default.Equals(dto.Id, id))
             {
                 return BadRequest(ServiceResult<TDetailsDTO>.Failure("ID mismatch between route and DTO"));
             }
@@ -187,7 +188,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
     /// </summary>
     [HttpDelete("{id}")]
     public virtual async Task<ActionResult<ServiceResult<bool>>> DeleteAsync(
-        Guid id,
+        TKey id,
         CancellationToken cancellationToken = default)
     {
         LogOperationStart(nameof(DeleteAsync), new { id });
@@ -196,11 +197,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
         {
             // Create delete DTO with ID
             var deleteDto = (TDeleteDTO)Activator.CreateInstance(typeof(TDeleteDTO))!;
-            var idProperty = typeof(TDeleteDTO).GetProperty("Id");
-            if (idProperty != null && idProperty.CanWrite)
-            {
-                idProperty.SetValue(deleteDto, id);
-            }
+            deleteDto.Id = id;
 
             var result = await DataService.DeleteAsync(deleteDto, cancellationToken);
 
@@ -218,5 +215,25 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
             LogOperationError(nameof(DeleteAsync), ex);
             return StatusCode(500, ServiceResult<TDeleteDTO>.Failure($"Internal server error: {ex.Message}"));
         }
+    }
+}
+
+/// <summary>
+/// Abstract generic base controller for Guid-primary-key entities — convenience alias.
+/// </summary>
+public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TService>
+    : DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TService, Guid>
+    where TEntity : class
+    where TCreateDTO : class
+    where TUpdateDTO : BaseDTO<Guid>
+    where TDeleteDTO : BaseDTO<Guid>
+    where TInitDTO : InitDTO<Guid>
+    where TDetailsDTO : BaseDTO<Guid>
+    where TSearchDTO : class
+    where TService : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+{
+    protected DataController(TService dataService, ILogger<ServiceController> logger)
+        : base(dataService, logger)
+    {
     }
 }

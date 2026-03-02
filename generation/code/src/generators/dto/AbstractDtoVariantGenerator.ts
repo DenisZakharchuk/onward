@@ -69,11 +69,15 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
     baseNamespace: string
   ): Promise<void> {
     const properties = this.getDtoProperties(entity, 'update');
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkName = entity.pk?.name ?? 'Id';
 
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
+      pkType,
+      pkName,
       properties: properties.map((p) => this.propertyToDto(p, 'update')),
       hasEnums: this.hasEnumProperties(entity, 'update'),
     };
@@ -88,10 +92,14 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
     namespace: string,
     baseNamespace: string
   ): Promise<void> {
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkName = entity.pk?.name ?? 'Id';
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
+      pkType,
+      pkName,
     };
 
     const filePath = path.join(entityDir, `Delete${entity.name}DTO.cs`);
@@ -105,11 +113,15 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
     baseNamespace: string
   ): Promise<void> {
     const properties = this.getInitDtoProperties(entity);
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkName = entity.pk?.name ?? 'Id';
 
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
+      pkType,
+      pkName,
       properties: properties.map((p) => ({
         name: p.name,
         type: TypeMapper.toCSharpType(p.enumType || p.type, false),
@@ -128,7 +140,8 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
         return false;
       }
 
-      if (p.name === 'Id' || p.name === 'CreatedAt' || p.name === 'UpdatedAt') {
+      const pkName = entity.pk?.name ?? 'Id';
+      if (p.name === pkName || p.name === 'CreatedAt' || p.name === 'UpdatedAt') {
         return false;
       }
 
@@ -155,11 +168,15 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
     baseNamespace: string
   ): Promise<void> {
     const properties = this.getDtoProperties(entity, 'details');
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkName = entity.pk?.name ?? 'Id';
 
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
+      pkType,
+      pkName,
       properties: properties.map((p) => this.propertyToDto(p, 'details')),
       hasEnums: this.hasEnumProperties(entity, 'details'),
       navigationProperties: [],

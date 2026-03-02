@@ -15,12 +15,12 @@ namespace {{namespace}}.BL.Entities;
 /// <summary>
 /// Junction entity representing the many-to-many relationship between {{leftEntity}} and {{rightEntity}}
 /// </summary>
-public class {{junctionName}} : JunctionEntityBase
+public class {{junctionName}} : JunctionEntityBase<{{leftPkType}}, {{rightPkType}}>
 {
     /// <summary>
     /// Private parameterless constructor for EF Core
     /// </summary>
-    private {{junctionName}}() : base(Guid.Empty, Guid.Empty) { }
+    private {{junctionName}}() : base(default({{leftPkType}})!, default({{rightPkType}})!) { }
 
     /// <summary>
     /// Creates a new instance of {{junctionName}}
@@ -31,8 +31,8 @@ public class {{junctionName}} : JunctionEntityBase
     /// <param name="{{paramName}}">{{paramDescription}}</param>
     {{/each}}
     public {{junctionName}}(
-        Guid {{leftEntityParam}}Id,
-        Guid {{rightEntityParam}}Id{{#if hasMetadata}},{{/if}}
+        {{leftPkType}} {{leftEntityParam}}Id,
+        {{rightPkType}} {{rightEntityParam}}Id{{#if hasMetadata}},{{/if}}
         {{#each metadataParams}}
         {{type}} {{paramName}}{{#unless @last}},{{/unless}}
         {{/each}}
@@ -46,12 +46,12 @@ public class {{junctionName}} : JunctionEntityBase
     /// <summary>
     /// Gets the {{leftEntity}} ID (alias for EntityId)
     /// </summary>
-    public Guid {{leftEntity}}Id => EntityId;
+    public {{leftPkType}} {{leftEntity}}Id => EntityId;
 
     /// <summary>
     /// Gets the {{rightEntity}} ID (alias for RelatedEntityId)
     /// </summary>
-    public Guid {{rightEntity}}Id => RelatedEntityId;
+    public {{rightPkType}} {{rightEntity}}Id => RelatedEntityId;
 
     {{#each metadataProperties}}
     {{#if description}}

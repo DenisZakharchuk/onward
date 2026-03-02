@@ -19,7 +19,7 @@ namespace {{namespace}}.BL.DataServices;
 /// <summary>
 /// Data service interface for {{entityName}}
 /// </summary>
-public interface I{{entityName}}DataService : IDataService<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO>
+public interface I{{entityName}}DataService : IDataService<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, {{pkType}}>
 {
 }
 
@@ -27,11 +27,11 @@ public interface I{{entityName}}DataService : IDataService<{{entityName}}, Creat
 /// Data service implementation for {{entityName}}
 /// </summary>
 {{#if isOwned}}
-public class {{entityName}}DataService : DataServiceBase<{{ownershipValueObject}}, {{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO>, I{{entityName}}DataService
+public class {{entityName}}DataService : DataServiceBase<{{ownershipValueObject}}, {{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, {{pkType}}>, I{{entityName}}DataService
 {
     public {{entityName}}DataService(
         Onward.Base.DataAccess.IUnitOfWork unitOfWork,
-        IRepository<{{entityName}}> repository,
+        IRepository<{{entityName}}, {{pkType}}> repository,
         IServiceProvider serviceProvider,
         ICurrentIdentityContext<{{ownershipValueObject}}> identityContext,
         ILogger<{{entityName}}DataService> logger)
@@ -44,7 +44,7 @@ public class {{entityName}}DataService : DataServiceBase<{{entityName}}, Create{
 {
     public {{entityName}}DataService(
         Onward.Base.DataAccess.IUnitOfWork unitOfWork,
-        IRepository<{{entityName}}> repository,
+        IRepository<{{entityName}}, {{pkType}}> repository,
         IServiceProvider serviceProvider,
         ILogger<{{entityName}}DataService> logger)
         : base(unitOfWork, repository, serviceProvider, logger)

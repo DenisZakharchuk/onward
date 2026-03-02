@@ -48,6 +48,8 @@ export class ControllerGenerator extends BaseGenerator {
   ): Promise<void> {
     const pluralEntityName = this.pluralize(entity.name);
     const isOwned = entity.owned === true && isContextOwned;
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkName = entity.pk?.name ?? 'Id';
 
     const context = {
       baseNamespace,
@@ -56,6 +58,8 @@ export class ControllerGenerator extends BaseGenerator {
       pluralEntityName,
       isOwned,
       ownershipValueObject,
+      pkType,
+      pkName,
       authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
       entityPermissions,
     };

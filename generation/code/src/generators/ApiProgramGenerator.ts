@@ -21,6 +21,7 @@ export class ApiProgramGenerator extends BaseGenerator {
       contextDescription: model.boundedContext.description || `${contextName} API`,
       authorizationEnabled: AuthModeResolver.isAuthorizationEnabled(this.blueprint),
       onlineAuthEnabled: AuthModeResolver.isOnlineAuth(this.blueprint),
+      isPerContextAuth: AuthModeResolver.isPerContextAuth(this.blueprint),
       onlineAuth: AuthModeResolver.resolveOnlineAuthConfig(this.blueprint, model.boundedContext),
     };
 

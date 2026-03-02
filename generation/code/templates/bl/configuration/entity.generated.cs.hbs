@@ -17,11 +17,18 @@ namespace {{namespace}}.BL.EntityConfigurations;
 /// <summary>
 /// Entity configuration for {{entityName}}
 /// </summary>
-public class {{entityName}}Configuration : BaseEntityConfiguration<{{entityName}}>
+public class {{entityName}}Configuration : {{#if pkIsDefaultBase}}BaseEntityConfiguration<{{entityName}}, {{pkType}}>{{else}}IEntityTypeConfiguration<{{entityName}}>{{/if}}
 {
+    {{#if pkIsDefaultBase}}
     protected override void ConfigureEntity(EntityTypeBuilder<{{entityName}}> builder)
+    {{else}}
+    public void Configure(EntityTypeBuilder<{{entityName}}> builder)
+    {{/if}}
     {
         builder.ToTable("{{tableName}}"{{#if schema}}, "{{schema}}"{{/if}});
+        {{#unless pkIsDefaultBase}}
+        builder.HasKey(e => e.{{pkName}});
+        {{/unless}}
 
         {{#each propertyConfigurations}}
         {{{this}}}

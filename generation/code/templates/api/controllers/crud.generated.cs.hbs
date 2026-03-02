@@ -32,7 +32,7 @@ namespace {{namespace}}.API.Controllers;
 {{else}}
 [AllowAnonymous]
 {{/if}}
-public partial class {{pluralEntityName}}Controller : DataController<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, I{{entityName}}DataService>
+public partial class {{pluralEntityName}}Controller : DataController<{{entityName}}, Create{{entityName}}DTO, Update{{entityName}}DTO, Delete{{entityName}}DTO, Init{{entityName}}DTO, {{entityName}}DetailsDTO, {{entityName}}SearchDTO, I{{entityName}}DataService, {{pkType}}>
 {
 {{#if isOwned}}
     private readonly ICurrentUserService<{{ownershipValueObject}}> _currentUserService;

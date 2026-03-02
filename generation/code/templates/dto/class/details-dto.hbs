@@ -17,7 +17,7 @@ namespace {{namespace}}.DTO.{{entityName}};
 /// <summary>
 /// DTO with detailed information about a {{entityName}}
 /// </summary>
-public class {{entityName}}DetailsDTO : DetailsDTO
+public class {{entityName}}DetailsDTO : DetailsDTO<{{pkType}}>
 {
     {{#each properties}}
     {{#if description}}

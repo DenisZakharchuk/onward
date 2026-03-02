@@ -39,6 +39,14 @@ export class AuthModeResolver {
   }
 
   /**
+   * Returns `true` when the blueprint generates auth endpoints inside the bounded context
+   * rather than delegating to the Onward.Auth service (mode='perContext').
+   */
+  static isPerContextAuth(blueprint: Blueprint | undefined): boolean {
+    return this.resolveMode(blueprint) === 'perContext';
+  }
+
+  /**
    * Returns the resolved online-auth configuration, merging data-model values with defaults.
    * authServiceUrl is taken from boundedContext.authModel.onlineAuth.authServiceUrl.
    * All other fields fall back to sensible defaults.

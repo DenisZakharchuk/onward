@@ -316,19 +316,35 @@ Inventorization.[BoundedContext].API  →  Inventorization.Base.AspNetCore
 
 ### Ownership in DataServiceBase
 
-For owned entities use the 8-type-parameter variant that constructor-injects identity context:
+For owned entities use the 8-type-parameter variant that constructor-injects identity context.
+The 9th type parameter `TPrimaryKey` is required when the entity uses a non-`Guid` PK:
 
 ```csharp
-// Owned data service — DataServiceBase stamps Ownership on Add/Update
+// Owned data service with default Guid PK — alias constructor (8 params)
 public class OrderDataService
     : DataServiceBase<UserTenantOwnership,
                       Order, CreateOrderDTO, UpdateOrderDTO, DeleteOrderDTO,
-                      OrderDetailsDTO, OrderSearchDTO>,
+                      OrderDetailsDTO, OrderSearchDTO, Guid>,
       IOrderDataService
 {
     public OrderDataService(
         IUnitOfWork unitOfWork,
-        IRepository<Order> repository,
+        IRepository<Order, Guid> repository,       // IRepository<T, Guid> — accepts both 1-param and 2-param Guid repos
+        ICurrentIdentityContext<UserTenantOwnership> identityContext,
+        ILogger<OrderDataService> logger)
+        : base(unitOfWork, repository, identityContext, logger) { }
+}
+
+// Owned data service with custom long PK — full 9-param form required
+public class OrderDataService
+    : DataServiceBase<UserTenantOwnership,
+                      Order, CreateOrderDTO, UpdateOrderDTO, DeleteOrderDTO,
+                      OrderDetailsDTO, OrderSearchDTO, long>,
+      IOrderDataService
+{
+    public OrderDataService(
+        IUnitOfWork unitOfWork,
+        IRepository<Order, long> repository,
         ICurrentIdentityContext<UserTenantOwnership> identityContext,
         ILogger<OrderDataService> logger)
         : base(unitOfWork, repository, identityContext, logger) { }
@@ -338,6 +354,13 @@ public class OrderDataService
 public class CategoryDataService
     : DataServiceBase<Category, CreateCategoryDTO, ...>, ICategoryDataService { ... }
 ```
+
+**`IRepository<T>` vs `IRepository<T, TKey>` hierarchy:**
+- `IRepository<T>` — derived interface, shorthand for `IRepository<T, Guid>`
+- `IRepository<T, Guid>` — the base interface accepted by alias constructors in `DataServiceBase`
+- `IRepository<T, long>` / `IRepository<T, int>` — for entities with non-Guid PK
+- The alias constructors in `DataServiceBase` accept `IRepository<TEntity, Guid>` so that both `IRepository<T>` (1-param) and `IRepository<T, Guid>` (2-param) satisfy the parameter via upcast.
+- **DI**: Register BOTH `IRepository<>` and `IRepository<,>` open generics (see DI section).
 
 `DataServiceBase<TOwnership, ...>` automatically:
 - Calls `entity.SetOwnership(identityContext.Ownership)` inside `AddAsync`
@@ -1225,8 +1248,9 @@ public static class CommerceServiceCollectionExtensions
         // Unit of Work
         services.AddScoped<ICommerceUnitOfWork, CommerceUnitOfWork>();
 
-        // Repositories
+        // Repositories — both open-generic forms required
         services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+        services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
 
         // Entity: Product
         services.AddScoped<IMapper<Product, ProductDetailsDTO>, ProductMapper>();
@@ -1359,7 +1383,9 @@ public static IServiceCollection AddCommerceServices(
 
 3. **Generic Repository Registration**:
    ```csharp
-   services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+   // Both open-generic forms required:
+   services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));    // IRepository<T> shorthand
+   services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));  // IRepository<T, TKey> — required for non-Guid PK entities
    ```
 
 4. **Entity-specific services** (mapper, creators, modifiers, validators, data service):

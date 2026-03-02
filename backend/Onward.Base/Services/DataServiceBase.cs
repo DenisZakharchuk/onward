@@ -28,31 +28,31 @@ using IUnitOfWorkInterface = Onward.Base.DataAccess.IUnitOfWork;
 /// <see cref="DataServiceBase{TEntity,TCreateDTO,TUpdateDTO,TDeleteDTO,TInitDTO,TDetailsDTO,TSearchDTO}"/>
 /// instead (the non-generic variant below).
 /// </remarks>
-public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
-    : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TKey>
+    : IDataService<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TKey>
     where TOwnership : OwnershipValueObject
     where TEntity : class
     where TCreateDTO : class
-    where TUpdateDTO : UpdateDTO
-    where TDeleteDTO : DeleteDTO
-    where TInitDTO : InitDTO
+    where TUpdateDTO : UpdateDTO<TKey>
+    where TDeleteDTO : DeleteDTO<TKey>
+    where TInitDTO : InitDTO<TKey>
     where TDetailsDTO : class
     where TSearchDTO : class
 {
     protected readonly IUnitOfWorkInterface UnitOfWork;
-    protected readonly IRepository<TEntity> Repository;
+    protected readonly IRepository<TEntity, TKey> Repository;
     protected readonly IServiceProvider ServiceProvider;
     protected readonly ICurrentIdentityContext<TOwnership> IdentityContext;
-    protected readonly ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> Logger;
+    protected readonly ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TKey>> Logger;
 
     protected string EntityName => typeof(TEntity).Name;
 
     protected DataServiceBase(
         IUnitOfWorkInterface unitOfWork,
-        IRepository<TEntity> repository,
+        IRepository<TEntity, TKey> repository,
         IServiceProvider serviceProvider,
         ICurrentIdentityContext<TOwnership> identityContext,
-        ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> logger)
+        ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, TKey>> logger)
     {
         UnitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         Repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -103,11 +103,11 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     /// <summary>
     /// Gets a single entity by ID
     /// </summary>
-    public async Task<ServiceResult<TDetailsDTO>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<TDetailsDTO>> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
         try
         {
-            if (id == Guid.Empty)
+            if (IsDefaultKey(id))
                 return ServiceResult<TDetailsDTO>.Failure($"{EntityName} ID is required");
 
             var entity = await Repository.GetByIdAsync(id, cancellationToken);
@@ -242,6 +242,27 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     }
 
     /// <summary>
+    /// Applies <see cref="ITenantScopeFilter{TEntity}"/> to the query when:
+    /// <list type="number">
+    ///   <item>An <see cref="ITenantContext"/> is registered in the service provider, AND</item>
+    ///   <item><see cref="ITenantContext.CurrentTenantId"/> is non-null, AND</item>
+    ///   <item>An <see cref="ITenantScopeFilter{TEntity}"/> implementation is registered.</item>
+    /// </list>
+    /// Otherwise the query is returned unchanged.
+    /// </summary>
+    protected IQueryable<TEntity> ApplyTenantScope(IQueryable<TEntity> query)
+    {
+        var tenantContext = ServiceProvider.GetService<ITenantContext>();
+        var tenantId = tenantContext?.CurrentTenantId;
+
+        if (string.IsNullOrWhiteSpace(tenantId))
+            return query;
+
+        var filter = ServiceProvider.GetService<ITenantScopeFilter<TEntity>>();
+        return filter is not null ? filter.Apply(query, tenantId) : query;
+    }
+
+    /// <summary>
     /// Searches for entities with pagination
     /// </summary>
     public async Task<ServiceResult<PagedResult<TDetailsDTO>>> SearchAsync(TSearchDTO searchDto, CancellationToken cancellationToken = default)
@@ -253,7 +274,7 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
 
             var searchProvider = ServiceProvider.GetRequiredService<ISearchQueryProvider<TEntity, TSearchDTO>>();
             var filter = searchProvider.GetSearchExpression(searchDto);
-            var query = Repository.GetQueryable().Where(filter);
+            var query = ApplyTenantScope(Repository.GetQueryable()).Where(filter);
 
             var total = await query.CountAsync(cancellationToken);
             
@@ -286,12 +307,44 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     }
 
     /// <summary>
+    /// Determines whether the given key is the default (empty) value.
+    /// Override for custom key types (e.g., <see langword="string"/>).
+    /// </summary>
+    protected virtual bool IsDefaultKey(TKey id)
+        => EqualityComparer<TKey>.Default.Equals(id, default!);
+
+    /// <summary>
     /// Helper method to get entity ID for logging
     /// </summary>
     protected virtual object? GetEntityId(TEntity entity)
     {
         var idProperty = typeof(TEntity).GetProperty("Id");
         return idProperty?.GetValue(entity);
+    }
+}
+
+/// <summary>
+/// Ownership-aware base class for Guid-primary-key entities — convenience alias.
+/// </summary>
+public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    : DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, Guid>
+    where TOwnership : OwnershipValueObject
+    where TEntity : class
+    where TCreateDTO : class
+    where TUpdateDTO : UpdateDTO<Guid>
+    where TDeleteDTO : DeleteDTO<Guid>
+    where TInitDTO : InitDTO<Guid>
+    where TDetailsDTO : class
+    where TSearchDTO : class
+{
+    protected DataServiceBase(
+        IUnitOfWorkInterface unitOfWork,
+        IRepository<TEntity, Guid> repository,
+        IServiceProvider serviceProvider,
+        ICurrentIdentityContext<TOwnership> identityContext,
+        ILogger<DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, Guid>> logger)
+        : base(unitOfWork, repository, serviceProvider, identityContext, logger)
+    {
     }
 }
 
@@ -306,24 +359,24 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
 /// </para>
 /// </summary>
 public abstract class DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
-    : DataServiceBase<NoOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>
+    : DataServiceBase<NoOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, Guid>
     where TEntity : class
     where TCreateDTO : class
-    where TUpdateDTO : UpdateDTO
-    where TDeleteDTO : DeleteDTO
-    where TInitDTO : InitDTO
+    where TUpdateDTO : UpdateDTO<Guid>
+    where TDeleteDTO : DeleteDTO<Guid>
+    where TInitDTO : InitDTO<Guid>
     where TDetailsDTO : class
     where TSearchDTO : class
 {
     protected DataServiceBase(
         IUnitOfWorkInterface unitOfWork,
-        IRepository<TEntity> repository,
+        IRepository<TEntity, Guid> repository,
         IServiceProvider serviceProvider,
         ILogger<DataServiceBase<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>> logger)
         : base(unitOfWork, repository, serviceProvider,
                AnonymousIdentityContext<NoOwnership>.Instance,
                // Logger type coercion: wrap in a typed forwarder so base class logger type param matches
-               new TypeForwardingLogger<DataServiceBase<NoOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO>>(logger))
+               new TypeForwardingLogger<DataServiceBase<NoOwnership, TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO, TInitDTO, TDetailsDTO, TSearchDTO, Guid>>(logger))
     {
     }
 }

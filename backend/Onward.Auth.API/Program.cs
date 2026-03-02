@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Onward.Auth.API.GrpcServices;
 using Onward.Auth.BL.DataAccess.Seeding;
 using Onward.Auth.BL.DbContexts;
 using Onward.Auth.BL.Extensions;
@@ -17,6 +18,9 @@ builder.Services.AddOnwardAuthBusinessServices(opt => opt.UseNpgsql(connectionSt
 
 // ===== JWT authentication + authorization =====
 builder.Services.AddOnwardJwtAuth(builder.Configuration);
+
+// ===== gRPC =====
+builder.Services.AddGrpc();
 
 // ===== Controllers & Swagger =====
 builder.Services.AddControllers();
@@ -84,5 +88,6 @@ app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseOnwardAuth();
 app.MapControllers();
+app.MapGrpcService<AuthIntrospectionGrpcService>();
 
 app.Run();

@@ -14,7 +14,7 @@ namespace {{namespace}}.DTO.{{entityName}};
 /// <summary>
 /// DTO for deleting a {{entityName}}
 /// </summary>
-public class Delete{{entityName}}DTO : DeleteDTO
+public class Delete{{entityName}}DTO : DeleteDTO<{{pkType}}>
 {
-    // Inherits Id from DeleteDTO base class
+    // Inherits {{pkName}} from DeleteDTO base class
 }

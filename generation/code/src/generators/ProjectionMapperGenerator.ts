@@ -27,7 +27,8 @@ export class ProjectionMapperGenerator extends BaseGenerator {
         mappersDir,
         namespace,
         baseNamespace,
-        model.relationships || []
+        model.relationships || [],
+        model.entities
       );
     }
   }
@@ -37,7 +38,8 @@ export class ProjectionMapperGenerator extends BaseGenerator {
     mappersDir: string,
     namespace: string,
     baseNamespace: string,
-    relationships: Relationship[]
+    relationships: Relationship[],
+    entities: Entity[] = []
   ): Promise<void> {
     // Get scalar properties (exclude collections and navigation properties)
     const scalarProperties = entity.properties.filter(
@@ -53,7 +55,7 @@ export class ProjectionMapperGenerator extends BaseGenerator {
       entityName: entity.name,
       projectionName: `${entity.name}Projection`,
       properties: this.buildPropertyContext(scalarProperties),
-      relationships: this.buildRelationshipContext(relatedEntities, entity.name),
+      relationships: this.buildRelationshipContext(relatedEntities, entity.name, entities),
       hasRelationships: relatedEntities.length > 0,
       maxDefaultDepth: 3, // Default depth for nested projections
     };
@@ -127,7 +129,8 @@ export class ProjectionMapperGenerator extends BaseGenerator {
 
   private buildRelationshipContext(
     relatedEntities: Array<{ name: string; targetEntity: string; isCollection: boolean; nullable: boolean }>,
-    _currentEntityName: string
+    _currentEntityName: string,
+    entities: import('../models/DataModel').Entity[] = []
   ): Array<{
     name: string;
     targetEntity: string;
@@ -137,16 +140,22 @@ export class ProjectionMapperGenerator extends BaseGenerator {
     nullable: boolean;
     camelName: string;
     camelTargetEntity: string;
+    targetPkName: string;
   }> {
-    return relatedEntities.map((r) => ({
-      name: r.name,
-      targetEntity: r.targetEntity,
-      targetProjection: `${r.targetEntity}Projection`,
-      targetMapperInterface: `I${r.targetEntity}ProjectionMapper`,
-      isCollection: r.isCollection,
-      nullable: r.nullable,
-      camelName: NamingConventions.toCamelCase(r.name),
-      camelTargetEntity: NamingConventions.toCamelCase(r.targetEntity),
-    }));
+    return relatedEntities.map((r) => {
+      const targetEntityDef = entities.find(e => e.name === r.targetEntity);
+      const targetPkName = targetEntityDef?.pk?.name ?? 'Id';
+      return {
+        name: r.name,
+        targetEntity: r.targetEntity,
+        targetProjection: `${r.targetEntity}Projection`,
+        targetMapperInterface: `I${r.targetEntity}ProjectionMapper`,
+        isCollection: r.isCollection,
+        nullable: r.nullable,
+        camelName: NamingConventions.toCamelCase(r.name),
+        camelTargetEntity: NamingConventions.toCamelCase(r.targetEntity),
+        targetPkName,
+      };
+    });
   }
 }

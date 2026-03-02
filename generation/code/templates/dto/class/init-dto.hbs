@@ -18,6 +18,6 @@ namespace {{namespace}}.DTO.{{entityName}};
 /// DTO for init operation on {{entityName}}
 /// </summary>
 public record Init{{entityName}}DTO(
-    Guid Id{{#each properties}},
+    {{pkType}} {{pkName}}{{#each properties}},
     {{type}} {{name}}{{/each}}
-) : InitDTO(Id);
+) : InitDTO<{{pkType}}>({{pkName}});

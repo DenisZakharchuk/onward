@@ -1,11 +1,15 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Grpc.Net.Client;
 using Onward.Base.Auth;
 using Onward.Base.AspNetCore.Auth;
+using Onward.Base.AspNetCore.Authorization;
+using GrpcProto = Onward.Base.AspNetCore.GrpcProto;
 
 namespace Onward.Base.AspNetCore.Extensions;
 
@@ -59,7 +63,7 @@ public static class OnwardAuthServiceCollectionExtensions
                 };
             });
 
-        services.AddAuthorization();
+        services.AddOnwardPermissionAuthorization();
 
         return services;
     }
@@ -80,7 +84,7 @@ public static class OnwardAuthServiceCollectionExtensions
             })
             .AddJwtBearer(opts => opts.TokenValidationParameters = tokenValidationParameters);
 
-        services.AddAuthorization();
+        services.AddOnwardPermissionAuthorization();
 
         return services;
     }
@@ -147,8 +151,23 @@ public static class OnwardAuthServiceCollectionExtensions
 
         if (useGrpc)
         {
-            // gRPC adapter (stub — swap body of GrpcAuthIntrospectionClient when proto is ready)
-            services.AddSingleton<IAuthIntrospectionClient, GrpcAuthIntrospectionClient>();
+            // gRPC channel + generated stub client
+            services.AddSingleton(sp =>
+            {
+                var channel = Grpc.Net.Client.GrpcChannel.ForAddress(
+                    onlineSettings.AuthServiceBaseUrl.TrimEnd('/'));
+                return new GrpcProto.AuthIntrospection.AuthIntrospectionClient(channel);
+            });
+
+            // Wrap with the caching decorator via the gRPC adapter
+            services.AddHttpContextAccessor();
+            services.AddScoped<GrpcAuthIntrospectionClient>();
+            services.AddScoped<IAuthIntrospectionClient>(sp =>
+                new CachedAuthIntrospectionClient(
+                    sp.GetRequiredService<GrpcAuthIntrospectionClient>(),
+                    sp.GetRequiredService<IMemoryCache>(),
+                    sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OnwardOnlineAuthSettings>>(),
+                    sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CachedAuthIntrospectionClient>>()));
         }
         else
         {
@@ -206,6 +225,25 @@ public static class OnwardAuthServiceCollectionExtensions
                     }
                 };
             });
+
+        services.AddOnwardPermissionAuthorization();
+
+        return services;
+    }
+
+    // ── Internal helpers ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Registers the Onward dynamic permission policy provider and its handler.
+    /// Called automatically by all auth registration methods that enable authorization.
+    /// </summary>
+    private static IServiceCollection AddOnwardPermissionAuthorization(this IServiceCollection services)
+    {
+        // Dynamic provider — resolves "Resource.Action" policy names at runtime
+        services.AddSingleton<IAuthorizationPolicyProvider, OnwardPermissionPolicyProvider>();
+
+        // Handler that evaluates OnwardPermissionRequirement against claims
+        services.AddScoped<IAuthorizationHandler, OnwardPermissionAuthorizationHandler>();
 
         services.AddAuthorization();
 

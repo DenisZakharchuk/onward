@@ -51,7 +51,7 @@ public class {{entityName}}ProjectionMapper : ProjectionMapperBase<{{entityName}
             {{name}} = deep && depth > 0 && entity.{{name}} != null
                 ? new {{targetProjection}}
                 {
-                    Id = entity.{{name}}.Id,
+                    {{targetPkName}} = entity.{{name}}.{{targetPkName}},
                     {{!-- Add common properties for nested entities --}}
                 }
                 : null,
@@ -88,7 +88,7 @@ public class {{entityName}}ProjectionMapper : ProjectionMapperBase<{{entityName}
             {{name}} = has{{name}} && entity.{{name}} != null
                 ? new {{targetProjection}}
                 {
-                    Id = entity.{{name}}.Id,
+                    {{targetPkName}} = entity.{{name}}.{{targetPkName}},
                 }
                 : null,
             {{/each}}
@@ -145,7 +145,7 @@ public class {{entityName}}ProjectionMapper : ProjectionMapperBase<{{entityName}
                 if (entity.{{name}} != null)
                 {
                     result.{{name}} ??= new {{targetProjection}}();
-                    result.{{name}}.Id = entity.{{name}}.Id;
+                    result.{{name}}.{{targetPkName}} = entity.{{name}}.{{targetPkName}};
                 }
                 break;
             case "{{camelName}}.name":

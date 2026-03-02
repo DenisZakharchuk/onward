@@ -1,10 +1,10 @@
 namespace Onward.Base.Models;
 
 /// <summary>
-/// Base class for many-to-many junction entities.
+/// Base class for many-to-many junction entities with configurable left/right FK types.
 /// Provides standardized EntityId and RelatedEntityId properties with validated constructor.
 /// </summary>
-public abstract class JunctionEntityBase : BaseEntity
+public abstract class JunctionEntityBase<TLeftKey, TRightKey> : BaseEntity
 {
     /// <summary>
     /// Parameterless constructor for EF Core only.
@@ -16,15 +16,12 @@ public abstract class JunctionEntityBase : BaseEntity
     /// <summary>
     /// Creates a junction entity with validated foreign keys.
     /// </summary>
-    /// <param name="entityId">Parent entity ID</param>
-    /// <param name="relatedEntityId">Related entity ID</param>
-    /// <exception cref="ArgumentException">Thrown if either ID is empty</exception>
-    protected JunctionEntityBase(Guid entityId, Guid relatedEntityId)
+    protected JunctionEntityBase(TLeftKey entityId, TRightKey relatedEntityId)
     {
-        if (entityId == Guid.Empty)
-            throw new ArgumentException("Entity ID cannot be empty", nameof(entityId));
-        if (relatedEntityId == Guid.Empty)
-            throw new ArgumentException("Related entity ID cannot be empty", nameof(relatedEntityId));
+        if (EqualityComparer<TLeftKey>.Default.Equals(entityId, default!))
+            throw new ArgumentException("Entity ID cannot be default/empty", nameof(entityId));
+        if (EqualityComparer<TRightKey>.Default.Equals(relatedEntityId, default!))
+            throw new ArgumentException("Related entity ID cannot be default/empty", nameof(relatedEntityId));
 
         EntityId = entityId;
         RelatedEntityId = relatedEntityId;
@@ -33,10 +30,21 @@ public abstract class JunctionEntityBase : BaseEntity
     /// <summary>
     /// Foreign key to the parent entity.
     /// </summary>
-    public Guid EntityId { get; protected set; }
+    public TLeftKey EntityId { get; protected set; } = default!;
 
     /// <summary>
     /// Foreign key to the related entity.
     /// </summary>
-    public Guid RelatedEntityId { get; protected set; }
+    public TRightKey RelatedEntityId { get; protected set; } = default!;
+}
+
+/// <summary>
+/// Base class for many-to-many junction entities with Guid FK columns — convenience alias.
+/// </summary>
+public abstract class JunctionEntityBase : JunctionEntityBase<Guid, Guid>
+{
+    protected JunctionEntityBase() : base() { }
+
+    protected JunctionEntityBase(Guid entityId, Guid relatedEntityId)
+        : base(entityId, relatedEntityId) { }
 }

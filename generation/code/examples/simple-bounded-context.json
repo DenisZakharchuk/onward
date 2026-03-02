@@ -331,6 +331,7 @@
             "description": "Customer order",
             "auditable": true,
             "owned": true,
+            "pk": { "name": "OrderId", "type": "long" },
             "properties": [
               {
                 "name": "CustomerId",
@@ -410,7 +411,7 @@
             "properties": [
               {
                 "name": "OrderId",
-                "type": "Guid",
+                "type": "long",
                 "required": true,
                 "isForeignKey": true,
                 "referencedEntity": "Order",

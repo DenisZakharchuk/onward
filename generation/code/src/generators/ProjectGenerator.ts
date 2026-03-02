@@ -137,29 +137,29 @@ export class ProjectGenerator extends BaseGenerator {
     return {
       projectName,
       baseNamespace,
-      itemGroup: this.buildItemGroup(projectType, namespace, baseNamespace, hasOwnership),
+      itemGroup: this.buildItemGroup(projectType, namespace, hasOwnership),
       targetFramework: 'net8.0'
     };
   }
 
-  private buildItemGroup(projectType: string, namespace: string, baseNamespace: string, hasOwnership = false): string {
+  private buildItemGroup(projectType: string, namespace: string, hasOwnership = false): string {
     switch (projectType) {
       case 'meta':
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
   </ItemGroup>`;
       
       case 'common':
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
   </ItemGroup>`;
       
       case 'dto':
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
   </ItemGroup>`;
@@ -167,7 +167,7 @@ export class ProjectGenerator extends BaseGenerator {
       case 'bl':
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
+    <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
@@ -180,11 +180,11 @@ export class ProjectGenerator extends BaseGenerator {
 
       case 'di': {
         const aspNetCoreRef = hasOwnership
-          ? `\n    <ProjectReference Include="../${baseNamespace}.Base.AspNetCore/${baseNamespace}.Base.AspNetCore.csproj" />`
+          ? `\n    <ProjectReference Include="../Onward.Base.AspNetCore/Onward.Base.AspNetCore.csproj" />`
           : '';
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />${aspNetCoreRef}
+    <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />${aspNetCoreRef}
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
     <ProjectReference Include="../${namespace}.DTO/${namespace}.DTO.csproj" />
@@ -200,8 +200,8 @@ export class ProjectGenerator extends BaseGenerator {
       case 'api': {
         return `
   <ItemGroup>
-    <ProjectReference Include="../${baseNamespace}.Base/${baseNamespace}.Base.csproj" />
-    <ProjectReference Include="../${baseNamespace}.Base.AspNetCore/${baseNamespace}.Base.AspNetCore.csproj" />
+    <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
+    <ProjectReference Include="../Onward.Base.AspNetCore/Onward.Base.AspNetCore.csproj" />
     <ProjectReference Include="../Onward.Base.API/Onward.Base.API.csproj" />
     <ProjectReference Include="../${namespace}.Meta/${namespace}.Meta.csproj" />
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />

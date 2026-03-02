@@ -1,0 +1,86 @@
+{
+  "$comment": "Example showing configurable primary key variants for entities",
+  "enums": [],
+  "boundedContexts": [
+    {
+      "name": "Catalog",
+      "namespace": "Inventorization.Catalog",
+      "description": "Demonstrates configurable PK types",
+      "databaseName": "catalog_db",
+      "apiPort": 5052,
+      "dbPort": 5444,
+      "ownership": { "enabled": false },
+      "dataModel": {
+        "entities": [
+          {
+            "$comment": "Default: Guid PK named Id — omitting pk field is equivalent to pk: { name: Id, type: Guid }",
+            "name": "Category",
+            "tableName": "Categories",
+            "description": "Product category with default Guid PK",
+            "auditable": true,
+            "properties": [
+              {
+                "name": "Name",
+                "type": "string",
+                "required": true,
+                "maxLength": 100,
+                "description": "Category name"
+              }
+            ]
+          },
+          {
+            "$comment": "int PK — maps to int in C#, DB generates identity column",
+            "name": "Unit",
+            "tableName": "Units",
+            "description": "Unit of measure with int PK (DB-generated identity)",
+            "auditable": false,
+            "pk": { "type": "int" },
+            "properties": [
+              {
+                "name": "Name",
+                "type": "string",
+                "required": true,
+                "maxLength": 30,
+                "description": "Unit name (e.g. kg, pcs)"
+              }
+            ]
+          },
+          {
+            "$comment": "long PK",
+            "name": "Event",
+            "tableName": "Events",
+            "description": "Audit event with long PK",
+            "auditable": false,
+            "pk": { "type": "long" },
+            "properties": [
+              {
+                "name": "Action",
+                "type": "string",
+                "required": true,
+                "maxLength": 100,
+                "description": "Event action name"
+              }
+            ]
+          },
+          {
+            "$comment": "Custom PK name + string type — entity declares PK property inline; uses IEntityTypeConfiguration instead of BaseEntityConfiguration",
+            "name": "Currency",
+            "tableName": "Currencies",
+            "description": "Currency with string PK named Code (e.g. USD, EUR)",
+            "auditable": false,
+            "pk": { "name": "Code", "type": "string" },
+            "properties": [
+              {
+                "name": "DisplayName",
+                "type": "string",
+                "required": true,
+                "maxLength": 50,
+                "description": "Human-readable currency name"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

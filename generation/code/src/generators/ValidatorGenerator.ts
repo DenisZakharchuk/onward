@@ -83,10 +83,16 @@ export class ValidatorGenerator extends BaseGenerator {
 
     // For Update DTOs, validate the Id field first
     if (dtoType === 'update') {
-      rules.push(
-        `if (dto.Id == Guid.Empty)\n` +
-          `    errors.Add("Id is required");`
-      );
+      const pkType = (entity as any).pk?.type ?? 'Guid';
+      let idCheck: string;
+      if (pkType === 'string') {
+        idCheck = 'string.IsNullOrEmpty(dto.Id)';
+      } else if (pkType === 'int' || pkType === 'long') {
+        idCheck = 'dto.Id == 0';
+      } else {
+        idCheck = 'dto.Id == Guid.Empty';
+      }
+      rules.push(`if (${idCheck})\n    errors.Add("Id is required");`);
     }
 
     // Get properties to validate based on DTO type

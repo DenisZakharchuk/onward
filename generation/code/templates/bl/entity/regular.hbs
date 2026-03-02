@@ -28,7 +28,11 @@ public class {{entityName}} : {{{baseEntityClass}}}
     /// </summary>
     private {{entityName}}() { }
 
-    /// <summary>
+    {{#unless pkIsDefaultBase}}
+    /// <summary>Primary key</summary>
+    public {{pkType}} {{pkName}} { get; private set; }
+
+    {{/unless}}    /// <summary>
     /// Creates a new instance of {{entityName}}
     /// </summary>
     {{#each constructorParams}}
@@ -48,7 +52,7 @@ public class {{entityName}} : {{{baseEntityClass}}}
         {{{this}}}
         {{/each}}
 
-        Id = Guid.NewGuid();
+        {{#if pkInitialization}}{{{pkInitialization}}}{{/if}}
         CreatedAt = DateTime.UtcNow;
         {{#if auditable}}
         UpdatedAt = DateTime.UtcNow;
@@ -121,7 +125,7 @@ public class {{entityName}} : {{{baseEntityClass}}}
     /// {{description}}
     /// </summary>
     /// <param name="{{paramName}}">{{entityName}} identifier</param>
-    public void Set{{entityName}}(Guid {{paramName}})
+    public void Set{{entityName}}({{fkType}} {{paramName}})
     {
         {{fkName}} = {{paramName}};
         {{#if ../auditable}}

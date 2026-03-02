@@ -13,6 +13,17 @@ public sealed class OnwardAuthorizeAttribute : AuthorizeAttribute
     public OnwardAuthorizeAttribute() { }
 
     /// <summary>
+    /// Creates an <see cref="OnwardAuthorizeAttribute"/> requiring authorization for the specified resource (any action).
+    /// The effective policy name is the resource name itself (e.g. <c>"Product"</c>).
+    /// </summary>
+    /// <param name="resource">The resource being protected (e.g. "Product").</param>
+    public OnwardAuthorizeAttribute(string resource)
+    {
+        Resource = resource;
+        Policy = resource;
+    }
+
+    /// <summary>
     /// Creates an <see cref="OnwardAuthorizeAttribute"/> requiring a specific permission.
     /// The effective policy name is <c>"resource.action"</c>.
     /// </summary>

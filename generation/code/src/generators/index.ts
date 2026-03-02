@@ -1,6 +1,7 @@
 // Barrel — re-exports every concrete generator so consumers can use a
 // single import instead of one line per generator class.
 
+export { PerContextAuthEndpointsGenerator } from './PerContextAuthEndpointsGenerator';
 export { AbstractionGenerator } from './AbstractionGenerator';
 export { AdoNetApiProgramGenerator } from './AdoNetApiProgramGenerator';
 export { AdoNetDataAccessGenerator } from './AdoNetDataAccessGenerator';

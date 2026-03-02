@@ -21,7 +21,7 @@ export class EntityGenerator extends BaseGenerator {
 
     for (const entity of model.entities) {
       if (entity.isJunction) {
-        await this.generateJunctionEntity(entity, entitiesDir, namespace);
+        await this.generateJunctionEntity(entity, entitiesDir, namespace, model.entities);
       } else {
         await this.generateRegularEntity(
           entity,
@@ -41,6 +41,33 @@ export class EntityGenerator extends BaseGenerator {
     relationships: Relationship[],
     ownershipValueObject: string = 'UserTenantOwnership'
   ): Promise<void> {
+    // Resolve PK config
+    const pkName = entity.pk?.name ?? 'Id';
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkIsDefaultBase = pkName === 'Id';
+
+    // Derive base class expression
+    let baseEntityClass: string;
+    if (!pkIsDefaultBase) {
+      // Custom PK name: entity implements IEntity<TKey> directly
+      baseEntityClass = entity.owned === true
+        ? `OwnedBaseEntity<${ownershipValueObject}, ${pkType}>`
+        : `IEntity<${pkType}>`;
+    } else if (entity.owned === true) {
+      baseEntityClass = pkType === 'Guid'
+        ? `OwnedBaseEntity<${ownershipValueObject}>`
+        : `OwnedBaseEntity<${ownershipValueObject}, ${pkType}>`;
+    } else {
+      baseEntityClass = pkType === 'Guid' ? 'BaseEntity' : `BaseEntity<${pkType}>`;
+    }
+
+    // PK initialization line for constructor (empty = DB-generated)
+    const pkInitialization = pkType === 'Guid'
+      ? `${pkName} = Guid.NewGuid();`
+      : pkType === 'string'
+      ? `${pkName} = string.Empty;`
+      : null;
+
     // Regular properties include FK properties (they are Guid properties)
     const properties = entity.properties.filter(
       (p) => !p.isCollection
@@ -49,7 +76,7 @@ export class EntityGenerator extends BaseGenerator {
     // Generate navigation properties from FK metadata and relationships
     const navigationProps = this.buildNavigationProperties(entity.properties, entity.name, relationships);
 
-    const updateableProps = this.getUpdateableProperties(properties);
+    const updateableProps = this.getUpdateableProperties(properties, pkName);
 
     const context = {
       namespace,
@@ -60,7 +87,11 @@ export class EntityGenerator extends BaseGenerator {
       hasEnums: this.hasEnumProperties(properties),
       isOwned: entity.owned === true,
       ownershipValueObject,
-      baseEntityClass: entity.owned === true ? `OwnedBaseEntity<${ownershipValueObject}>` : 'BaseEntity',
+      baseEntityClass,
+      pkName,
+      pkType,
+      pkIsDefaultBase,
+      pkInitialization,
       constructorParams: this.getConstructorParams(properties),
       validations: this.getValidations(properties),
       propertyAssignments: this.getPropertyAssignments(properties),
@@ -85,11 +116,18 @@ export class EntityGenerator extends BaseGenerator {
   private async generateJunctionEntity(
     entity: Entity,
     entitiesDir: string,
-    namespace: string
+    namespace: string,
+    entities: Entity[] = []
   ): Promise<void> {
     if (!entity.junctionMetadata) {
       throw new Error(`Junction entity ${entity.name} missing junctionMetadata`);
     }
+
+    // Resolve PK types for left and right entities
+    const leftEntityDef = entities.find(e => e.name === entity.junctionMetadata!.leftEntity);
+    const rightEntityDef = entities.find(e => e.name === entity.junctionMetadata!.rightEntity);
+    const leftPkType = leftEntityDef?.pk?.type ?? 'Guid';
+    const rightPkType = rightEntityDef?.pk?.type ?? 'Guid';
 
     const metadataProps = entity.properties.filter(
       (p) => !p.isForeignKey && p.name !== 'Id'
@@ -102,6 +140,8 @@ export class EntityGenerator extends BaseGenerator {
       rightEntity: entity.junctionMetadata.rightEntity,
       leftEntityParam: NamingConventions.toCamelCase(entity.junctionMetadata.leftEntity),
       rightEntityParam: NamingConventions.toCamelCase(entity.junctionMetadata.rightEntity),
+      leftPkType,
+      rightPkType,
       hasMetadata: metadataProps.length > 0,
       metadataParams: metadataProps.map((p) => ({
         type: TypeMapper.toCSharpType(p.type, !p.required),
@@ -279,10 +319,10 @@ export class EntityGenerator extends BaseGenerator {
   /**
    * Get properties that can be updated (exclude Id, CreatedAt, UpdatedAt, navigation props, FKs)
    */
-  private getUpdateableProperties(properties: Property[]): Property[] {
+  private getUpdateableProperties(properties: Property[], pkName = 'Id'): Property[] {
     return properties.filter(
       (p) =>
-        p.name !== 'Id' &&
+        p.name !== pkName &&
         p.name !== 'CreatedAt' &&
         p.name !== 'UpdatedAt' &&
         !p.isCollection &&
@@ -323,6 +363,7 @@ export class EntityGenerator extends BaseGenerator {
     entityName: string;
     paramName: string;
     description: string;
+    fkType: string;
   }> {
     return properties
       .filter((p) => p.isForeignKey && p.referencedEntity)
@@ -331,6 +372,7 @@ export class EntityGenerator extends BaseGenerator {
         entityName: p.referencedEntity!,
         paramName: NamingConventions.toCamelCase(p.name),
         description: p.description || `Set ${p.referencedEntity}`,
+        fkType: TypeMapper.toCSharpType(p.type, false),
       }));
   }
 }

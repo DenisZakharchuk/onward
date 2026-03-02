@@ -49,6 +49,8 @@ Follow the conventions from Architecture.md strictly:
 7. **Database**: PostgreSQL with Entity Framework; separate dedicated DB per microservice
 8. **Authorization**: JWT bearer token auth; services may be anonymous where appropriate
 9. **Documentation**: Swagger enabled in Development mode for all API projects
+10. **Repository Registration**: Always register BOTH `IRepository<>` and `IRepository<,>` open generics in every DI extension — required for entities with non-Guid PK
+11. **Custom PK**: Entities may declare `pk: { name?, type? }` in the data model JSON to use a non-Guid or non-default-named primary key. FK properties on other entities must use the same `type`. See GENERATION.md §`entity.pk` for full impact table.
 
 ## 📝 Documentation Policy
 

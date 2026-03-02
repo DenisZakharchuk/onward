@@ -35,12 +35,19 @@ export class ConfigurationGenerator extends BaseGenerator {
     // Detect if entity has any enum properties
     const hasEnums = entity.properties.some((p) => p.enumType);
 
+    const pkName = entity.pk?.name ?? 'Id';
+    const pkType = entity.pk?.type ?? 'Guid';
+    const pkIsDefaultBase = pkName === 'Id';
+
     const context = {
       baseNamespace,
       namespace,
       entityName: entity.name,
       tableName: entity.tableName || this.pluralize(entity.name),
       schema: entity.schema,
+      pkName,
+      pkType,
+      pkIsDefaultBase,
       propertyConfigurations: this.getPropertyConfigurations(entity.properties),
       indexes: this.getIndexConfigurations(entity),
       relationships: this.getRelationshipConfigurations(entity, model),
@@ -73,12 +80,20 @@ export class ConfigurationGenerator extends BaseGenerator {
     );
     const hasEnums = relevantProperties.some((p) => p.enumType);
 
+    // Junction entities always use Guid for their own EntityId/RelatedEntityId FKs
+    const leftEntityDef = _model.entities?.find(e => e.name === entity.junctionMetadata!.leftEntity);
+    const rightEntityDef = _model.entities?.find(e => e.name === entity.junctionMetadata!.rightEntity);
+    const leftPkType = leftEntityDef?.pk?.type ?? 'Guid';
+    const rightPkType = rightEntityDef?.pk?.type ?? 'Guid';
+
     const context = {
       baseNamespace,
       namespace,
       junctionName: entity.name,
       leftEntity: entity.junctionMetadata.leftEntity,
       rightEntity: entity.junctionMetadata.rightEntity,
+      leftPkType,
+      rightPkType,
       tableName: entity.tableName || this.pluralize(entity.name),
       schema: entity.schema,
       propertyConfigurations: this.getPropertyConfigurations(relevantProperties),

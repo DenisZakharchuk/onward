@@ -13,7 +13,6 @@ namespace Onward.Base.Ownership;
 public abstract class OwnedBaseEntity<TOwnership, TPrimaryKey>
     : BaseEntity<TPrimaryKey>, IOwnedEntity<TOwnership>
     where TOwnership : OwnershipValueObject
-    where TPrimaryKey : struct
 {
     /// <summary>
     /// Ownership snapshot stamped at creation. EF Core maps this as an owned/complex type.

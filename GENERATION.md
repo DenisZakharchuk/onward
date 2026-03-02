@@ -555,6 +555,8 @@ private transformProperty(property: Property): PropertyContext {
 public Guid CategoryId { get; private set; }
 ```
 
+> **Important**: The FK property `type` must match the referenced entity's PK type. If the target entity has `"pk": { "type": "long" }`, the FK property must also be `"type": "long"`. The FK setter on the entity uses the property's own C# type — not a hardcoded `Guid`.
+
 #### Navigation Property Generation
 
 Navigation properties are **derived from metadata**, not declared as separate properties:
@@ -1974,6 +1976,46 @@ Configures the ownership value object and factory for the entire bounded context
 When `ownership.enabled = true` the generator:
 1. Emits `services.AddOwnershipServices<TOwnership, TFactory>()` in the DI extension
 2. Adds `using Inventorization.Base.AspNetCore.Extensions` to the DI file
+
+### `entity.pk` (entity-level)
+
+Configures a non-default primary key name or type for an entity:
+
+```json
+{
+  "name": "Order",
+  "tableName": "Orders",
+  "owned": true,
+  "pk": {
+    "name": "OrderId",
+    "type": "long"
+  }
+}
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `pk.name` | `string` | `"Id"` | The C# property name on the entity and the column name in EF configuration |
+| `pk.type` | `string` | `"Guid"` | C# type: `Guid`, `int`, `long`, `string` |
+
+When `pk` is set the generator:
+
+| Component | Default output | Custom PK output |
+|---|---|---|
+| Entity base class | `BaseEntity` (has `Guid Id`) | `BaseEntity<long>` / plain entity with explicit PK property |
+| Entity constructor | `Id = Guid.NewGuid();` | `OrderId = 0;` (int/long) or `OrderId = "";` (string) |
+| EF configuration | `BaseEntityConfiguration<T>` | `IEntityTypeConfiguration<T>` with explicit `HasKey(e => e.OrderId)` |
+| DTOs | `UpdateDTO<Guid>`, `DeleteDTO<Guid>`, etc. | `UpdateDTO<long>`, `DeleteDTO<long>`, etc. |
+| DataService | `IDataService<..., Guid>` | `IDataService<..., long>` |
+| Repository injection | `IRepository<Order, Guid>` | `IRepository<Order, long>` |
+| Update validator | `if (dto.Id == Guid.Empty)` | `if (dto.Id == 0)` (int/long) |
+| FK setters | `Set[Entity](Guid id)` | `Set[Entity](long id)` |
+| Projection DTO base property | `Guid? Id` | `long? OrderId` |
+| Projection mapper | `entity.Ref.Id` | `entity.Ref.OrderId` |
+
+**Constraint**: `pk.name` and `pk.type` must be consistent across all FK properties referencing this entity.
+
+---
 
 ### `entity.owned` (entity-level)
 

@@ -42,6 +42,7 @@ public static class {{contextName}}ServiceCollectionExtensions
         services.AddDbContext<{{contextName}}DbContext>(configureDbContext);
         services.AddScoped<DbContext>(sp => sp.GetRequiredService<{{contextName}}DbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+        services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
         services.AddScoped<I{{contextName}}UnitOfWork, {{contextName}}UnitOfWork>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<I{{contextName}}UnitOfWork>());
 

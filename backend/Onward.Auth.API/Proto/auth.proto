@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option csharp_namespace = "Onward.Auth.API.GrpcProto";
+
+package onward.auth;
+
+// ---------------------------------------------------------------------------
+// Auth Introspection Service
+// Used for service-to-service token validation (online auth mode with gRPC transport).
+// ---------------------------------------------------------------------------
+
+service AuthIntrospection {
+  // Validates a JWT by its JTI claim and returns the fresh authorization context.
+  rpc IntrospectToken (IntrospectRequest) returns (IntrospectResponse);
+}
+
+message IntrospectRequest {
+  // JWT unique identifier (jti claim value).
+  string jti = 1;
+
+  // User ID extracted from the JWT subject claim (caller-side pre-validated).
+  string user_id = 2;
+
+  // Optional tenant identifier (for multi-tenant contexts).
+  optional string tenant_id = 3;
+}
+
+message IntrospectResponse {
+  // Whether the token is active (not revoked, user not blocked, not expired).
+  bool active = 1;
+
+  // User ID associated with the token.
+  string user_id = 2;
+
+  // Email address of the token owner.
+  string email = 3;
+
+  // Current role names of the user (fresh from DB).
+  repeated string roles = 4;
+
+  // Current permission strings of the user (fresh from DB, format: "Resource.Action").
+  repeated string permissions = 5;
+
+  // True when inactive because the user is blocked.
+  bool blocked = 6;
+
+  // Tenant identifier if applicable.
+  optional string tenant_id = 7;
+
+  // Human-readable reason the token is inactive (when active = false).
+  optional string inactive_reason = 8;
+}

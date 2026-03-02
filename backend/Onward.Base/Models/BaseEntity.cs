@@ -29,18 +29,17 @@ public interface ISoftDeletableEntity
 /// <summary>
 /// Base entity interface for all domain entities
 /// </summary>
-public interface IEntity<TPrimaryKey> where TPrimaryKey : struct
+public interface IEntity<TPrimaryKey>
 {
     TPrimaryKey Id { get; }
 }
 
 /// <summary>
-/// Base entity class with generic primary key support (int, Guid, etc.)
+/// Base entity class with generic primary key support (int, Guid, string, etc.)
 /// </summary>
 public abstract class BaseEntity<TPrimaryKey> : IEntity<TPrimaryKey>
-    where TPrimaryKey : struct
 {
-    public TPrimaryKey Id { get; protected set; }
+    public TPrimaryKey Id { get; protected set; } = default!;
 }
 
 /// <summary>

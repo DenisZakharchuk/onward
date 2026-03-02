@@ -24,7 +24,7 @@ public class {{entityName}}DataServiceTests
     [Fact]
     public async Task AddAsync_ReturnsSuccess_WhenDtoValid()
     {
-        var repository = new Mock<IRepository<{{entityName}}>>();
+        var repository = new Mock<IRepository<{{entityName}}, {{pkType}}>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var logger = new Mock<ILogger<{{dataServiceName}}>>();
         var serviceProvider = BuildServiceProvider();
@@ -52,7 +52,7 @@ public class {{entityName}}DataServiceTests
     [MemberData(nameof(InvalidCreateDtos))]
     public async Task AddAsync_ReturnsFailure_WhenDtoInvalid(Create{{entityName}}DTO dto)
     {
-        var repository = new Mock<IRepository<{{entityName}}>>();
+        var repository = new Mock<IRepository<{{entityName}}, {{pkType}}>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var logger = new Mock<ILogger<{{dataServiceName}}>>();
         var serviceProvider = BuildServiceProvider();
@@ -70,7 +70,7 @@ public class {{entityName}}DataServiceTests
     [Fact]
     public async Task AddAsync_ReturnsFailure_WhenDtoNull()
     {
-        var repository = new Mock<IRepository<{{entityName}}>>();
+        var repository = new Mock<IRepository<{{entityName}}, {{pkType}}>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var logger = new Mock<ILogger<{{dataServiceName}}>>();
         var serviceProvider = BuildServiceProvider();
@@ -85,14 +85,14 @@ public class {{entityName}}DataServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsSuccess_WhenDtoValid()
     {
-        var repository = new Mock<IRepository<{{entityName}}>>();
+        var repository = new Mock<IRepository<{{entityName}}, {{pkType}}>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var logger = new Mock<ILogger<{{dataServiceName}}>>();
         var serviceProvider = BuildServiceProvider();
 
         var entity = CreateEntity();
         repository
-            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetByIdAsync(It.IsAny<{{pkType}}>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(entity);
         repository
             .Setup(r => r.UpdateAsync(It.IsAny<{{entityName}}>(), It.IsAny<CancellationToken>()))
@@ -116,7 +116,7 @@ public class {{entityName}}DataServiceTests
     [MemberData(nameof(InvalidUpdateDtos))]
     public async Task UpdateAsync_ReturnsFailure_WhenDtoInvalid(Update{{entityName}}DTO dto)
     {
-        var repository = new Mock<IRepository<{{entityName}}>>();
+        var repository = new Mock<IRepository<{{entityName}}, {{pkType}}>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var logger = new Mock<ILogger<{{dataServiceName}}>>();
         var serviceProvider = BuildServiceProvider();
@@ -134,7 +134,7 @@ public class {{entityName}}DataServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFailure_WhenDtoNull()
     {
-        var repository = new Mock<IRepository<{{entityName}}>>();
+        var repository = new Mock<IRepository<{{entityName}}, {{pkType}}>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var logger = new Mock<ILogger<{{dataServiceName}}>>();
         var serviceProvider = BuildServiceProvider();
@@ -194,7 +194,7 @@ public class {{entityName}}DataServiceTests
     {
         var dto = new Update{{entityName}}DTO
         {
-            Id = Guid.NewGuid(),
+            Id = {{#if (eq pkType "int")}}1{{else if (eq pkType "long")}}1L{{else if (eq pkType "string")}}"test-id"{{else}}Guid.NewGuid(){{/if}},
             {{#each updateAssignments}}
             {{name}} = {{{value}}},
             {{/each}}

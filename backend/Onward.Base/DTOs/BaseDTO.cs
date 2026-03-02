@@ -1,11 +1,18 @@
 namespace Onward.Base.DTOs;
 
 /// <summary>
-/// Base class for all DTOs
+/// Generic base class for all DTOs carrying a primary key of type <typeparamref name="TKey"/>.
 /// </summary>
-public abstract class BaseDTO
+public abstract class BaseDTO<TKey>
 {
-    public Guid Id { get; set; }
+    public TKey Id { get; set; } = default!;
+}
+
+/// <summary>
+/// Base class for all DTOs — convenience Guid alias.
+/// </summary>
+public abstract class BaseDTO : BaseDTO<Guid>
+{
 }
 
 /// <summary>
@@ -16,30 +23,58 @@ public abstract class CreateDTO
 }
 
 /// <summary>
-/// Base class for Update DTOs
+/// Generic base class for Update DTOs with a configurable primary key type.
 /// </summary>
-public abstract class UpdateDTO : BaseDTO
+public abstract class UpdateDTO<TKey> : BaseDTO<TKey>
 {
 }
 
 /// <summary>
-/// Base class for Delete DTOs
+/// Base class for Update DTOs — convenience Guid alias.
 /// </summary>
-public abstract class DeleteDTO : BaseDTO
+public abstract class UpdateDTO : UpdateDTO<Guid>
 {
 }
 
 /// <summary>
-/// Base record for init operations
+/// Generic base class for Delete DTOs with a configurable primary key type.
 /// </summary>
-public record InitDTO(Guid Id)
+public abstract class DeleteDTO<TKey> : BaseDTO<TKey>
 {
 }
 
 /// <summary>
-/// Base class for Details DTOs (returned by GetByIdAsync)
+/// Base class for Delete DTOs — convenience Guid alias.
 /// </summary>
-public abstract class DetailsDTO : BaseDTO
+public abstract class DeleteDTO : DeleteDTO<Guid>
+{
+}
+
+/// <summary>
+/// Generic base record for init operations.
+/// </summary>
+public record InitDTO<TKey>(TKey Id)
+{
+}
+
+/// <summary>
+/// Base record for init operations — convenience Guid alias.
+/// </summary>
+public record InitDTO(Guid Id) : InitDTO<Guid>(Id)
+{
+}
+
+/// <summary>
+/// Generic base class for Details DTOs (returned by GetByIdAsync) with a configurable PK type.
+/// </summary>
+public abstract class DetailsDTO<TKey> : BaseDTO<TKey>
+{
+}
+
+/// <summary>
+/// Base class for Details DTOs (returned by GetByIdAsync) — convenience Guid alias.
+/// </summary>
+public abstract class DetailsDTO : DetailsDTO<Guid>
 {
 }
 
