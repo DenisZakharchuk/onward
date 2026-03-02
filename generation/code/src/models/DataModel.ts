@@ -263,6 +263,12 @@ export interface GenerationMetadata {
   generatedAt: string;           // ISO timestamp
   sourceFile: string;            // Source data model file name
   baseNamespace: string;         // Base namespace prefix (e.g., 'Inventorization')
+  /**
+   * Root directory for generated client libraries.
+   * Absolute path or relative to the generator's outputDir.
+   * Defaults to `generated-clients` (written as a sub-folder of outputDir).
+   */
+  clientsDir?: string;
 }
 
 /**

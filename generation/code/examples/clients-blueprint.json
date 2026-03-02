@@ -1,0 +1,43 @@
+{
+  "version": "1",
+  "boundedContext": {
+    "common": {
+      "enums": "SmartEnums"
+    },
+    "presentation": {
+      "kind": "controllers"
+    },
+    "dataService": {
+      "dto": "class",
+      "uow": "injected",
+      "dataAccess": {
+        "orm": {
+          "kind": "ef-core",
+          "provider": "npgsql"
+        },
+        "entities": "immutable"
+      },
+      "domain": "default"
+    },
+    "clients": [
+      {
+        "language": "typescript",
+        "httpClient": "axios",
+        "outputSubDir": "ts-axios"
+      },
+      {
+        "language": "typescript",
+        "httpClient": "fetch"
+      },
+      {
+        "language": "csharp",
+        "httpClient": "httpclient"
+      },
+      {
+        "language": "csharp",
+        "httpClient": "refit",
+        "outputSubDir": "cs-refit"
+      }
+    ]
+  }
+}

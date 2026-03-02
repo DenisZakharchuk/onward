@@ -27,6 +27,11 @@ export interface OrchestratorOptions {
   sourceFile?: string;  // Name of source data model file
   baseNamespace?: string;  // Base namespace prefix (default: 'Inventorization')
   blueprint?: Blueprint;
+  /**
+   * Root directory for generated client libraries.
+   * If omitted, clients are written to `generated-clients/` within the output directory.
+   */
+  clientsDir?: string;
   /** Controls how many bounded contexts are generated simultaneously. Default: sequential. */
   contextScheduler?: IExecutionScheduler;
   /** Controls how many generators within a single phase run simultaneously. Default: sequential. */
@@ -93,6 +98,7 @@ export class Orchestrator {
       generatedAt,
       sourceFile,
       baseNamespace: this.options.baseNamespace!,
+      clientsDir: this.options.clientsDir ?? 'generated-clients',
     };
 
     const context: IGeneratorExecutionContext = {
@@ -158,6 +164,12 @@ export class Orchestrator {
 
     if (!this.options.skipTests) {
       enabledSlots.add('tests');
+    }
+
+    // Client generation slots: activated per configured language in the blueprint
+    for (const clientCfg of this.options.blueprint?.boundedContext.clients ?? []) {
+      if (clientCfg.language === 'typescript') enabledSlots.add('client-ts');
+      if (clientCfg.language === 'csharp') enabledSlots.add('client-cs');
     }
 
     const executionPlan = this.registry.resolveExecutionPlan(ctx, context, enabledSlots);

@@ -33,6 +33,8 @@ import {
   ServiceGenerator,
   TestGenerator,
   ValidatorGenerator,
+  TypeScriptClientGenerator,
+  CSharpClientGenerator,
 } from '../generators';
 
 /**
@@ -380,6 +382,28 @@ export class GeneratorRegistrar {
       ambiguity: 'variant',
       requires: ['di', 'api-program'],
       provides: ['projects'],
+    });
+
+    reg(new TypeScriptClientGenerator(), {
+      id: 'TypeScriptClientGenerator',
+      domain: 'infra',
+      phase: 14,
+      ambiguity: 'optional',
+      requires: ['controllers'],
+      provides: ['client-ts'],
+      dependsOn: ['ControllerGenerator'],
+      optionalSlot: 'client-ts',
+    });
+
+    reg(new CSharpClientGenerator(), {
+      id: 'CSharpClientGenerator',
+      domain: 'infra',
+      phase: 14,
+      ambiguity: 'optional',
+      requires: ['controllers'],
+      provides: ['client-cs'],
+      dependsOn: ['ControllerGenerator'],
+      optionalSlot: 'client-cs',
     });
   }
 }

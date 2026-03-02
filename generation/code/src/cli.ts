@@ -25,6 +25,7 @@ interface GenerateOptions {
   namespace?: string;
   baseNamespace?: string;
   blueprint?: string;
+  clientsDir?: string;
   skipTests: boolean;
   dryRun: boolean;
   force: boolean;
@@ -129,6 +130,7 @@ async function generateCommand(dataModelPath: string, options: GenerateOptions) 
       sourceFile: path.basename(dataModelPath),
       baseNamespace: options.baseNamespace,
       blueprint,
+      clientsDir: options.clientsDir ? path.relative(outputDir, path.resolve(options.clientsDir)) : undefined,
       contextScheduler: scheduler,
       generatorScheduler: scheduler,
       logger: new ChalkLogger(),
@@ -252,6 +254,10 @@ yargs(hideBin(process.argv))
         })
         .option('blueprint', {
           describe: 'Path to blueprint JSON file for architecture/layout strategy',
+          type: 'string',
+        })
+        .option('clients-dir', {
+          describe: 'Output directory for generated client libraries. Defaults to generated-clients/ inside output-dir.',
           type: 'string',
         })
         .option('skip-tests', {

@@ -129,6 +129,44 @@
             "properties": { "mode": { "const": "perDomain" } }
           },
           "additionalProperties": false
+        },
+        "clients": {
+          "type": "array",
+          "description": "Client library generation entries. Each entry generates a typed HTTP client for the given language and HTTP client base.",
+          "items": {
+            "type": "object",
+            "required": ["language", "httpClient"],
+            "properties": {
+              "language": {
+                "type": "string",
+                "enum": ["typescript", "csharp"],
+                "description": "Target programming language for the generated client."
+              },
+              "httpClient": {
+                "type": "string",
+                "enum": ["axios", "fetch", "xhr", "httpclient", "refit"],
+                "description": "HTTP client base: axios|fetch|xhr for TypeScript; httpclient|refit for C#."
+              },
+              "outputSubDir": {
+                "type": "string",
+                "description": "Optional sub-directory within the clients output root. Defaults to {contextName}/{language}-{httpClient}."
+              }
+            },
+            "additionalProperties": false,
+            "if": {
+              "properties": { "language": { "const": "typescript" } }
+            },
+            "then": {
+              "properties": {
+                "httpClient": { "enum": ["axios", "fetch", "xhr"] }
+              }
+            },
+            "else": {
+              "properties": {
+                "httpClient": { "enum": ["httpclient", "refit"] }
+              }
+            }
+          }
         }
       },
       "additionalProperties": false

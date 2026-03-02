@@ -45,6 +45,34 @@ export type BlueprintAuthorization =
   | BlueprintAuthorizationNone;
 
 // ---------------------------------------------------------------------------
+// Client generation types
+// ---------------------------------------------------------------------------
+
+export type ClientLanguage = 'typescript' | 'csharp';
+
+/** HTTP client base for TypeScript clients. */
+export type TsHttpClient = 'axios' | 'fetch' | 'xhr';
+
+/** HTTP client base for C# clients. */
+export type CsHttpClient = 'httpclient' | 'refit';
+
+/**
+ * A single client library to generate.
+ * One entry per language×httpClient combination.
+ */
+export interface ClientConfig {
+  /** Target programming language. */
+  language: ClientLanguage;
+  /** HTTP client base. Must match the language: axios|fetch|xhr for TS, httpclient|refit for C#. */
+  httpClient: TsHttpClient | CsHttpClient;
+  /**
+   * Optional sub-directory within the clients output root.
+   * If omitted, defaults to `{contextName}/{language}-{httpClient}`.
+   */
+  outputSubDir?: string;
+}
+
+// ---------------------------------------------------------------------------
 
 export interface Blueprint {
   version: BlueprintVersion;
@@ -62,6 +90,12 @@ export interface BlueprintBoundedContext {
    * Defaults to `{ mode: 'perDomain' }` when absent.
    */
   authorization?: BlueprintAuthorization;
+  /**
+   * Client library generation entries.
+   * Each entry generates a typed HTTP client library for the given language and HTTP client base.
+   * Omit to skip client generation.
+   */
+  clients?: ClientConfig[];
 }
 
 export type BlueprintPresentation =
