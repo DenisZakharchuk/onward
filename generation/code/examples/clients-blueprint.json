@@ -12,7 +12,6 @@
       "uow": "injected",
       "dataAccess": {
         "managementSystem": "postgres",
-        "managementSystem": "postgres",
         "orm": {
           "kind": "ef-core",
           "provider": "npgsql"
