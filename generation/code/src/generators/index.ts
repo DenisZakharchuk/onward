@@ -33,3 +33,4 @@ export { TestGenerator } from './TestGenerator';
 export { ValidatorGenerator } from './ValidatorGenerator';
 export { TypeScriptClientGenerator } from './clients/TypeScriptClientGenerator';
 export { CSharpClientGenerator } from './clients/CSharpClientGenerator';
+export { DockerComposeGenerator } from './DockerComposeGenerator';

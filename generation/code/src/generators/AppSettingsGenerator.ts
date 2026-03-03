@@ -15,8 +15,8 @@ export class AppSettingsGenerator extends BaseGenerator {
     const apiProjectPath = `${baseNamespace}.${contextName}.API`;
 
     const databaseName =
-      model.boundedContext.databaseName ?? contextName.toLowerCase() + '_db';
-    const dbPort = model.boundedContext.dbPort ?? 5432;
+      model.boundedContext.database?.name ?? contextName.toLowerCase() + '_db';
+    const dbPort = model.boundedContext.database?.port ?? 5432;
     const apiPort = model.boundedContext.apiPort ?? 5000;
     const jwt = model.boundedContext.jwt;
     const onlineAuthEnabled = AuthModeResolver.isOnlineAuth(this.blueprint);

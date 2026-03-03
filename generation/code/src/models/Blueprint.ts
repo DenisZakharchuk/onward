@@ -6,7 +6,13 @@ export type PresentationKind = 'controllers' | 'minimal-api' | 'grpc';
 
 export type DataAccessKind = 'ef-core' | 'ado-net';
 
-export type DataProviderKind = 'npgsql';
+export type DataProviderKind = 'npgsql' | 'sqlserver' | 'sqlite';
+
+/**
+ * Database management system identifier used to select the Docker image
+ * and service configuration in generated docker-compose files.
+ */
+export type ManagementSystemKind = 'postgres' | 'mssql' | 'mysql';
 
 export type UnitOfWorkKind = 'injected';
 
@@ -118,6 +124,8 @@ export interface BlueprintDataService {
 
 export type BlueprintDataAccess =
   | {
+      /** Database management system — selects the Docker image for generated compose files. Defaults to 'postgres'. */
+      managementSystem?: ManagementSystemKind;
       orm: {
         kind: 'ef-core';
         provider: DataProviderKind;
@@ -125,6 +133,8 @@ export type BlueprintDataAccess =
       entities?: 'immutable';
     }
   | {
+      /** Database management system — selects the Docker image for generated compose files. Defaults to 'postgres'. */
+      managementSystem?: ManagementSystemKind;
       ado: {
         provider: DataProviderKind;
         dialect?: 'pgsql';

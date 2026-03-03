@@ -13,6 +13,17 @@
         "$ref": "#/definitions/EnumDefinition"
       }
     },
+    "docker": {
+      "type": "object",
+      "description": "Domain-level Docker configuration shared across all bounded contexts",
+      "properties": {
+        "network": {
+          "type": "string",
+          "description": "Docker network name referenced in generated compose files. Defaults to 'inventory-network'."
+        }
+      },
+      "additionalProperties": false
+    },
     "boundedContexts": {
       "type": "array",
       "description": "One or more bounded contexts to generate",
@@ -41,22 +52,28 @@
           "type": "string",
           "description": "Description of the bounded context"
         },
-        "databaseName": {
-          "type": "string",
-          "description": "PostgreSQL database name (defaults to lowercase context name)"
+        "database": {
+          "type": "object",
+          "description": "Database instance configuration (name and exposed port). Drives appsettings connection string and docker-compose service generation.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Database name (defaults to lowercase context name + '_db')"
+            },
+            "port": {
+              "type": "integer",
+              "description": "Host port to expose for the database container (defaults to 5432)",
+              "minimum": 1024,
+              "maximum": 65535
+            }
+          },
+          "additionalProperties": false
         },
         "apiPort": {
           "type": "integer",
           "description": "API port number (e.g., 5022)",
           "minimum": 1024,
           "maximum": 65535
-        },
-        "dbPort": {
-          "type": "integer",
-          "description": "PostgreSQL port number (defaults to 5432)",
-          "minimum": 1024,
-          "maximum": 65535,
-          "default": 5432
         },
         "jwt": {
           "type": "object",

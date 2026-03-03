@@ -1,4 +1,7 @@
 {
+  "docker": {
+    "network": "inventory-network"
+  },
   "enums": [
     {
       "name": "ProductStatus",
@@ -35,9 +38,11 @@
       "name": "Commerce",
       "namespace": "Inventorization.Commerce",
       "description": "E-commerce and order management bounded context",
-      "databaseName": "commerce_db",
+      "database": {
+        "name": "commerce_db",
+        "port": 5434
+      },
       "apiPort": 5042,
-      "dbPort": 5434,
       "jwt": {
         "issuer": "Inventorization.Auth",
         "audience": "Inventorization.Client",

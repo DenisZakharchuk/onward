@@ -11,6 +11,8 @@
       "dto": "class",
       "uow": "injected",
       "dataAccess": {
+        "managementSystem": "postgres",
+        "managementSystem": "postgres",
         "ado": {
           "provider": "npgsql",
           "dialect": "pgsql"

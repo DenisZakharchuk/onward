@@ -54,6 +54,11 @@
             "dataAccess": {
               "type": "object",
               "properties": {
+                "managementSystem": {
+                  "type": "string",
+                  "enum": ["postgres", "mssql", "mysql"],
+                  "description": "Database management system. Selects the Docker image for generated docker-compose files. Defaults to 'postgres'."
+                },
                 "entities": {
                   "type": "string",
                   "enum": ["immutable"]
@@ -68,7 +73,7 @@
                     },
                     "provider": {
                       "type": "string",
-                      "enum": ["npgsql"]
+                      "enum": ["npgsql", "sqlserver", "sqlite"]
                     }
                   },
                   "additionalProperties": false
@@ -79,7 +84,7 @@
                   "properties": {
                     "provider": {
                       "type": "string",
-                      "enum": ["npgsql"]
+                      "enum": ["npgsql", "sqlserver", "sqlite"]
                     },
                     "dialect": {
                       "type": "string",

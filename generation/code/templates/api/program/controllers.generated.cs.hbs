@@ -17,7 +17,7 @@ var connectionString = builder.Configuration.GetConnectionString("{{contextName}
     ?? throw new InvalidOperationException("Connection string '{{contextName}}Database' not found.");
 
 builder.Services.Add{{contextName}}Services(options =>
-    options.UseNpgsql(connectionString));
+    options.{{efUseMethod}}(connectionString));
 
 // ===== Authentication =====
 {{#if authorizationEnabled}}

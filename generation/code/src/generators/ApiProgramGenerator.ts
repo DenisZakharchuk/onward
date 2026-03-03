@@ -5,6 +5,7 @@
 import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext } from '../models/DataModel';
 import { AuthModeResolver } from '../utils/AuthModeResolver';
+import { DbmsRegistry } from '../utils/DbmsRegistry';
 import * as path from 'path';
 
 export class ApiProgramGenerator extends BaseGenerator {
@@ -23,6 +24,7 @@ export class ApiProgramGenerator extends BaseGenerator {
       onlineAuthEnabled: AuthModeResolver.isOnlineAuth(this.blueprint),
       isPerContextAuth: AuthModeResolver.isPerContextAuth(this.blueprint),
       onlineAuth: AuthModeResolver.resolveOnlineAuthConfig(this.blueprint, model.boundedContext),
+      efUseMethod: this.resolveEfUseMethod(),
     };
 
     const filePath = path.join(apiProjectPath, 'Program.cs');
@@ -32,5 +34,11 @@ export class ApiProgramGenerator extends BaseGenerator {
       filePath,
       true
     );
+  }
+
+  private resolveEfUseMethod(): string {
+    const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+    if (!dataAccess || !('orm' in dataAccess)) return 'UseNpgsql';
+    return DbmsRegistry.getProviderConfig(dataAccess.orm.provider).useMethod;
   }
 }

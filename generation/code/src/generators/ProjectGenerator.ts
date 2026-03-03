@@ -2,6 +2,7 @@ import Handlebars from 'handlebars';
 import { BoundedContextGenerationContext } from '../models/DataModel';
 import { BaseGenerator } from './BaseGenerator';
 import { FileManager } from '../utils/FileManager';
+import { DbmsRegistry } from '../utils/DbmsRegistry';
 import path from 'path';
 
 interface ProjectContext {
@@ -127,6 +128,18 @@ export class ProjectGenerator extends BaseGenerator {
     }
   }
 
+  private getEfNugetPackage(): string {
+    const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+    if (!dataAccess || !('orm' in dataAccess)) return 'Npgsql.EntityFrameworkCore.PostgreSQL';
+    return DbmsRegistry.getProviderConfig(dataAccess.orm.provider).package;
+  }
+
+  private getEfNugetPackageVersion(): string {
+    const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+    if (!dataAccess || !('orm' in dataAccess)) return '8.0.0';
+    return DbmsRegistry.getProviderConfig(dataAccess.orm.provider).packageVersion;
+  }
+
   private buildProjectContext(
     projectName: string,
     baseNamespace: string,
@@ -164,7 +177,9 @@ export class ProjectGenerator extends BaseGenerator {
     <ProjectReference Include="../${namespace}.Common/${namespace}.Common.csproj" />
   </ItemGroup>`;
       
-      case 'bl':
+      case 'bl': {
+        const efPackage = this.getEfNugetPackage();
+        const efVersion = this.getEfNugetPackageVersion();
         return `
   <ItemGroup>
     <ProjectReference Include="../Onward.Base/Onward.Base.csproj" />
@@ -175,8 +190,9 @@ export class ProjectGenerator extends BaseGenerator {
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+    <PackageReference Include="${efPackage}" Version="${efVersion}" />
   </ItemGroup>`;
+      }
 
       case 'di': {
         const aspNetCoreRef = hasOwnership

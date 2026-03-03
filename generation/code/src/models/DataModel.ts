@@ -11,6 +11,14 @@ export interface DomainModel {
   enums?: EnumDefinition[];
   /** One or more bounded contexts to generate. */
   boundedContexts: BoundedContext[];
+  /**
+   * Domain-level Docker configuration shared across all bounded contexts.
+   * Drives docker-compose generation (e.g. shared network name).
+   */
+  docker?: {
+    /** Docker network name to reference in generated compose files. Defaults to 'inventory-network'. */
+    network?: string;
+  };
 }
 
 /**
@@ -29,6 +37,8 @@ export interface DataModel {
  * unwrapping BoundedContext.dataModel.
  */
 export interface BoundedContextGenerationContext {
+  /** The parent domain model — carries domain-level config such as docker.network. */
+  domain: DomainModel;
   boundedContext: BoundedContext;
   /** Merged enums: domain-level + context-level (context-level wins on name collision). */
   enums: EnumDefinition[];
@@ -49,14 +59,27 @@ export interface JwtConfig {
   devExpirationMinutes?: number;
 }
 
+/**
+ * Database instance configuration for a bounded context.
+ * Drives both appsettings connection string generation and docker-compose service generation.
+ */
+export interface DatabaseConfig {
+  /** Database name. Defaults to '{contextNameLower}_db'. */
+  name?: string;
+  /** Host port to expose for the database container. Defaults to 5432. */
+  port?: number;
+}
+
 export interface BoundedContext {
   name: string;
   namespace: string;
   description?: string;
-  databaseName?: string;
+  /**
+   * Database instance configuration.
+   * Replaces the former flat `databaseName` and `dbPort` fields.
+   */
+  database?: DatabaseConfig;
   apiPort?: number;
-  /** PostgreSQL port (defaults to 5432) */
-  dbPort?: number;
   /** When set, appsettings generation includes a JwtSettings section */
   jwt?: JwtConfig;
   dtoLayout?: 'class' | 'record';

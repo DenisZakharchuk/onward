@@ -4,8 +4,11 @@
     {
       "label": "Start Infra",
       "type": "shell",
-      "command": "docker",
-      "args": ["compose", "-f", "docker-compose.yml", "up", "-d", "--build"],
+      "command": "bash",
+      "args": [
+        "-c",
+        "EXTRA=$(find backend/docker -name '*.yml' 2>/dev/null | sort | xargs -I{} printf ' -f %s' {}); docker compose -f docker-compose.yml $EXTRA up -d --build"
+      ],
       "options": {
         "cwd": "${workspaceFolder}"
       },

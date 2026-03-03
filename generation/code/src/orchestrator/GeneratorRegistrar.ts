@@ -35,6 +35,7 @@ import {
   ValidatorGenerator,
   TypeScriptClientGenerator,
   CSharpClientGenerator,
+  DockerComposeGenerator,
 } from '../generators';
 
 /**
@@ -404,6 +405,15 @@ export class GeneratorRegistrar {
       provides: ['client-cs'],
       dependsOn: ['ControllerGenerator'],
       optionalSlot: 'client-cs',
+    });
+
+    reg(new DockerComposeGenerator(), {
+      id: 'DockerComposeGenerator',
+      domain: 'infra',
+      phase: 13,
+      ambiguity: 'deterministic',
+      requires: [],
+      provides: ['docker-compose'],
     });
   }
 }

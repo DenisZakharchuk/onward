@@ -78,6 +78,7 @@ export class DataModelParser {
     return domain.boundedContexts.map((ctx) => {
       const mergedEnums = mergeEnums(domain.enums ?? [], ctx.enums ?? []);
       return {
+        domain,
         boundedContext: ctx,
         enums: mergedEnums,
         entities: ctx.dataModel.entities,
