@@ -1,0 +1,16 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "generation/code/examples/blueprints/*.json"
+      ],
+      "url": "./generation/code/schemas/blueprint.schema.json"
+    },
+    {
+      "fileMatch": [
+        "generation/code/examples/models/*.json"
+      ],
+      "url": "./generation/code/schemas/data-model.schema.json"
+    }
+  ]
+}

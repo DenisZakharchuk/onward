@@ -8,10 +8,9 @@
       "kind": "controllers"
     },
     "dataService": {
-      "dto": "record",
+      "dto": "class",
       "uow": "injected",
       "dataAccess": {
-        "managementSystem": "postgres",
         "managementSystem": "postgres",
         "orm": {
           "kind": "ef-core",

@@ -12,7 +12,6 @@
       "uow": "injected",
       "dataAccess": {
         "managementSystem": "postgres",
-        "managementSystem": "postgres",
         "orm": {
           "kind": "ef-core",
           "provider": "npgsql"
@@ -20,6 +19,10 @@
         "entities": "immutable"
       },
       "domain": "default"
+    },
+    "authorization": {
+      "mode": "perDomain",
+      "authMode": "online"
     }
   }
 }

@@ -7,11 +7,10 @@
     "presentation": {
       "kind": "controllers"
     },
-    "dataService": {
-      "dto": "class",
+    "dataService": {      
+      "dto": "record",
       "uow": "injected",
       "dataAccess": {
-        "managementSystem": "postgres",
         "managementSystem": "postgres",
         "orm": {
           "kind": "ef-core",
@@ -20,10 +19,6 @@
         "entities": "immutable"
       },
       "domain": "default"
-    },
-    "authorization": {
-      "mode": "perDomain",
-      "authMode": "online"
     }
   }
 }
