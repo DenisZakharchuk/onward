@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Onward.Base.Models;
+using Onward.Base.Ownership;
 
 namespace Onward.Base.DataAccess;
 
@@ -58,5 +59,24 @@ public abstract class BaseEntityConfiguration<TEntity, TKey> : IEntityTypeConfig
 public abstract class BaseEntityConfiguration<TEntity> : BaseEntityConfiguration<TEntity, Guid>
     where TEntity : BaseEntity<Guid>
 {
+}
+
+/// <summary>
+/// Base entity configuration for Guid-PK entities that extend OwnedBaseEntity&lt;TOwnership&gt;.
+/// Automatically configures OwnsOne mappings for Ownership and LastModifiedOwnership.
+/// </summary>
+/// <typeparam name="TEntity">Entity type (must inherit from OwnedBaseEntity&lt;TOwnership, Guid&gt;)</typeparam>
+/// <typeparam name="TOwnership">The ownership value object type</typeparam>
+public abstract class OwnedBaseEntityConfiguration<TEntity, TOwnership>
+    : BaseEntityConfiguration<TEntity>
+    where TEntity : OwnedBaseEntity<TOwnership, Guid>
+    where TOwnership : OwnershipValueObject
+{
+    public override void Configure(EntityTypeBuilder<TEntity> builder)
+    {
+        base.Configure(builder);
+        builder.OwnsOne(e => e.Ownership);
+        builder.OwnsOne(e => e.LastModifiedOwnership);
+    }
 }
 

@@ -10,9 +10,9 @@
     "{{contextName}}Database": "Host=localhost;Port={{dbPort}};Database={{databaseName}}_dev;Username=postgres;Password=postgres"
   }{{#if jwt}},
   "JwtSettings": {
-    "SecretKey": "dev-secret-key-change-in-production-min-32-chars-dev",
-    "Issuer": "{{jwt.issuer}}.Dev",
-    "Audience": "{{jwt.audience}}.Dev",
+    "SecretKey": "{{#if jwt.devSecretKey}}{{jwt.devSecretKey}}{{else}}{{#if jwt.secretKey}}{{jwt.secretKey}}{{else}}dev-secret-key-change-in-production-min-32-chars-dev{{/if}}{{/if}}",
+    "Issuer": "{{#if jwt.devIssuer}}{{jwt.devIssuer}}{{else}}{{jwt.issuer}}.Dev{{/if}}",
+    "Audience": "{{#if jwt.devAudience}}{{jwt.devAudience}}{{else}}{{jwt.audience}}.Dev{{/if}}",
     "ExpirationMinutes": {{#if jwt.devExpirationMinutes}}{{jwt.devExpirationMinutes}}{{else}}{{jwt.expirationMinutes}}{{/if}}
   }{{/if}}{{#if onlineAuthEnabled}},
   "OnlineAuth": {

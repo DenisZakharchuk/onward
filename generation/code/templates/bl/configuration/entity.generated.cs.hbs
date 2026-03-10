@@ -10,14 +10,15 @@ using {{namespace}}.BL.Entities;
 {{#if hasEnums}}
 using {{namespace}}.Common.Enums;
 {{/if}}
-using Onward.Base.DataAccess;
+{{#if isOwned}}using Onward.Base.Ownership;
+{{/if}}using Onward.Base.DataAccess;
 
 namespace {{namespace}}.BL.EntityConfigurations;
 
 /// <summary>
 /// Entity configuration for {{entityName}}
 /// </summary>
-public class {{entityName}}Configuration : {{#if pkIsDefaultBase}}BaseEntityConfiguration<{{entityName}}, {{pkType}}>{{else}}IEntityTypeConfiguration<{{entityName}}>{{/if}}
+public class {{entityName}}Configuration : {{#if isOwned}}{{#if pkIsDefaultBase}}OwnedBaseEntityConfiguration<{{entityName}}, {{ownershipValueObject}}>{{else}}IEntityTypeConfiguration<{{entityName}}>{{/if}}{{else}}{{#if pkIsDefaultBase}}BaseEntityConfiguration<{{entityName}}, {{pkType}}>{{else}}IEntityTypeConfiguration<{{entityName}}>{{/if}}{{/if}}
 {
     {{#if pkIsDefaultBase}}
     protected override void ConfigureEntity(EntityTypeBuilder<{{entityName}}> builder)
@@ -42,5 +43,11 @@ public class {{entityName}}Configuration : {{#if pkIsDefaultBase}}BaseEntityConf
         {{{this}}}
 
         {{/each}}
+        {{#if isOwned}}
+        {{#unless pkIsDefaultBase}}
+        builder.OwnsOne(e => e.Ownership);
+        builder.OwnsOne(e => e.LastModifiedOwnership);
+        {{/unless}}
+        {{/if}}
     }
 }

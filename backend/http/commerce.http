@@ -1,0 +1,417 @@
+### ============================================================
+### COMMERCE SERVICE  –  http://localhost:5022
+### ============================================================
+### Prerequisites:
+###   Run the login request in auth.http first, then paste the
+###   accessToken below, OR set @accessToken directly here.
+###
+### All endpoints require:  Authorization: Bearer {{accessToken}}
+### ============================================================
+
+@commerceBase = http://localhost:5042
+
+# Paste the accessToken from the auth.http login response here:
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzN2ZkMTAyYy1kYTM2LTQ2ZGItYmZjNy0wM2E2YWYyMjY3MjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImRjZjk2N2YxLTIwMWUtNDdmNS1hNjZmLWZiNGRkMjNlY2EwYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGludmVudG9yaXphdGlvbi5sb2NhbCIsIm5hbWUiOiJTeXN0ZW0gQWRtaW5pc3RyYXRvciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwicGVybWlzc2lvbnMiOlsidXNlci5jcmVhdGUiLCJ1c2VyLmRlbGV0ZSIsInJvbGUuY3JlYXRlIiwicGVybWlzc2lvbi5kZWxldGUiLCJ1c2VyLnVwZGF0ZSIsInJvbGUudXBkYXRlIiwicGVybWlzc2lvbi5yZWFkIiwicm9sZS5kZWxldGUiLCJwZXJtaXNzaW9uLnVwZGF0ZSIsInBlcm1pc3Npb24uY3JlYXRlIiwicm9sZS5yZWFkIiwidXNlci5yZWFkIl0sImV4cCI6MTc3MzE4MTUzMCwiaXNzIjoiT253YXJkLkF1dGguRGV2IiwiYXVkIjoiSW52ZW50b3JpemF0aW9uLkNsaWVudC5EZXYifQ.isDmNMLPMnlrabvko6STQUBAMGHqScaJCg68qujoGVU
+
+# Placeholder IDs – replace with real values after creation
+@categoryId  = 5640e71e-04a9-4d98-8dba-bdea8c289227
+@productId   = 00000000-0000-0000-0000-000000000002
+@customerId  = 00000000-0000-0000-0000-000000000003
+@addressId   = 00000000-0000-0000-0000-000000000004
+@orderId     = 1
+@orderItemId = 00000000-0000-0000-0000-000000000005
+
+
+# ══════════════════════════════════════════════════════════════
+# CATEGORIES
+# ══════════════════════════════════════════════════════════════
+
+### Create a category
+# @name createCategory
+POST {{commerceBase}}/api/categories
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Electronics12",
+  "description": "Electronic devices and accessories",
+  "isActive": true
+}
+
+###
+
+### Get a category by ID
+GET {{commerceBase}}/api/categories/{{categoryId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update a category
+PUT {{commerceBase}}/api/categories/{{categoryId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": "{{categoryId}}",
+  "name": "Electronics & Gadgets",
+  "description": "Updated description",
+  "isActive": true
+}
+
+###
+
+### Query categories (filter + pagination)
+POST {{commerceBase}}/api/categories/query
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10
+  }
+}
+
+
+###
+
+### Delete a category
+DELETE {{commerceBase}}/api/categories/{{categoryId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+
+# ══════════════════════════════════════════════════════════════
+# PRODUCTS
+# ══════════════════════════════════════════════════════════════
+
+### Create a product
+# @name createProduct
+POST {{commerceBase}}/api/products
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Laptop Pro 15",
+  "sku": "LAP-PRO-15",
+  "description": "High-performance laptop with 15-inch display",
+  "price": 1299.99,
+  "stockQuantity": 50,
+  "categoryId": "{{categoryId}}",
+  "status": "Active"
+}
+
+###
+
+### Get a product by ID
+GET {{commerceBase}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update a product
+PUT {{commerceBase}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": "{{productId}}",
+  "name": "Laptop Pro 15 (Revised)",
+  "sku": "LAP-PRO-15",
+  "description": "Updated high-performance laptop",
+  "price": 1199.99,
+  "stockQuantity": 45,
+  "categoryId": "{{categoryId}}",
+  "status": "Active"
+}
+
+###
+
+### Query products (filter by category)
+POST {{commerceBase}}/api/products/query
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filter": {
+    "CategoryId": "{{categoryId}}",
+    "IsActive": true
+  },
+  "sort": { "field": "price", "direction": "asc" },
+  "pagination": { "pageNumber": 1, "pageSize": 20 }
+}
+
+###
+
+### Delete a product
+DELETE {{commerceBase}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+
+# ══════════════════════════════════════════════════════════════
+# CUSTOMERS
+# ══════════════════════════════════════════════════════════════
+
+### Create a customer
+# @name createCustomer
+POST {{commerceBase}}/api/customers
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "email": "jane.doe@example.com",
+  "phone": "+1-555-0100",
+  "isActive": true
+}
+
+###
+
+### Get a customer by ID
+GET {{commerceBase}}/api/customers/{{customerId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update a customer
+PUT {{commerceBase}}/api/customers/{{customerId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": "{{customerId}}",
+  "firstName": "Jane",
+  "lastName": "Doe-Smith",
+  "email": "jane.doesmith@example.com",
+  "phone": "+1-555-0199",
+  "isActive": true
+}
+
+###
+
+### Query customers
+POST {{commerceBase}}/api/customers/query
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filter": {
+    "IsActive": true
+  },
+  "sort": { "field": "lastName", "direction": "asc" },
+  "pagination": { "pageNumber": 1, "pageSize": 10 }
+}
+
+###
+
+### Delete a customer
+DELETE {{commerceBase}}/api/customers/{{customerId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+
+# ══════════════════════════════════════════════════════════════
+# ADDRESSES
+# ══════════════════════════════════════════════════════════════
+
+### Create an address (Shipping)
+# @name createAddress
+POST {{commerceBase}}/api/addresses
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "customerId": "{{customerId}}",
+  "addressType": "Shipping",
+  "street": "123 Main Street",
+  "city": "San Francisco",
+  "state": "CA",
+  "postalCode": "94102",
+  "country": "USA",
+  "isDefault": true
+}
+
+###
+
+### Get an address by ID
+GET {{commerceBase}}/api/addresses/{{addressId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update an address
+PUT {{commerceBase}}/api/addresses/{{addressId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": "{{addressId}}",
+  "customerId": "{{customerId}}",
+  "addressType": "Shipping",
+  "street": "456 Oak Avenue",
+  "city": "San Francisco",
+  "state": "CA",
+  "postalCode": "94103",
+  "country": "USA",
+  "isDefault": true
+}
+
+###
+
+### Query addresses by customer
+POST {{commerceBase}}/api/addresses/query
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filter": {
+    "CustomerId": "{{customerId}}"
+  },
+  "pagination": { "pageNumber": 1, "pageSize": 10 }
+}
+
+###
+
+### Delete an address
+DELETE {{commerceBase}}/api/addresses/{{addressId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+
+# ══════════════════════════════════════════════════════════════
+# ORDERS  (PK is long, not Guid)
+# ══════════════════════════════════════════════════════════════
+
+### Create an order
+# @name createOrder
+POST {{commerceBase}}/api/orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "customerId": "{{customerId}}",
+  "orderNumber": "ORD-20260001",
+  "orderDate": "2026-03-10T12:00:00Z",
+  "totalAmount": 1299.99,
+  "status": "Pending",
+  "shippingAddressId": "{{addressId}}"
+}
+
+###
+
+### Get an order by ID (long)
+GET {{commerceBase}}/api/orders/{{orderId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update an order
+PUT {{commerceBase}}/api/orders/{{orderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": {{orderId}},
+  "customerId": "{{customerId}}",
+  "orderNumber": "ORD-20260001",
+  "orderDate": "2026-03-10T12:00:00Z",
+  "totalAmount": 1299.99,
+  "status": "Processing",
+  "shippingAddressId": "{{addressId}}"
+}
+
+###
+
+### Query orders
+POST {{commerceBase}}/api/orders/query
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filter": {
+    "and": [
+      { "field": "customerId", "operator": "eq",  "value": "{{customerId}}" },
+      { "field": "status",     "operator": "neq", "value": "Cancelled" }
+    ]
+  },
+  "sort": { "field": "orderDate", "direction": "desc" },
+  "pagination": { "pageNumber": 1, "pageSize": 10 }
+}
+
+###
+
+### Delete an order
+DELETE {{commerceBase}}/api/orders/{{orderId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+
+# ══════════════════════════════════════════════════════════════
+# ORDER ITEMS
+# ══════════════════════════════════════════════════════════════
+
+### Create an order item
+# @name createOrderItem
+POST {{commerceBase}}/api/orderitems
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "orderId": {{orderId}},
+  "productId": "{{productId}}",
+  "quantity": 1,
+  "unitPrice": 1299.99,
+  "totalPrice": 1299.99
+}
+
+###
+
+### Get an order item by ID
+GET {{commerceBase}}/api/orderitems/{{orderItemId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update an order item
+PUT {{commerceBase}}/api/orderitems/{{orderItemId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": "{{orderItemId}}",
+  "orderId": {{orderId}},
+  "productId": "{{productId}}",
+  "quantity": 2,
+  "unitPrice": 1299.99,
+  "totalPrice": 2599.98
+}
+
+###
+
+### Query order items for an order
+POST {{commerceBase}}/api/orderitems/query
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filter": {
+    "OrderId": {{orderId}}
+  },
+  "pagination": { "pageNumber": 1, "pageSize": 50 }
+}
+
+###
+
+### Delete an order item
+DELETE {{commerceBase}}/api/orderitems/{{orderItemId}}
+Authorization: Bearer {{accessToken}}

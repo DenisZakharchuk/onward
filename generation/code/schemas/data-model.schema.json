@@ -97,6 +97,22 @@
               "type": "integer",
               "description": "Token expiration in minutes used only in Development environment (defaults to expirationMinutes)",
               "minimum": 1
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "HMAC signing key emitted into appsettings.json JwtSettings.SecretKey. Defaults to a placeholder."
+            },
+            "devSecretKey": {
+              "type": "string",
+              "description": "HMAC signing key emitted into appsettings.Development.json JwtSettings.SecretKey. Falls back to secretKey, then a placeholder."
+            },
+            "devIssuer": {
+              "type": "string",
+              "description": "JWT issuer override for Development environment. Falls back to issuer + '.Dev'."
+            },
+            "devAudience": {
+              "type": "string",
+              "description": "JWT audience override for Development environment. Falls back to audience + '.Dev'."
             }
           },
           "additionalProperties": false

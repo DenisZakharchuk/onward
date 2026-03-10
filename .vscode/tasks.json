@@ -7,7 +7,7 @@
       "command": "bash",
       "args": [
         "-c",
-        "EXTRA=$(find backend/docker -name '*.yml' 2>/dev/null | sort | xargs -I{} printf ' -f %s' {}); docker compose -f docker-compose.yml $EXTRA up -d --build"
+        "docker network create inventory-network 2>/dev/null || true; EXTRA=$(find backend/docker -name \"*.yml\" 2>/dev/null | sort | xargs -I{} printf \" -f %s\" {}); docker compose -f docker-compose.yml $EXTRA up -d --build"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -100,7 +100,7 @@
       "command": "dotnet",
       "args": ["run"],
       "options": {
-        "cwd": "${workspaceFolder}/backend/Inventorization.Auth.API",
+        "cwd": "${workspaceFolder}/backend/Onward.Auth.API",
         "env": {
           "ASPNETCORE_URLS": "http://localhost:5012"
         }

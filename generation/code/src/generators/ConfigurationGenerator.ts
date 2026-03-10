@@ -52,6 +52,8 @@ export class ConfigurationGenerator extends BaseGenerator {
       indexes: this.getIndexConfigurations(entity),
       relationships: this.getRelationshipConfigurations(entity, model),
       hasEnums,
+      isOwned: entity.owned === true,
+      ownershipValueObject: model.boundedContext.ownership?.valueObject ?? 'UserTenantOwnership',
     };
 
     const filePath = path.join(configurationsDir, `${entity.name}Configuration.cs`);

@@ -92,32 +92,40 @@ public abstract class UnitOfWorkBase<TDbContext> : IUnitOfWork
     }
 
     /// <summary>
-    /// Disposes resources asynchronously
+    /// Disposes resources asynchronously.
+    /// Only rolls back any open transaction — the DbContext lifetime is owned by the DI container.
     /// </summary>
     public virtual async ValueTask DisposeAsync()
     {
-        if (Context.Database.CurrentTransaction != null)
+        try
         {
-            await Context.Database.RollbackTransactionAsync();
-            Logger.LogWarning("Disposed UnitOfWork with active transaction - rolled back");
+            if (Context.Database.CurrentTransaction != null)
+            {
+                await Context.Database.RollbackTransactionAsync();
+                Logger.LogWarning("Disposed UnitOfWork with active transaction - rolled back");
+            }
         }
+        catch (ObjectDisposedException) { /* context already disposed by EF after a failed save — nothing to roll back */ }
 
-        await Context.DisposeAsync();
         GC.SuppressFinalize(this);
     }
 
     /// <summary>
-    /// Disposes resources synchronously
+    /// Disposes resources synchronously.
+    /// Only rolls back any open transaction — the DbContext lifetime is owned by the DI container.
     /// </summary>
     public virtual void Dispose()
     {
-        if (Context.Database.CurrentTransaction != null)
+        try
         {
-            Context.Database.RollbackTransaction();
-            Logger.LogWarning("Disposed UnitOfWork with active transaction - rolled back");
+            if (Context.Database.CurrentTransaction != null)
+            {
+                Context.Database.RollbackTransaction();
+                Logger.LogWarning("Disposed UnitOfWork with active transaction - rolled back");
+            }
         }
+        catch (ObjectDisposedException) { /* context already disposed by EF after a failed save — nothing to roll back */ }
 
-        Context.Dispose();
         GC.SuppressFinalize(this);
     }
 }

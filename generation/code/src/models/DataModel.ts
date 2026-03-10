@@ -57,6 +57,14 @@ export interface JwtConfig {
   expirationMinutes: number;
   /** Development environment token expiration in minutes (defaults to expirationMinutes) */
   devExpirationMinutes?: number;
+  /** HMAC signing key emitted into appsettings.json SecretKey. Defaults to a placeholder. */
+  secretKey?: string;
+  /** HMAC signing key emitted into appsettings.Development.json SecretKey. Falls back to secretKey, then placeholder. */
+  devSecretKey?: string;
+  /** JWT issuer override for Development environment. Falls back to `issuer + '.Dev'`. */
+  devIssuer?: string;
+  /** JWT audience override for Development environment. Falls back to `audience + '.Dev'`. */
+  devAudience?: string;
 }
 
 /**
@@ -292,6 +300,8 @@ export interface GenerationMetadata {
    * Defaults to `generated-clients` (written as a sub-folder of outputDir).
    */
   clientsDir?: string;
+  /** When true, AppSettingsGenerator overwrites existing appsettings files. */
+  force?: boolean;
 }
 
 /**

@@ -11,7 +11,7 @@
     "{{contextName}}Database": "Host=localhost;Port={{dbPort}};Database={{databaseName}};Username=postgres;Password=postgres"
   }{{#if jwt}},
   "JwtSettings": {
-    "SecretKey": "your-super-secret-key-change-in-production-min-32-chars",
+    "SecretKey": "{{#if jwt.secretKey}}{{jwt.secretKey}}{{else}}your-super-secret-key-change-in-production-min-32-chars{{/if}}",
     "Issuer": "{{jwt.issuer}}",
     "Audience": "{{jwt.audience}}",
     "ExpirationMinutes": {{jwt.expirationMinutes}}

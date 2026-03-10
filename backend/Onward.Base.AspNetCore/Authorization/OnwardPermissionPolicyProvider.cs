@@ -35,9 +35,14 @@ public sealed class OnwardPermissionPolicyProvider : IAuthorizationPolicyProvide
     public Task<AuthorizationPolicy?> GetFallbackPolicyAsync()
         => _fallback.GetFallbackPolicyAsync();
 
+    // Matches a single identifier — resource-only policy (e.g. [OnwardAuthorize("Category")])
+    private static readonly Regex ResourceOnlyPolicyPattern =
+        new(@"^[A-Za-z]\w*$", RegexOptions.Compiled);
+
     /// <inheritdoc />
     public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
+        // "Resource.Action" → full permission requirement
         if (PermissionPolicyPattern.IsMatch(policyName))
         {
             var dot = policyName.IndexOf('.');
@@ -47,6 +52,16 @@ public sealed class OnwardPermissionPolicyProvider : IAuthorizationPolicyProvide
             var policy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .AddRequirements(new OnwardPermissionRequirement(resource, action))
+                .Build();
+
+            return Task.FromResult<AuthorizationPolicy?>(policy);
+        }
+
+        // "Resource" only → require authenticated user (action-level check is responsibility of BL)
+        if (ResourceOnlyPolicyPattern.IsMatch(policyName))
+        {
+            var policy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
                 .Build();
 
             return Task.FromResult<AuthorizationPolicy?>(policy);

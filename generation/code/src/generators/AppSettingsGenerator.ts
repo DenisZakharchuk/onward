@@ -32,20 +32,22 @@ export class AppSettingsGenerator extends BaseGenerator {
       onlineAuth,
     };
 
+    const overwrite = this.metadata?.force ?? false;
+
     // Write appsettings.json — skip if already exists; regenerate with --force
     await this.writeRenderedTemplate(
       'api/appsettings/appsettings.json.hbs',
       context,
       path.join(apiProjectPath, 'appsettings.json'),
-      false
+      overwrite
     );
 
-    // Write appsettings.Development.json — skip if already exists
+    // Write appsettings.Development.json — skip if already exists; regenerate with --force
     await this.writeRenderedTemplate(
       'api/appsettings/appsettings.Development.json.hbs',
       context,
       path.join(apiProjectPath, 'appsettings.Development.json'),
-      false
+      overwrite
     );
 
     // Write Properties/launchSettings.json — sets ASPNETCORE_ENVIRONMENT=Development
@@ -54,7 +56,7 @@ export class AppSettingsGenerator extends BaseGenerator {
       'api/appsettings/launchSettings.json.hbs',
       context,
       path.join(apiProjectPath, 'Properties', 'launchSettings.json'),
-      false
+      overwrite
     );
   }
 }

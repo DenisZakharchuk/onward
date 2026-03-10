@@ -1,0 +1,136 @@
+### ============================================================
+### AUTH SERVICE  –  http://localhost:5012
+### ============================================================
+### Workflow:
+###   1. Run "Login" → token is captured automatically
+###   2. Run any subsequent request – they reuse @accessToken / @refreshToken
+###   3. Run "Revoke token" or "Logout" to end the session
+### ============================================================
+
+@authBase = http://localhost:5012
+
+# ──────────────────────────────────────────────────────────────
+# 1. LOGIN  →  obtain accessToken + refreshToken
+# ──────────────────────────────────────────────────────────────
+
+# @name login
+POST {{authBase}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@inventorization.local",
+  "password": "Admin123!",
+  "tenantId": null
+}
+
+###
+
+# Capture tokens from the login response (VS Code REST Client dynamic variables)
+@accessToken  = {{login.response.body.$.data.accessToken}}
+@refreshToken = {{login.response.body.$.data.refreshToken}}
+
+# ──────────────────────────────────────────────────────────────
+# 2. REFRESH TOKEN  →  exchange refreshToken for a new pair
+# ──────────────────────────────────────────────────────────────
+
+# @name refresh
+POST {{authBase}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+# Update captured tokens after refresh
+@accessToken  = {{refresh.response.body.$.data.accessToken}}
+@refreshToken = {{refresh.response.body.$.data.refreshToken}}
+
+# ──────────────────────────────────────────────────────────────
+# 3. INTROSPECT TOKEN  →  validate a token and inspect its claims
+#    (service-to-service endpoint, no auth header required)
+#    jti and userId must be extracted from the decoded JWT payload
+# ──────────────────────────────────────────────────────────────
+
+POST {{authBase}}/api/tokens/introspect
+Content-Type: application/json
+
+{
+  "jti": "<jti-claim-from-jwt>",
+  "userId": "<userId-guid-from-jwt>",
+  "tenantId": null
+}
+
+###
+
+# ──────────────────────────────────────────────────────────────
+# 4. REVOKE TOKEN  →  invalidate a specific token by JTI
+#    Requires a valid Bearer token in the header.
+#    jti is the "jti" claim from the JWT you want to revoke.
+#    Decode the access token at https://jwt.io to find the jti.
+# ──────────────────────────────────────────────────────────────
+
+POST {{authBase}}/api/tokens/revoke
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "jti": "<jti-claim-from-jwt>",
+  "reason": "User requested token revocation"
+}
+
+###
+
+# ──────────────────────────────────────────────────────────────
+# 5. LOGOUT  →  invalidate the current session on the server
+# ──────────────────────────────────────────────────────────────
+
+POST {{authBase}}/api/auth/logout
+Authorization: Bearer {{accessToken}}
+
+###
+
+# ──────────────────────────────────────────────────────────────
+# BONUS: USER MANAGEMENT  (requires valid token)
+# ──────────────────────────────────────────────────────────────
+
+### Create a user
+POST {{authBase}}/api/users
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "Passw0rd!",
+  "fullName": "New User",
+  "roleIds": []
+}
+
+###
+
+### Get a user by ID
+GET {{authBase}}/api/users/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update a user
+PUT {{authBase}}/api/users/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "id": "00000000-0000-0000-0000-000000000001",
+  "email": null,
+  "fullName": "Updated Name",
+  "newPassword": null,
+  "isActive": true,
+  "roleIds": null
+}
+
+###
+
+### Delete a user
+DELETE {{authBase}}/api/users/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{accessToken}}

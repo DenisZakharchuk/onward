@@ -45,8 +45,8 @@ public class JwtTokenProvider : IJwtTokenProvider
             foreach (var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
 
-            if (permissions.Any())
-                claims.Add(new Claim("permissions", string.Join(",", permissions)));
+            foreach (var permission in permissions)
+                claims.Add(new Claim("permissions", permission));
 
             var token = new JwtSecurityToken(
                 issuer: _settings.Issuer,

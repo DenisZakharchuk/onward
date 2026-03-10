@@ -99,6 +99,7 @@ export class Orchestrator {
       sourceFile,
       baseNamespace: this.options.baseNamespace!,
       clientsDir: this.options.clientsDir ?? 'generated-clients',
+      force: this.options.force,
     };
 
     const context: IGeneratorExecutionContext = {

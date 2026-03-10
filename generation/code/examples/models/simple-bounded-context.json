@@ -44,10 +44,14 @@
       },
       "apiPort": 5042,
       "jwt": {
-        "issuer": "Inventorization.Auth",
-        "audience": "Inventorization.Client",
+        "issuer": "Onward.Auth",
+        "audience": "Onward.Client",
         "expirationMinutes": 60,
-        "devExpirationMinutes": 480
+        "devExpirationMinutes": 480,
+        "secretKey": "InventorizationSuperSecretKey12345678901234567890",
+        "devSecretKey": "DevOnlySecretKey123456789012345678901234567890",
+        "devIssuer": "Onward.Auth.Dev",
+        "devAudience": "Inventorization.Client.Dev"
       },
       "ownership": {
         "enabled": true,
