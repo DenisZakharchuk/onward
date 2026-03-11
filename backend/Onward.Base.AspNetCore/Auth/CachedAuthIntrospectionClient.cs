@@ -34,12 +34,13 @@ public sealed class CachedAuthIntrospectionClient : IAuthIntrospectionClient
 
     public async Task<IntrospectionResult> IntrospectAsync(
         string jti,
+        Guid userId,
         string? tenantId = null,
         CancellationToken cancellationToken = default)
     {
         // Bypass cache when TTL is 0 (per-request mode)
         if (_settings.CacheTtlSeconds <= 0)
-            return await _inner.IntrospectAsync(jti, tenantId, cancellationToken);
+            return await _inner.IntrospectAsync(jti, userId, tenantId, cancellationToken);
 
         var key = KeyPrefix + jti;
 
@@ -50,7 +51,7 @@ public sealed class CachedAuthIntrospectionClient : IAuthIntrospectionClient
         }
 
         _logger.LogDebug("Cache miss for JTI {Jti}. Calling Auth Service.", jti);
-        var result = await _inner.IntrospectAsync(jti, tenantId, cancellationToken);
+        var result = await _inner.IntrospectAsync(jti, userId, tenantId, cancellationToken);
 
         // Only cache active results; inactive results (revoked, blocked) must always
         // be re-evaluated so that an unblock takes effect within the TTL window.

@@ -16,7 +16,7 @@
     "ExpirationMinutes": {{#if jwt.devExpirationMinutes}}{{jwt.devExpirationMinutes}}{{else}}{{jwt.expirationMinutes}}{{/if}}
   }{{/if}}{{#if onlineAuthEnabled}},
   "OnlineAuth": {
-    "AuthServiceBaseUrl": "{{onlineAuth.authServiceUrl}}",
+    "AuthServiceBaseUrl": "{{#if onlineAuth.devAuthServiceUrl}}{{onlineAuth.devAuthServiceUrl}}{{else}}{{onlineAuth.authServiceUrl}}{{/if}}",
     "CacheTtlSeconds": {{onlineAuth.cacheTtlSeconds}},
     "FailOpen": {{onlineAuth.failOpen}},
     "Transport": "{{onlineAuth.transport}}",

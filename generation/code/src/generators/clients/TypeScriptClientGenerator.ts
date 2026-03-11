@@ -7,7 +7,7 @@
  */
 
 import { BaseGenerator } from '../BaseGenerator';
-import { BoundedContextGenerationContext, Entity, Property } from '../../models/DataModel';
+import { BoundedContextGenerationContext, Entity, EnumDefinition, Property } from '../../models/DataModel';
 import { ClientConfig } from '../../models/Blueprint';
 import { TypeScriptTypeMapper } from '../../utils/TypeScriptTypeMapper';
 import { NamingConventions } from '../../utils/NamingConventions';
@@ -40,6 +40,9 @@ interface TsEntityContext {
   detailsProps: TsPropContext[];
   searchProps: TsPropContext[];
   projectionProps: TsPropContext[];
+  /** Enum definitions directly used by this entity's properties */
+  enums: Array<{ name: string; values: Array<{ name: string; value?: number }> }>;
+  hasEnums: boolean;
 }
 
 export class TypeScriptClientGenerator extends BaseGenerator {
@@ -52,12 +55,15 @@ export class TypeScriptClientGenerator extends BaseGenerator {
 
     const contextName = model.boundedContext.name;
     const regularEntities = model.entities.filter((e) => !e.isJunction);
+    const allEnums = model.enums ?? [];
 
     for (const clientCfg of clients) {
       const httpClient = clientCfg.httpClient as string;
+      const isAxios = httpClient === 'axios';
       const outDir = this.resolveClientOutputDir(contextName, clientCfg);
+      const contextNameKebab = contextName.replace(/([A-Z])/g, (_, c, i) => (i > 0 ? '-' : '') + c).toLowerCase();
 
-      const entityContexts = regularEntities.map((e) => this.buildEntityContext(e));
+      const entityContexts = regularEntities.map((e) => this.buildEntityContext(e, allEnums));
 
       // Generate per-entity client file
       for (const entityCtx of entityContexts) {
@@ -70,25 +76,45 @@ export class TypeScriptClientGenerator extends BaseGenerator {
         );
       }
 
-      // Generate shared types file
-      const typesFilePath = path.join(outDir, 'types.ts');
-      await this.writeRenderedTemplate(
-        'clients/typescript/types.ts.hbs',
-        { contextName, entities: entityContexts, httpClient },
-        typesFilePath,
-        true
-      );
+      // Generate per-entity DTO file in dto/ subfolder
+      for (const entityCtx of entityContexts) {
+        const dtoFilePath = path.join(outDir, 'dto', `${entityCtx.entityNameLower}.dto.ts`);
+        await this.writeRenderedTemplate(
+          'clients/typescript/dto/entity.dto.ts.hbs',
+          { ...entityCtx, contextName, httpClient },
+          dtoFilePath,
+          true
+        );
+      }
 
-      // Generate barrel index
+      // Generate barrel index (passes full entity context for entityNameLower)
       const indexFilePath = path.join(outDir, 'index.ts');
       await this.writeRenderedTemplate(
         'clients/typescript/index.ts.hbs',
         {
           contextName,
-          entityNames: entityContexts.map((e) => e.entityName),
+          entities: entityContexts,
           httpClient,
         },
         indexFilePath,
+        true
+      );
+
+      // Generate package.json
+      const packageJsonPath = path.join(outDir, 'package.json');
+      await this.writeRenderedTemplate(
+        'clients/typescript/package.json.hbs',
+        { contextName, contextNameKebab, httpClient, isAxios },
+        packageJsonPath,
+        true
+      );
+
+      // Generate tsconfig.json
+      const tsconfigPath = path.join(outDir, 'tsconfig.json');
+      await this.writeRenderedTemplate(
+        'clients/typescript/tsconfig.json.hbs',
+        { contextName, httpClient },
+        tsconfigPath,
         true
       );
     }
@@ -107,7 +133,7 @@ export class TypeScriptClientGenerator extends BaseGenerator {
     );
   }
 
-  private buildEntityContext(entity: Entity): TsEntityContext {
+  private buildEntityContext(entity: Entity, allEnums: EnumDefinition[]): TsEntityContext {
     const entityName = entity.name;
     const entityNameLower = NamingConventions.toCamelCase(entityName);
     const entityNamePlural = this.pluralize(entityNameLower);
@@ -128,6 +154,18 @@ export class TypeScriptClientGenerator extends BaseGenerator {
     const scalarProps = entity.properties.filter(
       (p) => !p.isCollection && !(p.isForeignKey && p.navigationProperty)
     );
+
+    // Collect enum types used by this entity's properties
+    const usedEnumNames = new Set<string>(
+      scalarProps.map((p) => p.enumType).filter((e): e is string => !!e)
+    );
+    const enums = allEnums
+      .filter((e) => usedEnumNames.has(e.name))
+      .map((e) => ({
+        name: e.name,
+        values: e.values.map((v) => ({ name: v.name, value: v.value })),
+      }));
+    const hasEnums = enums.length > 0;
 
     const createProps = this.buildProps(
       scalarProps.filter((p) => this.includeInCreate(p))
@@ -166,6 +204,8 @@ export class TypeScriptClientGenerator extends BaseGenerator {
       detailsProps,
       searchProps,
       projectionProps,
+      enums,
+      hasEnums,
     };
   }
 

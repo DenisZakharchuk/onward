@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Onward.Base.Auth;
 using Onward.Base.AspNetCore.GrpcProto;
@@ -14,36 +12,27 @@ namespace Onward.Base.AspNetCore.Auth;
 public sealed class GrpcAuthIntrospectionClient : IAuthIntrospectionClient
 {
     private readonly AuthIntrospection.AuthIntrospectionClient _grpcClient;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<GrpcAuthIntrospectionClient> _logger;
 
     public GrpcAuthIntrospectionClient(
         AuthIntrospection.AuthIntrospectionClient grpcClient,
-        IHttpContextAccessor httpContextAccessor,
         ILogger<GrpcAuthIntrospectionClient> logger)
     {
         _grpcClient = grpcClient;
-        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task<IntrospectionResult> IntrospectAsync(
         string jti,
+        Guid userId,
         string? tenantId = null,
         CancellationToken cancellationToken = default)
     {
-        var userIdStr = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userIdStr))
-        {
-            _logger.LogWarning("Cannot introspect JTI {Jti} via gRPC: userId not found in current request claims.", jti);
-            return IntrospectionResult.InactiveResult("UserId not available for introspection.");
-        }
-
         var request = new IntrospectRequest
         {
             Jti    = jti,
-            UserId = userIdStr,
+            UserId = userId.ToString(),
         };
 
         if (tenantId is not null)

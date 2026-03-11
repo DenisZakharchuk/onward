@@ -161,74 +161,12 @@ export class TypeMapper {
       }
     }
 
-    if (property.validation?.regex) {
-      attributes.push(`[RegularExpression(@"${property.validation.regex}")]`);
-    }
-
-    if (property.validation?.min !== undefined || property.validation?.max !== undefined) {
-      const isDecimal = property.type.toLowerCase() === 'decimal';
-      
-      if (property.validation.min !== undefined && property.validation.max !== undefined) {
-        if (isDecimal) {
-          attributes.push(`[Range(typeof(decimal), "${property.validation.min}", "${property.validation.max}")]`);
-        } else {
-          attributes.push(`[Range(${property.validation.min}, ${property.validation.max})]`);
-        }
-      } else if (property.validation.min !== undefined) {
-        if (isDecimal) {
-          attributes.push(`[Range(typeof(decimal), "${property.validation.min}", "${this.getMaxValueForType(property.type)}")]`);
-        } else {
-          attributes.push(`[Range(${property.validation.min}, ${this.getMaxValueForType(property.type)})]`);
-        }
-      } else if (property.validation.max !== undefined) {
-        if (isDecimal) {
-          attributes.push(`[Range(typeof(decimal), "${this.getMinValueForType(property.type)}", "${property.validation.max}")]`);
-        } else {
-          attributes.push(`[Range(${this.getMinValueForType(property.type)}, ${property.validation.max})]`);
-        }
-      }
-    }
+    // Range and RegularExpression validations are intentionally omitted from DTO annotations.
+    // Business-rule validations (range, format, email, etc.) are enforced exclusively by the
+    // generated IValidator<T> classes in BL/Validators/, which are called by DataServiceBase
+    // before every create/update operation.
 
     return attributes;
   }
 
-  /**
-   * Get maximum value for numeric type
-   */
-  private static getMaxValueForType(type: string): string {
-    switch (type.toLowerCase()) {
-      case 'int':
-        return 'int.MaxValue';
-      case 'long':
-        return 'long.MaxValue';
-      case 'decimal':
-        return 'decimal.MaxValue';
-      case 'double':
-        return 'double.MaxValue';
-      case 'float':
-        return 'float.MaxValue';
-      default:
-        return 'int.MaxValue';
-    }
-  }
-
-  /**
-   * Get minimum value for numeric type
-   */
-  private static getMinValueForType(type: string): string {
-    switch (type.toLowerCase()) {
-      case 'int':
-        return 'int.MinValue';
-      case 'long':
-        return 'long.MinValue';
-      case 'decimal':
-        return 'decimal.MinValue';
-      case 'double':
-        return 'double.MinValue';
-      case 'float':
-        return 'float.MinValue';
-      default:
-        return 'int.MinValue';
-    }
-  }
 }

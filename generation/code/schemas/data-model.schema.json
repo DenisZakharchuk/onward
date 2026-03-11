@@ -176,6 +176,10 @@
                   "type": "string",
                   "description": "Base URL of the Onward.Auth service (e.g. http://auth-service:5012)"
                 },
+                "devAuthServiceUrl": {
+                  "type": "string",
+                  "description": "Override URL for local development outside Docker (e.g. http://localhost:5012). Falls back to authServiceUrl when absent."
+                },
                 "cacheTtlSeconds": {
                   "type": "integer",
                   "minimum": 0,

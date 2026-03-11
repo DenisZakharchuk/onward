@@ -11,7 +11,7 @@ import type {
   {{detailsDtoName}},
   {{searchDtoName}},
   {{projectionName}},
-} from './types';
+} from './dto/{{entityNameLower}}.dto';
 
 export class {{entityName}}Client {
   private readonly http: AxiosInstance;
@@ -30,15 +30,11 @@ export class {{entityName}}Client {
 
   /** Get a single {{entityName}} by primary key */
   async getById({{pkNameLower}}: {{pkTsType}}): Promise<{{detailsDtoName}} | null> {
-    try {
-      const { data } = await this.http.get<{{detailsDtoName}}>(
-        `/{{routePrefix}}/${encodeURIComponent(String({{pkNameLower}}))}`
-      );
-      return data;
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) return null;
-      throw err;
-    }
+    const { data, status } = await this.http.get<{{detailsDtoName}}>(
+      `/{{routePrefix}}/${encodeURIComponent(String({{pkNameLower}}))}`,
+      { validateStatus: (s) => s < 500 }
+    );
+    return status === 404 ? null : data;
   }
 
   /** Create a new {{entityName}} */

@@ -5,6 +5,7 @@
 
 using System.Net;
 using System.Net.Http.Json;
+using {{namespace}}.Dto;
 
 namespace {{namespace}};
 
@@ -14,8 +15,8 @@ public interface I{{entityName}}Client
     Task<IReadOnlyList<{{projectionName}}>> GetAllAsync({{searchDtoName}}? search = null, CancellationToken ct = default);
     Task<{{detailsDtoName}}?> GetByIdAsync({{pkCsType}} {{pkNameLower}}, CancellationToken ct = default);
     Task<{{detailsDtoName}}> CreateAsync({{createDtoName}} dto, CancellationToken ct = default);
-    Task<{{detailsDtoName}}> UpdateAsync({{updateDtoName}} dto, CancellationToken ct = default);
-    Task DeleteAsync({{deleteDtoName}} dto, CancellationToken ct = default);
+    Task<{{detailsDtoName}}> UpdateAsync({{pkCsType}} {{pkNameLower}}, {{updateDtoName}} dto, CancellationToken ct = default);
+    Task DeleteAsync({{pkCsType}} {{pkNameLower}}, CancellationToken ct = default);
 }
 
 /// <summary>HttpClient-based implementation of <see cref="I{{entityName}}Client" />.</summary>
@@ -51,17 +52,17 @@ public sealed class {{entityName}}HttpClient : I{{entityName}}Client
     }
 
     /// <inheritdoc />
-    public async Task<{{detailsDtoName}}> UpdateAsync({{updateDtoName}} dto, CancellationToken ct = default)
+    public async Task<{{detailsDtoName}}> UpdateAsync({{pkCsType}} {{pkNameLower}}, {{updateDtoName}} dto, CancellationToken ct = default)
     {
-        var response = await _http.PutAsJsonAsync($"{{routeWithDtoPk}}", dto, ct);
+        var response = await _http.PutAsJsonAsync($"/{{routePrefix}}/{{{pkNameLower}}}", dto, ct);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<{{detailsDtoName}}>(cancellationToken: ct))!;
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync({{deleteDtoName}} dto, CancellationToken ct = default)
+    public async Task DeleteAsync({{pkCsType}} {{pkNameLower}}, CancellationToken ct = default)
     {
-        var response = await _http.DeleteAsync($"{{routeWithDtoPk}}", ct);
+        var response = await _http.DeleteAsync($"/{{routePrefix}}/{{{pkNameLower}}}", ct);
         response.EnsureSuccessStatusCode();
     }
 

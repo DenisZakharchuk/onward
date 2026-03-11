@@ -1,0 +1,28 @@
+services:
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: inventory-postgres-auth
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - inventory-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_auth_data:
+    driver: local
+
+networks:
+  inventory-network:
+    external: true

@@ -58,6 +58,7 @@ export class AuthModeResolver {
     const raw = boundedContext.authModel?.onlineAuth;
     return {
       authServiceUrl: raw?.authServiceUrl ?? '',
+      devAuthServiceUrl: raw?.devAuthServiceUrl ?? raw?.authServiceUrl ?? '',
       cacheTtlSeconds: raw?.cacheTtlSeconds ?? 30,
       failOpen: raw?.failOpen ?? false,
       transport: raw?.transport ?? 'Http',

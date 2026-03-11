@@ -48,11 +48,17 @@ public sealed class OnwardOnlineJwtBearerEventsHandler
         }
 
         var userIdStr = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdStr, out var userId))
+        {
+            context.Fail("Token is missing or has an invalid 'sub' / NameIdentifier claim.");
+            return;
+        }
+
         var tenantId = principal.FindFirstValue("tenant_id");
 
         try
         {
-            var result = await _client.IntrospectAsync(jti, tenantId, context.HttpContext.RequestAborted);
+            var result = await _client.IntrospectAsync(jti, userId, tenantId, context.HttpContext.RequestAborted);
 
             if (!result.Active)
             {

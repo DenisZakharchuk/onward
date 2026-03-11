@@ -7,7 +7,7 @@
  */
 
 import { BaseGenerator } from '../BaseGenerator';
-import { BoundedContextGenerationContext, Entity, Property } from '../../models/DataModel';
+import { BoundedContextGenerationContext, EnumDefinition, Entity, Property } from '../../models/DataModel';
 import { ClientConfig } from '../../models/Blueprint';
 import { TypeMapper } from '../../utils/TypeMapper';
 import { NamingConventions } from '../../utils/NamingConventions';
@@ -42,6 +42,8 @@ interface CsEntityContext {
   detailsProps: CsPropContext[];
   searchProps: CsPropContext[];
   projectionProps: CsPropContext[];
+  enums: Array<{ name: string; values: Array<{ name: string; value?: number }> }>;
+  hasEnums: boolean;
 }
 
 export class CSharpClientGenerator extends BaseGenerator {
@@ -55,13 +57,14 @@ export class CSharpClientGenerator extends BaseGenerator {
     const contextName = model.boundedContext.name;
     const namespace = model.boundedContext.namespace;
     const regularEntities = model.entities.filter((e) => !e.isJunction);
+    const allEnums = model.enums ?? [];
 
     for (const clientCfg of clients) {
       const httpClient = clientCfg.httpClient as 'httpclient' | 'refit';
       const clientNamespace = `${namespace}.Client`;
       const outDir = this.resolveClientOutputDir(contextName, clientCfg);
 
-      const entityContexts = regularEntities.map((e) => this.buildEntityContext(e));
+      const entityContexts = regularEntities.map((e) => this.buildEntityContext(e, allEnums));
 
       // Generate per-entity client file
       for (const entityCtx of entityContexts) {
@@ -79,12 +82,24 @@ export class CSharpClientGenerator extends BaseGenerator {
         );
       }
 
-      // Generate shared DTOs file
-      const dtosFilePath = path.join(outDir, `${contextName}ClientDtos.cs`);
+      // Generate per-entity DTO files in Dto/ subfolder
+      for (const entityCtx of entityContexts) {
+        const dtoFilePath = path.join(outDir, 'Dto', `${entityCtx.entityName}ClientDtos.cs`);
+        await this.writeRenderedTemplate(
+          'clients/csharp/shared/entity-dtos.cs.hbs',
+          { ...entityCtx, contextName, namespace: clientNamespace, httpClient },
+          dtoFilePath,
+          true
+        );
+      }
+
+      // Generate .csproj project file
+      const isRefit = httpClient === 'refit';
+      const projectFilePath = path.join(outDir, `${clientNamespace}.csproj`);
       await this.writeRenderedTemplate(
-        'clients/csharp/shared/dtos.cs.hbs',
-        { contextName, namespace: clientNamespace, entities: entityContexts, httpClient },
-        dtosFilePath,
+        'clients/csharp/shared/project.csproj.hbs',
+        { contextName, namespace: clientNamespace, isRefit, isHttpClient: !isRefit },
+        projectFilePath,
         true
       );
 
@@ -97,8 +112,8 @@ export class CSharpClientGenerator extends BaseGenerator {
           namespace: clientNamespace,
           entities: entityContexts,
           httpClient,
-          isRefit: httpClient === 'refit',
-          isHttpClient: httpClient === 'httpclient',
+          isRefit,
+          isHttpClient: !isRefit,
         },
         diFilePath,
         true
@@ -119,7 +134,7 @@ export class CSharpClientGenerator extends BaseGenerator {
     );
   }
 
-  private buildEntityContext(entity: Entity): CsEntityContext {
+  private buildEntityContext(entity: Entity, allEnums: EnumDefinition[]): CsEntityContext {
     const entityName = entity.name;
     const entityNamePlural = this.pluralize(entityName);
     const routePrefix = `api/${entityNamePlural.toLowerCase()}`;
@@ -138,6 +153,18 @@ export class CSharpClientGenerator extends BaseGenerator {
     const scalarProps = entity.properties.filter(
       (p) => !p.isCollection && !(p.isForeignKey && p.navigationProperty)
     );
+
+    // Collect enum types used by this entity's properties
+    const usedEnumNames = new Set<string>(
+      scalarProps.map((p) => p.enumType).filter((e): e is string => !!e)
+    );
+    const enums = allEnums
+      .filter((e) => usedEnumNames.has(e.name))
+      .map((e) => ({
+        name: e.name,
+        values: e.values.map((v) => ({ name: v.name, value: v.value })),
+      }));
+    const hasEnums = enums.length > 0;
 
     const createProps = this.buildProps(
       scalarProps.filter((p) => this.includeInCreate(p))
@@ -178,6 +205,8 @@ export class CSharpClientGenerator extends BaseGenerator {
       detailsProps,
       searchProps,
       projectionProps,
+      enums,
+      hasEnums,
     };
   }
 

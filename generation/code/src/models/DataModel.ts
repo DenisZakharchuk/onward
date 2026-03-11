@@ -132,8 +132,10 @@ export interface OwnershipConfig {
  * Only required when blueprint.authorization.authMode is 'online'.
  */
 export interface OnlineAuthConfig {
-  /** Base URL of the Onward.Auth service.  E.g. 'http://auth-service:5012'. */
+  /** Base URL of the Onward.Auth service (Docker/production).  E.g. 'http://auth-service:5012'. */
   authServiceUrl: string;
+  /** Override URL for local development (outside Docker). E.g. 'http://localhost:5012'. Falls back to authServiceUrl when absent. */
+  devAuthServiceUrl?: string;
   /** Per-JTI cache TTL in seconds (0 = disabled). Defaults to 30. */
   cacheTtlSeconds?: number;
   /** When true, a failed introspection call allows the request through. Defaults to false. */

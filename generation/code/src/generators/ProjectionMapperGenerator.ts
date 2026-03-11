@@ -54,7 +54,7 @@ export class ProjectionMapperGenerator extends BaseGenerator {
       baseNamespace,
       entityName: entity.name,
       projectionName: `${entity.name}Projection`,
-      properties: this.buildPropertyContext(scalarProperties),
+      properties: [...this.buildBaseProperties(entity), ...this.buildPropertyContext(scalarProperties)],
       relationships: this.buildRelationshipContext(relatedEntities, entity.name, entities),
       hasRelationships: relatedEntities.length > 0,
       maxDefaultDepth: 3, // Default depth for nested projections
@@ -107,6 +107,57 @@ export class ProjectionMapperGenerator extends BaseGenerator {
     }
 
     return related;
+  }
+
+  private buildBaseProperties(entity: Entity): Array<{
+    name: string;
+    type: string;
+    typeNullable: string;
+    isNullable: boolean;
+    camelName: string;
+    pascalName: string;
+  }> {
+    const pkName = entity.pk?.name ?? 'Id';
+    const pkCSharpType = TypeMapper.toCSharpType(entity.pk?.type ?? 'Guid', false);
+
+    const baseProps: Array<{
+      name: string;
+      type: string;
+      typeNullable: string;
+      isNullable: boolean;
+      camelName: string;
+      pascalName: string;
+    }> = [
+      {
+        name: pkName,
+        type: pkCSharpType,
+        typeNullable: `${pkCSharpType}?`,
+        isNullable: false,
+        camelName: NamingConventions.toCamelCase(pkName),
+        pascalName: pkName,
+      },
+      {
+        name: 'CreatedAt',
+        type: 'DateTime',
+        typeNullable: 'DateTime?',
+        isNullable: false,
+        camelName: 'createdAt',
+        pascalName: 'CreatedAt',
+      },
+    ];
+
+    if (entity.auditable !== false) {
+      baseProps.push({
+        name: 'UpdatedAt',
+        type: 'DateTime?',
+        typeNullable: 'DateTime?',
+        isNullable: true,
+        camelName: 'updatedAt',
+        pascalName: 'UpdatedAt',
+      });
+    }
+
+    return baseProps;
   }
 
   private buildPropertyContext(properties: Property[]): Array<{

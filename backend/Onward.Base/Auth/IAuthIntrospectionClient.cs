@@ -10,6 +10,7 @@ public interface IAuthIntrospectionClient
     /// Introspects a JWT by its unique identifier (jti claim).
     /// </summary>
     /// <param name="jti">The JWT ID claim value to introspect.</param>
+    /// <param name="userId">The user ID extracted from the validated JWT principal.</param>
     /// <param name="tenantId">Optional tenant context. Pass <c>null</c> for single-tenant deployments.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
@@ -17,6 +18,7 @@ public interface IAuthIntrospectionClient
     /// </returns>
     Task<IntrospectionResult> IntrospectAsync(
         string jti,
+        Guid userId,
         string? tenantId = null,
         CancellationToken cancellationToken = default);
 }

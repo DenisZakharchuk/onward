@@ -1,6 +1,4 @@
 using System.Net.Http.Json;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Onward.Base.Auth;
 
@@ -13,32 +11,22 @@ namespace Onward.Base.AspNetCore.Auth;
 public sealed class HttpAuthIntrospectionClient : IAuthIntrospectionClient
 {
     private readonly HttpClient _http;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<HttpAuthIntrospectionClient> _logger;
 
     public HttpAuthIntrospectionClient(
         HttpClient http,
-        IHttpContextAccessor httpContextAccessor,
         ILogger<HttpAuthIntrospectionClient> logger)
     {
         _http = http;
-        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
 
     public async Task<IntrospectionResult> IntrospectAsync(
         string jti,
+        Guid userId,
         string? tenantId = null,
         CancellationToken cancellationToken = default)
     {
-        // Extract userId from the current request's JWT claims (already validated by ASP.NET Core)
-        var userIdStr = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userIdStr, out var userId))
-        {
-            _logger.LogWarning("Cannot introspect JTI {Jti}: userId not found in current request claims.", jti);
-            return IntrospectionResult.InactiveResult("UserId not available for introspection.");
-        }
-
         var payload = new IntrospectPayload(jti, userId, tenantId);
 
         var response = await _http.PostAsJsonAsync("api/tokens/introspect", payload, cancellationToken);

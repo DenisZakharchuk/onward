@@ -69,6 +69,7 @@
         },
         "onlineAuth": {
           "authServiceUrl": "http://auth-service:5012",
+          "devAuthServiceUrl": "http://localhost:5012",
           "cacheTtlSeconds": 30,
           "failOpen": false,
           "transport": "Http",

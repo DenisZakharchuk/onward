@@ -24,20 +24,20 @@ public class CachedAuthIntrospectionClientTests
     public async Task IntrospectAsync_CacheHit_DoesNotCallInner()
     {
         var inner = new Mock<IAuthIntrospectionClient>();
-        inner.Setup(i => i.IntrospectAsync("jti", null, default))
+        inner.Setup(i => i.IntrospectAsync("jti", It.IsAny<Guid>(), null, default))
              .ReturnsAsync(IntrospectionResult.ActiveResult(Guid.NewGuid(), "a@b.com",
-                 new[] { "Admin" }.AsReadOnly(), Array.Empty<string>().AsReadOnly()));
+                          new[] { "Admin" }.AsReadOnly(), Array.Empty<string>().AsReadOnly()));
 
         var sut = new CachedAuthIntrospectionClient(inner.Object, NewCache(), Options(30), Logger());
 
         // First call — populates cache
-        var first = await sut.IntrospectAsync("jti");
+        var first = await sut.IntrospectAsync("jti", Guid.NewGuid());
         // Second call — should hit cache
-        var second = await sut.IntrospectAsync("jti");
+        var second = await sut.IntrospectAsync("jti", Guid.NewGuid());
 
         Assert.True(first.Active);
         Assert.True(second.Active);
-        inner.Verify(i => i.IntrospectAsync("jti", null, default), Times.Once);
+        inner.Verify(i => i.IntrospectAsync("jti", It.IsAny<Guid>(), null, default), Times.Once);
     }
 
     // ── Different JTIs get separate cache entries ──────────────────────────
@@ -46,18 +46,18 @@ public class CachedAuthIntrospectionClientTests
     public async Task IntrospectAsync_DifferentJtis_AreIndependent()
     {
         var inner = new Mock<IAuthIntrospectionClient>();
-        inner.Setup(i => i.IntrospectAsync(It.IsAny<string>(), null, default))
+        inner.Setup(i => i.IntrospectAsync(It.IsAny<string>(), It.IsAny<Guid>(), null, default))
              .ReturnsAsync(IntrospectionResult.ActiveResult(Guid.NewGuid(), "a@b.com",
-                 Array.Empty<string>().AsReadOnly(), Array.Empty<string>().AsReadOnly()));
+                          Array.Empty<string>().AsReadOnly(), Array.Empty<string>().AsReadOnly()));
 
         var cache = NewCache();
         var sut = new CachedAuthIntrospectionClient(inner.Object, cache, Options(30), Logger());
 
-        await sut.IntrospectAsync("jti-A");
-        await sut.IntrospectAsync("jti-B");
+        await sut.IntrospectAsync("jti-A", Guid.NewGuid());
+        await sut.IntrospectAsync("jti-B", Guid.NewGuid());
 
-        inner.Verify(i => i.IntrospectAsync("jti-A", null, default), Times.Once);
-        inner.Verify(i => i.IntrospectAsync("jti-B", null, default), Times.Once);
+        inner.Verify(i => i.IntrospectAsync("jti-A", It.IsAny<Guid>(), null, default), Times.Once);
+        inner.Verify(i => i.IntrospectAsync("jti-B", It.IsAny<Guid>(), null, default), Times.Once);
     }
 
     // ── Inactive results are NOT cached ───────────────────────────────────
@@ -66,16 +66,16 @@ public class CachedAuthIntrospectionClientTests
     public async Task IntrospectAsync_InactiveResult_NotCached()
     {
         var inner = new Mock<IAuthIntrospectionClient>();
-        inner.Setup(i => i.IntrospectAsync("bad-jti", null, default))
+        inner.Setup(i => i.IntrospectAsync("bad-jti", It.IsAny<Guid>(), null, default))
              .ReturnsAsync(IntrospectionResult.InactiveResult("revoked"));
 
         var sut = new CachedAuthIntrospectionClient(inner.Object, NewCache(), Options(30), Logger());
 
-        await sut.IntrospectAsync("bad-jti");
-        await sut.IntrospectAsync("bad-jti");
+        await sut.IntrospectAsync("bad-jti", Guid.NewGuid());
+        await sut.IntrospectAsync("bad-jti", Guid.NewGuid());
 
         // Inner called twice — inactive results bypass cache so an unblock is seen immediately
-        inner.Verify(i => i.IntrospectAsync("bad-jti", null, default), Times.Exactly(2));
+        inner.Verify(i => i.IntrospectAsync("bad-jti", It.IsAny<Guid>(), null, default), Times.Exactly(2));
     }
 
     // ── TTL=0 disables cache ───────────────────────────────────────────────
@@ -84,15 +84,15 @@ public class CachedAuthIntrospectionClientTests
     public async Task IntrospectAsync_ZeroTtl_AlwaysCallsInner()
     {
         var inner = new Mock<IAuthIntrospectionClient>();
-        inner.Setup(i => i.IntrospectAsync("jti", null, default))
+        inner.Setup(i => i.IntrospectAsync("jti", It.IsAny<Guid>(), null, default))
              .ReturnsAsync(IntrospectionResult.ActiveResult(Guid.NewGuid(), "a@b.com",
-                 Array.Empty<string>().AsReadOnly(), Array.Empty<string>().AsReadOnly()));
+                          Array.Empty<string>().AsReadOnly(), Array.Empty<string>().AsReadOnly()));
 
         var sut = new CachedAuthIntrospectionClient(inner.Object, NewCache(), Options(0), Logger());
 
-        await sut.IntrospectAsync("jti");
-        await sut.IntrospectAsync("jti");
+        await sut.IntrospectAsync("jti", Guid.NewGuid());
+        await sut.IntrospectAsync("jti", Guid.NewGuid());
 
-        inner.Verify(i => i.IntrospectAsync("jti", null, default), Times.Exactly(2));
+        inner.Verify(i => i.IntrospectAsync("jti", It.IsAny<Guid>(), null, default), Times.Exactly(2));
     }
 }

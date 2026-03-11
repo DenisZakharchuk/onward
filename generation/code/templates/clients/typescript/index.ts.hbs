@@ -6,9 +6,11 @@
 // </auto-generated>
 
 // DTO interfaces
-export * from './types';
+{{#each entities}}
+export * from './dto/{{entityNameLower}}.dto';
+{{/each}}
 
 // Entity clients
-{{#each entityNames}}
-export { {{this}}Client } from './{{this}}Client';
+{{#each entities}}
+export { {{entityName}}Client } from './{{entityName}}Client';
 {{/each}}
