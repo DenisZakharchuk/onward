@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Onward.Base.DTOs;
 
 /// <summary>
@@ -105,10 +107,18 @@ public class ServiceResult<T>
     public string? Message { get; set; }
     public List<string> Errors { get; set; } = new();
 
-    /// <summary>True when a concurrent modification or unique-constraint conflict was detected.</summary>
+    /// <summary>
+    /// Internal routing signal — true when a concurrent modification or unique-constraint conflict was
+    /// detected. Maps to HTTP 409. Not serialized to clients; use the HTTP status code instead.
+    /// </summary>
+    [JsonIgnore]
     public bool IsConflict { get; set; }
 
-    /// <summary>True when the requested resource has not changed since the client's cached version.</summary>
+    /// <summary>
+    /// Internal routing signal — true when the client's conditional GET token matches the current
+    /// entity version. Maps to HTTP 304. Not serialized to clients; use the HTTP status code instead.
+    /// </summary>
+    [JsonIgnore]
     public bool IsNotModified { get; set; }
 
     public static ServiceResult<T> Success(T data, string? message = null) =>
