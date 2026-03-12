@@ -21,7 +21,7 @@ namespace {{namespace}}.BL.Entities;
 /// <summary>
 /// {{description}}
 /// </summary>
-public class {{entityName}} : {{{baseEntityClass}}}
+public class {{entityName}} : {{{baseEntityClass}}}{{#if isVersioned}}, IVersionedEntity{{/if}}
 {
     /// <summary>
     /// Private parameterless constructor for EF Core
@@ -91,6 +91,14 @@ public class {{entityName}} : {{{baseEntityClass}}}
     /// Timestamp when the entity was last updated
     /// </summary>
     public DateTime? UpdatedAt { get; private set; }
+
+    {{/if}}
+    {{#if isVersioned}}
+    /// <summary>
+    /// Optimistic concurrency token managed by the database (PostgreSQL xmin).
+    /// Do not set manually — value is populated by EF Core after reads and writes.
+    /// </summary>
+    public uint RowVersion { get; set; }
 
     {{/if}}
     {{#if hasUpdateMethod}}

@@ -105,6 +105,12 @@ public class ServiceResult<T>
     public string? Message { get; set; }
     public List<string> Errors { get; set; } = new();
 
+    /// <summary>True when a concurrent modification or unique-constraint conflict was detected.</summary>
+    public bool IsConflict { get; set; }
+
+    /// <summary>True when the requested resource has not changed since the client's cached version.</summary>
+    public bool IsNotModified { get; set; }
+
     public static ServiceResult<T> Success(T data, string? message = null) =>
         new() { IsSuccess = true, Data = data, Message = message };
 
@@ -113,6 +119,21 @@ public class ServiceResult<T>
 
     public static ServiceResult<T> Failure(List<string> errors) =>
         new() { IsSuccess = false, Errors = errors };
+
+    /// <summary>
+    /// Creates a conflict result — returned when a stale version token is detected
+    /// (optimistic concurrency) or a unique constraint violation occurs.
+    /// Maps to HTTP 409 Conflict.
+    /// </summary>
+    public static ServiceResult<T> Conflict(string message) =>
+        new() { IsSuccess = false, IsConflict = true, Message = message };
+
+    /// <summary>
+    /// Creates a not-modified result — returned when the client's conditional GET token
+    /// matches the current entity version. Maps to HTTP 304 Not Modified.
+    /// </summary>
+    public static ServiceResult<T> NotModified() =>
+        new() { IsSuccess = false, IsNotModified = true };
 }
 
 /// <summary>

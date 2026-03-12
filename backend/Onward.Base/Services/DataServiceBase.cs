@@ -1,6 +1,7 @@
 using Onward.Base.Abstractions;
 using Onward.Base.DataAccess;
 using Onward.Base.DTOs;
+using Onward.Base.Models;
 using Onward.Base.Ownership;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -101,7 +102,7 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     }
 
     /// <summary>
-    /// Gets a single entity by ID
+    /// Gets a single entity by ID. Integrates with idempotency caching and ETag generation.
     /// </summary>
     public async Task<ServiceResult<TDetailsDTO>> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
@@ -110,12 +111,48 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
             if (IsDefaultKey(id))
                 return ServiceResult<TDetailsDTO>.Failure($"{EntityName} ID is required");
 
+            var tokenAccessor = ServiceProvider.GetService<IIdempotencyTokenAccessor>()
+                                ?? NoOpIdempotencyTokenAccessor.Instance;
+            var responseCache  = ServiceProvider.GetService<IResponseCacheContext>()
+                                ?? NoOpResponseCacheContext.Instance;
+
+            // Check conditional GET (If-None-Match) before hitting the DB
+            var conditionalToken = tokenAccessor.GetConditionalToken();
+
+            // Try response cache first
+            var cacheKey = $"{EntityName}:{id}";
+            var (cacheHit, cached, cachedToken) = await responseCache.TryGetAsync<TDetailsDTO>(cacheKey, cancellationToken);
+            if (cacheHit && cached is not null)
+            {
+                if (conditionalToken is not null && conditionalToken == cachedToken)
+                    return ServiceResult<TDetailsDTO>.NotModified();
+
+                if (cachedToken is not null)
+                    tokenAccessor.SetResponseToken(cachedToken);
+
+                return ServiceResult<TDetailsDTO>.Success(cached);
+            }
+
             var entity = await Repository.GetByIdAsync(id, cancellationToken);
             if (entity == null)
                 return ServiceResult<TDetailsDTO>.Failure($"{EntityName} not found");
 
+            var versionToken = (entity is IVersionedEntity v) ? v.RowVersion.ToString() : null;
+
+            // 304 short-circuit from DB token
+            if (conditionalToken is not null && conditionalToken == versionToken)
+                return ServiceResult<TDetailsDTO>.NotModified();
+
             var mapper = ServiceProvider.GetRequiredService<IMapper<TEntity, TDetailsDTO>>();
-            return ServiceResult<TDetailsDTO>.Success(mapper.Map(entity));
+            var dto = mapper.Map(entity);
+
+            // Store in response cache
+            await responseCache.SetAsync(cacheKey, dto, versionToken, cancellationToken);
+
+            if (versionToken is not null)
+                tokenAccessor.SetResponseToken(versionToken);
+
+            return ServiceResult<TDetailsDTO>.Success(dto);
         }
         catch (Exception ex)
         {
@@ -127,7 +164,7 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     /// <summary>
     /// Creates a new entity. When the entity implements <see cref="IOwnedEntity{TOwnership}"/>,
     /// ownership is stamped from the current <see cref="ICurrentIdentityContext{TOwnership}"/>
-    /// before the entity is persisted.
+    /// before the entity is persisted. Supports POST idempotency via X-Idempotency-Key header.
     /// </summary>
     public async Task<ServiceResult<TDetailsDTO>> AddAsync(TCreateDTO createDto, CancellationToken cancellationToken = default)
     {
@@ -135,6 +172,23 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
         {
             if (createDto == null)
                 return ServiceResult<TDetailsDTO>.Failure($"{EntityName} data is required");
+
+            var tokenAccessor = ServiceProvider.GetService<IIdempotencyTokenAccessor>()
+                                ?? NoOpIdempotencyTokenAccessor.Instance;
+            var responseCache  = ServiceProvider.GetService<IResponseCacheContext>()
+                                ?? NoOpResponseCacheContext.Instance;
+
+            // POST deduplication: if client sent X-Idempotency-Key and we have a cached result, return it
+            var idempotencyKey = tokenAccessor.GetIdempotencyKey();
+            if (idempotencyKey is not null)
+            {
+                var (hit, cached, cachedToken) = await responseCache.TryGetAsync<TDetailsDTO>($"post:{idempotencyKey}", cancellationToken);
+                if (hit && cached is not null)
+                {
+                    if (cachedToken is not null) tokenAccessor.SetResponseToken(cachedToken);
+                    return ServiceResult<TDetailsDTO>.Success(cached, $"{EntityName} already created (idempotent)");
+                }
+            }
 
             var createValidator = ServiceProvider.GetRequiredService<IValidator<TCreateDTO>>();
             var validationResult = await createValidator.ValidateAsync(createDto, cancellationToken);
@@ -153,8 +207,29 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
             var mapper = ServiceProvider.GetRequiredService<IMapper<TEntity, TDetailsDTO>>();
-            Logger.LogInformation("{EntityName} created successfully: {EntityId}", EntityName, GetEntityId(entity));
-            return ServiceResult<TDetailsDTO>.Success(mapper.Map(entity), $"{EntityName} created successfully");
+            var dto = mapper.Map(entity);
+            var versionToken = (entity is IVersionedEntity v) ? v.RowVersion.ToString() : null;
+
+            // Cache the result under X-Idempotency-Key for safe retries
+            if (idempotencyKey is not null)
+                await responseCache.SetAsync($"post:{idempotencyKey}", dto, versionToken, cancellationToken);
+
+            // Also prime the GET cache
+            var entityId = GetEntityId(entity);
+            if (entityId is not null)
+                await responseCache.SetAsync($"{EntityName}:{entityId}", dto, versionToken, cancellationToken);
+
+            if (versionToken is not null)
+                tokenAccessor.SetResponseToken(versionToken);
+
+            Logger.LogInformation("{EntityName} created successfully: {EntityId}", EntityName, entityId);
+            return ServiceResult<TDetailsDTO>.Success(dto, $"{EntityName} created successfully");
+        }
+        catch (DbUpdateException dbEx) when (IsUniqueViolation(dbEx))
+        {
+            Logger.LogWarning(dbEx, "Unique constraint violation creating {EntityName}", EntityName);
+            return ServiceResult<TDetailsDTO>.Conflict(
+                $"{EntityName} already exists with the same unique field values.");
         }
         catch (Exception ex)
         {
@@ -166,6 +241,8 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     /// <summary>
     /// Updates an existing entity. When the entity implements <see cref="IOwnedEntity{TOwnership}"/>,
     /// <see cref="IOwnedEntity{TOwnership}.LastModifiedOwnership"/> is stamped from the current identity.
+    /// When the entity implements <see cref="IVersionedEntity"/>, the If-Match token from the HTTP
+    /// request is checked via <see cref="IIdempotencyTokenAccessor"/>; a stale token returns 409.
     /// </summary>
     public async Task<ServiceResult<TDetailsDTO>> UpdateAsync(TUpdateDTO updateDto, CancellationToken cancellationToken = default)
     {
@@ -183,6 +260,17 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
             if (entity == null)
                 return ServiceResult<TDetailsDTO>.Failure($"{EntityName} not found");
 
+            // Optimistic concurrency check (only for versioned entities)
+            if (entity is IVersionedEntity versioned)
+            {
+                var tokenAccessor = ServiceProvider.GetService<IIdempotencyTokenAccessor>()
+                                    ?? NoOpIdempotencyTokenAccessor.Instance;
+                var clientToken = tokenAccessor.GetMutationToken();
+                if (clientToken is not null && clientToken != versioned.RowVersion.ToString())
+                    return ServiceResult<TDetailsDTO>.Conflict(
+                        $"{EntityName} was modified since you last read it. Reload and retry.");
+            }
+
             var modifier = ServiceProvider.GetRequiredService<IEntityModifier<TEntity, TUpdateDTO>>();
             modifier.Modify(entity, updateDto);
 
@@ -193,8 +281,32 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
             var mapper = ServiceProvider.GetRequiredService<IMapper<TEntity, TDetailsDTO>>();
+            var dto = mapper.Map(entity);
+            var versionToken = (entity is IVersionedEntity v) ? v.RowVersion.ToString() : null;
+
+            // Refresh caches
+            var responseCache = ServiceProvider.GetService<IResponseCacheContext>()
+                                ?? NoOpResponseCacheContext.Instance;
+            await responseCache.SetAsync($"{EntityName}:{updateDto.Id}", dto, versionToken, cancellationToken);
+
+            var tokenAcc = ServiceProvider.GetService<IIdempotencyTokenAccessor>()
+                           ?? NoOpIdempotencyTokenAccessor.Instance;
+            if (versionToken is not null) tokenAcc.SetResponseToken(versionToken);
+
             Logger.LogInformation("{EntityName} updated successfully: {EntityId}", EntityName, updateDto.Id);
-            return ServiceResult<TDetailsDTO>.Success(mapper.Map(entity), $"{EntityName} updated successfully");
+            return ServiceResult<TDetailsDTO>.Success(dto, $"{EntityName} updated successfully");
+        }
+        catch (DbUpdateConcurrencyException dbConcEx)
+        {
+            Logger.LogWarning(dbConcEx, "Concurrency conflict updating {EntityName}", EntityName);
+            return ServiceResult<TDetailsDTO>.Conflict(
+                $"{EntityName} was modified concurrently. Reload and retry.");
+        }
+        catch (DbUpdateException dbEx) when (IsUniqueViolation(dbEx))
+        {
+            Logger.LogWarning(dbEx, "Unique constraint violation updating {EntityName}", EntityName);
+            return ServiceResult<TDetailsDTO>.Conflict(
+                $"{EntityName} already exists with the same unique field values.");
         }
         catch (Exception ex)
         {
@@ -204,7 +316,9 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
     }
 
     /// <summary>
-    /// Deletes an entity
+    /// Deletes an entity. When the entity implements <see cref="IVersionedEntity"/>, the If-Match
+    /// token from the HTTP request is checked via <see cref="IIdempotencyTokenAccessor"/>;
+    /// a stale token returns 409.
     /// </summary>
     public async Task<ServiceResult<bool>> DeleteAsync(TDeleteDTO deleteDto, CancellationToken cancellationToken = default)
     {
@@ -213,14 +327,39 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
             if (deleteDto == null)
                 return ServiceResult<bool>.Failure("Delete request is required");
 
-            var deleted = await Repository.DeleteAsync(deleteDto.Id, cancellationToken);
-            if (!deleted)
+            // Load entity first so we can (a) 404-check and (b) do a versioned delete
+            var entity = await Repository.GetByIdAsync(deleteDto.Id, cancellationToken);
+            if (entity == null)
                 return ServiceResult<bool>.Failure($"{EntityName} not found");
 
+            // Optimistic concurrency check (only for versioned entities)
+            if (entity is IVersionedEntity versioned)
+            {
+                var tokenAccessor = ServiceProvider.GetService<IIdempotencyTokenAccessor>()
+                                    ?? NoOpIdempotencyTokenAccessor.Instance;
+                var clientToken = tokenAccessor.GetMutationToken();
+                if (clientToken is not null && clientToken != versioned.RowVersion.ToString())
+                    return ServiceResult<bool>.Conflict(
+                        $"{EntityName} was modified since you last read it. Reload and retry.");
+            }
+
+            // Use entity-based delete so EF Core includes the xmin token in the WHERE clause
+            await Repository.DeleteAsync(entity, cancellationToken);
             await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Evict from response cache
+            var responseCache = ServiceProvider.GetService<IResponseCacheContext>()
+                                ?? NoOpResponseCacheContext.Instance;
+            await responseCache.SetAsync($"{EntityName}:{deleteDto.Id}", (object?)null, null, cancellationToken);
 
             Logger.LogInformation("{EntityName} deleted successfully: {EntityId}", EntityName, deleteDto.Id);
             return ServiceResult<bool>.Success(true, $"{EntityName} deleted successfully");
+        }
+        catch (DbUpdateConcurrencyException dbConcEx)
+        {
+            Logger.LogWarning(dbConcEx, "Concurrency conflict deleting {EntityName}", EntityName);
+            return ServiceResult<bool>.Conflict(
+                $"{EntityName} was modified concurrently. Reload and retry.");
         }
         catch (Exception ex)
         {
@@ -321,6 +460,16 @@ public abstract class DataServiceBase<TOwnership, TEntity, TCreateDTO, TUpdateDT
         var idProperty = typeof(TEntity).GetProperty("Id");
         return idProperty?.GetValue(entity);
     }
+
+    /// <summary>
+    /// Returns true when <paramref name="ex"/> is caused by a unique constraint violation.
+    /// Checks the inner exception message for common database error strings without
+    /// requiring a direct dependency on the database provider package (e.g. Npgsql).
+    /// </summary>
+    private static bool IsUniqueViolation(DbUpdateException ex)
+        => ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true
+        || ex.InnerException?.Message.Contains("violates unique constraint", StringComparison.OrdinalIgnoreCase) == true
+        || ex.InnerException?.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase) == true;
 }
 
 /// <summary>

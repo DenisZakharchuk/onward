@@ -102,6 +102,7 @@ export class EntityGenerator extends BaseGenerator {
       updateValidations: this.getValidations(updateableProps),
       updateAssignments: this.getUpdateAssignments(updateableProps),
       foreignKeySetters: this.getForeignKeySetters(entity.properties),
+      isVersioned: entity.versioned === 'rowversion',
     };
 
     const filePath = path.join(entitiesDir, `${entity.name}.cs`);

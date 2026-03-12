@@ -45,6 +45,23 @@ export class DiGenerator extends BaseGenerator {
     const ownershipValueObject = ownershipCfg?.valueObject ?? 'UserTenantOwnership';
     const ownershipFactory = ownershipCfg?.factory ?? `${ownershipValueObject}Factory`;
 
+    // Derive idempotency template flags ----------------------------------------
+    // Any entity with versioned='rowversion' implies data-level idempotency is active,
+    // which requires the HTTP token accessor even when the context-level mode is unset.
+    const anyEntityVersioned = model.entities.some(e => e.versioned === 'rowversion');
+    const idempotencyMode = model.boundedContext.idempotency?.mode
+      ?? (anyEntityVersioned ? 'data' : 'none');
+    const cacheMode = model.boundedContext.idempotency?.cache?.mode;
+
+    const idempotency = {
+      mode: idempotencyMode,
+      // Register HttpContextIdempotencyTokenAccessor when any real idempotency is active
+      hasHttpTokenAccessor: idempotencyMode !== 'none',
+      isInMemoryCache: idempotencyMode === 'cache' && (cacheMode === 'inmemory' || !cacheMode),
+      isDistributedCache: idempotencyMode === 'cache' && cacheMode === 'distributed',
+    };
+    // ---------------------------------------------------------------------------
+
     const context = {
       baseNamespace,
       namespace,
@@ -53,6 +70,7 @@ export class DiGenerator extends BaseGenerator {
       hasOwnership,
       ownershipValueObject,
       ownershipFactory,
+      idempotency,
     };
 
     const filePath = path.join(extensionsDir, `${contextName}ServiceCollectionExtensions.cs`);

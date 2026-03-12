@@ -86,6 +86,9 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
         {
             var result = await DataService.GetByIdAsync(id, cancellationToken);
 
+            if (result.IsNotModified)
+                return StatusCode(304);
+
             if (!result.IsSuccess)
             {
                 LogOperationError(nameof(GetByIdAsync), new Exception(result.Message));
@@ -169,6 +172,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
             if (!result.IsSuccess)
             {
                 LogOperationError(nameof(UpdateAsync), new Exception(result.Message));
+                if (result.IsConflict) return Conflict(result);
                 return NotFound(result);
             }
 
@@ -204,6 +208,7 @@ public abstract class DataController<TEntity, TCreateDTO, TUpdateDTO, TDeleteDTO
             if (!result.IsSuccess)
             {
                 LogOperationError(nameof(DeleteAsync), new Exception(result.Message));
+                if (result.IsConflict) return Conflict(result);
                 return NotFound(result);
             }
 

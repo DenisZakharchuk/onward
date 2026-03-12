@@ -6,6 +6,10 @@
 // </auto-generated>
 
 using Onward.Base.Abstractions;
+using Onward.Base.Abstractions;
+{{#if idempotency.hasHttpTokenAccessor}}
+using Onward.Base.AspNetCore.Identity;
+{{/if}}
 using Onward.Base.DataAccess;
 using Onward.Base.Services;
 {{#if hasOwnership}}
@@ -45,6 +49,28 @@ public static class {{contextName}}ServiceCollectionExtensions
         services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
         services.AddScoped<I{{contextName}}UnitOfWork, {{contextName}}UnitOfWork>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<I{{contextName}}UnitOfWork>());
+
+{{#if idempotency.hasHttpTokenAccessor}}
+        // Idempotency token accessor — reads If-Match / If-None-Match / X-Idempotency-Key request headers
+        // and writes the ETag response header.
+        services.AddHttpContextAccessor();
+        services.AddScoped<IIdempotencyTokenAccessor, HttpContextIdempotencyTokenAccessor>();
+{{else}}
+        // Idempotency disabled (mode=none): inject no-op accessor so domain services compile cleanly.
+        services.AddSingleton<IIdempotencyTokenAccessor>(NoOpIdempotencyTokenAccessor.Instance);
+{{/if}}
+
+{{#if idempotency.isInMemoryCache}}
+        // Response cache — in-process IMemoryCache (mode=inmemory).
+        services.AddMemoryCache();
+        services.AddScoped<IResponseCacheContext, InMemoryResponseCacheContext>();
+{{else if idempotency.isDistributedCache}}
+        // Response cache — distributed (mode=distributed). Consumer must register IDistributedCache separately.
+        services.AddScoped<IResponseCacheContext, DistributedResponseCacheContext>();
+{{else}}
+        // No response cache: inject no-op context so domain services compile cleanly.
+        services.AddSingleton<IResponseCacheContext>(NoOpResponseCacheContext.Instance);
+{{/if}}
 
         services.AddScoped<ProjectionExpressionBuilder>();
 

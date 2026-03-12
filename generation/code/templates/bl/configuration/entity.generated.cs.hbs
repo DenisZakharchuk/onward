@@ -39,6 +39,15 @@ public class {{entityName}}Configuration : {{#if isOwned}}{{#if pkIsDefaultBase}
         {{{this}}}
 
         {{/each}}
+        {{#if isVersioned}}
+        // Optimistic concurrency token — mapped to the PostgreSQL xmin system column.
+        // No migration needed: xmin is a built-in PG column updated automatically on every row write.
+        builder.Property<uint>("RowVersion")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .IsRowVersion();
+
+        {{/if}}
         {{#each relationships}}
         {{{this}}}
 

@@ -216,6 +216,32 @@
             "$ref": "#/definitions/EnumDefinition"
           }
         },
+        "idempotency": {
+          "type": "object",
+          "description": "Bounded-context-level idempotency configuration. When absent, mode is inferred: 'data' if any entity has versioned='rowversion', else 'none'.",
+          "required": ["mode"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["none", "cache", "data"],
+              "description": "none → NoOp token accessor + NoOp cache; cache → IResponseCacheContext (in-memory or distributed) + X-Idempotency-Key POST dedup + ETag GET caching; data → DB-level row versioning via xmin (PostgreSQL)"
+            },
+            "cache": {
+              "type": "object",
+              "description": "Cache backing. Only applicable when mode is 'cache'.",
+              "required": ["mode"],
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": ["inmemory", "distributed"],
+                  "description": "inmemory → registers IMemoryCache + InMemoryResponseCacheContext; distributed → registers IDistributedCache + DistributedResponseCacheContext"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "dataModel": {
           "$ref": "#/definitions/DataModel"
         }
@@ -359,6 +385,11 @@
             "$ref": "#/definitions/Property"
           },
           "minItems": 1
+        },
+        "versioned": {
+          "type": "string",
+          "enum": ["none", "rowversion"],
+          "description": "Opt-in optimistic concurrency. 'rowversion' maps the PostgreSQL xmin system column as the EF Core concurrency token — entity implements IVersionedEntity and exposes uint RowVersion. No migration required. Defaults to 'none'."
         },
         "indexes": {
           "type": "array",

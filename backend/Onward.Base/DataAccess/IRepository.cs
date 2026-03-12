@@ -26,6 +26,13 @@ public interface IRepository<T, TKey> where T : class
     Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Removes an already-loaded entity. Preferred over <see cref="DeleteAsync(TKey, CancellationToken)"/>
+    /// when the entity implements <see cref="Onward.Base.Models.IVersionedEntity"/> because EF Core
+    /// will include the concurrency token column in the generated DELETE WHERE clause.
+    /// </summary>
+    Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns an IQueryable for LINQ filtering and projection
     /// </summary>
     IQueryable<T> GetQueryable();

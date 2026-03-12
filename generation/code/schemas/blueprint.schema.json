@@ -135,6 +135,32 @@
           },
           "additionalProperties": false
         },
+        "idempotency": {
+          "type": "object",
+          "description": "Service-level idempotency configuration. When absent, defaults to 'data' when any entity has versioned='rowversion', else 'none'.",
+          "required": ["mode"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["none", "cache", "data"],
+              "description": "none → NoOp implementations; cache → IResponseCacheContext (in-memory or distributed) + POST dedup + ETag; data → DB-level row versioning via xmin (PostgreSQL)"
+            },
+            "cache": {
+              "type": "object",
+              "description": "Cache backing configuration. Only relevant when mode is 'cache'.",
+              "required": ["mode"],
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": ["inmemory", "distributed"],
+                  "description": "inmemory → IMemoryCache; distributed → IDistributedCache (Redis, etc.)"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "clients": {
           "type": "array",
           "description": "Client library generation entries. Each entry generates a typed HTTP client for the given language and HTTP client base.",

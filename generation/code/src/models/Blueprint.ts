@@ -17,6 +17,31 @@ export type ManagementSystemKind = 'postgres' | 'mssql' | 'mysql';
 export type UnitOfWorkKind = 'injected';
 
 // ---------------------------------------------------------------------------
+// Idempotency types
+// ---------------------------------------------------------------------------
+
+/** Idempotency backing strategy for a bounded context. */
+export type BlueprintIdempotencyMode = 'none' | 'cache' | 'data';
+
+/** In-process vs. distributed cache backing for the 'cache' mode. */
+export type BlueprintCacheBackingMode = 'inmemory' | 'distributed';
+
+/**
+ * Service-level idempotency configuration.
+ * Lives in blueprint.boundedContext.idempotency.
+ * - none  → NoOp implementations injected (idempotency fully disabled)
+ * - cache → IResponseCacheContext backed by in-memory or distributed cache
+ * - data  → concurrency enforced at the DB level via row versioning (default)
+ */
+export interface BlueprintIdempotency {
+  /**
+   * Allowed idempotency modes for this bounded context.
+   * When absent, all modes are allowed.
+   */
+  allowedModes?: BlueprintIdempotencyMode[];
+}
+
+// ---------------------------------------------------------------------------
 // Authorization types
 // ---------------------------------------------------------------------------
 
@@ -102,6 +127,17 @@ export interface BlueprintBoundedContext {
    * Omit to skip client generation.
    */
   clients?: ClientConfig[];
+  /**
+   * Service-level idempotency configuration.
+   * - none  → NoOp implementations injected (idempotency fully disabled)
+   * - cache → IResponseCacheContext backed by in-memory or distributed cache, plus POST dedup
+   * - data  → concurrency enforced at the DB level via row versioning (default)
+   * When absent, defaults to 'data' when any entity has versioned='rowversion', else 'none'.
+   */
+  idempotency?: {
+    mode: BlueprintIdempotencyMode;
+    cache?: { mode: BlueprintCacheBackingMode };
+  };
 }
 
 export type BlueprintPresentation =

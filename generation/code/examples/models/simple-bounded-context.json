@@ -120,6 +120,7 @@
             "tableName": "Products",
             "description": "Product in the catalog",
             "auditable": true,
+            "versioned": "rowversion",
             "properties": [
               {
                 "name": "Name",

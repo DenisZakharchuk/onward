@@ -68,6 +68,18 @@ public class BaseRepository<T, TKey> : IRepository<T, TKey> where T : class
         return await Context.Set<T>().Where(predicate).ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Removes an entity that is already tracked by the context.
+    /// When the entity implements <see cref="Onward.Base.Models.IVersionedEntity"/>, EF Core
+    /// automatically adds the concurrency token to the DELETE WHERE clause.
+    /// </summary>
+    public virtual Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        if (entity == null) throw new ArgumentNullException(nameof(entity));
+        Context.Set<T>().Remove(entity);
+        return Task.CompletedTask;
+    }
+
     /// <summary>Gets a queryable set for LINQ queries.</summary>
     public virtual IQueryable<T> GetQueryable()
     {

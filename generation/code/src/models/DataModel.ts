@@ -108,6 +108,19 @@ export interface BoundedContext {
    * At generation time they are merged with the domain-level DomainModel.enums.
    */
   enums?: EnumDefinition[];
+  /**
+   * Bounded-context-level idempotency configuration.
+   * Determines what idempotency infrastructure is generated/registered for this context.
+   * - mode: 'none'  → NoOp implementations (token accessor + cache are no-ops)
+   * - mode: 'cache' → IResponseCacheContext backed by in-memory or distributed cache
+   *                   + X-Idempotency-Key POST deduplication + ETag GET caching
+   * - mode: 'data'  → concurrency enforced at the DB level via entity row versioning (default)
+   * When absent, the mode is inferred: 'data' if any entity has versioned='rowversion', else 'none'.
+   */
+  idempotency?: {
+    mode: 'none' | 'cache' | 'data';
+    cache?: { mode: 'inmemory' | 'distributed' };
+  };
   /** Entity and relationship definitions for this bounded context. */
   dataModel: DataModel;
 }
@@ -206,6 +219,15 @@ export interface Entity {
     name?: string;
     type?: 'Guid' | 'int' | 'long' | 'string';
   };
+  /**
+   * Optimistic concurrency versioning mode for this entity.
+   * - 'none'       → no versioning (default, last-write-wins)
+   * - 'rowversion' → uses PostgreSQL xmin system column via EF Core IsRowVersion().
+   *                  The entity will implement IVersionedEntity and expose uint RowVersion.
+   * Designed to be extensible: future modes (e.g. 'timestamp', 'hash') can be added
+   * without structural changes to the existing modes.
+   */
+  versioned?: 'none' | 'rowversion';
   properties: Property[];
   indexes?: Index[];
 }
