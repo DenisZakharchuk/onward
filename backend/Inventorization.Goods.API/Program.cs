@@ -247,6 +247,7 @@ builder.Services.AddScoped<Inventorization.Goods.BL.DataServices.IGoodSupplierDa
 
 // ===== Controllers & Swagger =====
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -295,6 +296,9 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = string.Empty; // Serve Swagger UI at root
     });
 }
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 app.UseAuthentication();
 app.UseAuthorization();

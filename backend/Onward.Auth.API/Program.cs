@@ -24,6 +24,7 @@ builder.Services.AddGrpc();
 
 // ===== Controllers & Swagger =====
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -84,6 +85,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseOnwardAuth();

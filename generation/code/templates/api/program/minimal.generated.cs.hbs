@@ -31,6 +31,7 @@ builder.Services.AddOnwardAnonymousAuth();
 {{/if}}
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddProblemDetails();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -48,6 +49,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {

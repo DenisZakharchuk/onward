@@ -32,6 +32,7 @@ builder.Services.AddOnwardAnonymousAuth();
 
 // ===== Controllers & Swagger =====
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -52,6 +53,9 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // ===== HTTP Pipeline =====
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
