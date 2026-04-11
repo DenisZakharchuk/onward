@@ -8,6 +8,9 @@ using System.Linq.Expressions;
 using {{namespace}}.BL.Entities;
 using {{namespace}}.DTO.{{entityName}};
 using Onward.Base.Abstractions;
+{{#if hasValueObjects}}
+using Onward.Base.Models;
+{{/if}}
 
 namespace {{namespace}}.BL.Mappers;
 
@@ -28,7 +31,7 @@ public class {{entityName}}Mapper : IMapper<{{entityName}}, {{entityName}}Detail
         {
             Id = entity.Id,
             {{#each propertyMappings}}
-            {{dtoProperty}} = {{entityProperty}},
+            {{dtoProperty}} = {{{entityProperty}}},
             {{/each}}
         };
     }
@@ -42,7 +45,7 @@ public class {{entityName}}Mapper : IMapper<{{entityName}}, {{entityName}}Detail
         {
             Id = entity.Id,
             {{#each propertyMappings}}
-            {{dtoProperty}} = {{entityProperty}},
+            {{dtoProperty}} = {{{projectionExpression}}},
             {{/each}}
         };
     }

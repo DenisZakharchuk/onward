@@ -307,6 +307,7 @@ export type CSharpType =
   | 'bool'
   | 'DateTime'
   | 'DateTimeOffset'
+  | 'DateTimeWithOffset'
   | 'Guid'
   | 'byte[]';
 

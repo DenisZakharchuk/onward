@@ -13,6 +13,9 @@ using System.Text.Json.Serialization;
 {{#if hasEnums}}
 using {{namespace}}.Common.Enums;
 {{/if}}
+{{#if hasValueObjects}}
+using Onward.Base.Models;
+{{/if}}
 
 namespace {{namespace}}.DTO.ADTs;
 

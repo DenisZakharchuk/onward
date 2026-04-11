@@ -5,6 +5,7 @@
 import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext, Entity, Property } from '../models/DataModel';
 import { TypeMapper } from '../utils/TypeMapper';
+import { isPredefinedValueObject } from '../utils/PredefinedValueObjects';
 import * as path from 'path';
 
 export class ConfigurationGenerator extends BaseGenerator {
@@ -122,6 +123,19 @@ export class ConfigurationGenerator extends BaseGenerator {
         continue;
       }
 
+      // Value objects (IValueObject sealed classes) are persisted via OwnsOne, not Property()
+      if (isPredefinedValueObject(prop.type)) {
+        const ownsOneBlock = [
+          `builder.OwnsOne(e => e.${prop.name}, b =>`,
+          `{`,
+          `    b.Property(x => x.UtcTicks).HasColumnName("${prop.name}_UtcTicks").HasColumnType("bigint").IsRequired(false);`,
+          `    b.Property(x => x.OffsetMinutes).HasColumnName("${prop.name}_OffsetMinutes").HasColumnType("smallint").IsRequired(false);`,
+          `});`,
+        ].join('\n');
+        configs.push(ownsOneBlock);
+        continue;
+      }
+
       const lines: string[] = [];
 
       // Start property configuration
@@ -141,11 +155,6 @@ export class ConfigurationGenerator extends BaseGenerator {
       if (prop.type === 'decimal' && prop.precision) {
         const scale = prop.scale || 2;
         lines.push(`    .HasPrecision(${prop.precision}, ${scale})`);
-      }
-
-      // DateTimeOffset → timestamptz (explicit for Npgsql 6+ clarity)
-      if (prop.type === 'DateTimeOffset') {
-        lines.push(`    .HasColumnType("timestamptz")`);
       }
 
       // Default value

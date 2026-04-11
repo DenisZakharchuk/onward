@@ -2,6 +2,7 @@ import * as path from 'path';
 import { BaseGenerator } from '../BaseGenerator';
 import { BoundedContextGenerationContext, Entity, Property } from '../../models/DataModel';
 import { TypeMapper } from '../../utils/TypeMapper';
+import { isPredefinedValueObject } from '../../utils/PredefinedValueObjects';
 import { IDTOLayoutGenerator } from './DtoVariantContracts';
 
 export abstract class AbstractDtoVariantGenerator extends BaseGenerator implements IDTOLayoutGenerator {
@@ -236,6 +237,18 @@ export abstract class AbstractDtoVariantGenerator extends BaseGenerator implemen
     validationAttributes: string[];
   } {
     const isNullable = forceNullable || !property.required;
+
+    // Value objects (IValueObject) flatten to plain ISO 8601 string in DTOs
+    if (isPredefinedValueObject(property.type)) {
+      return {
+        name: property.name,
+        type: 'string',
+        description: property.description,
+        defaultValue: null,
+        validationAttributes: [],
+      };
+    }
+
     const type = TypeMapper.toCSharpType(property.enumType || property.type, isNullable);
 
     return {

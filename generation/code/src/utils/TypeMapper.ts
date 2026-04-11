@@ -3,6 +3,7 @@
  */
 
 import { Property } from '../models/DataModel';
+import { isPredefinedValueObject } from './PredefinedValueObjects';
 
 export class TypeMapper {
   /**
@@ -42,6 +43,9 @@ export class TypeMapper {
       case 'datetimeoffset':
         csharpType = 'DateTimeOffset';
         break;
+      case 'datetimewithoffset':
+        csharpType = 'DateTimeWithOffset';
+        break;
       case 'guid':
       case 'uuid':
         csharpType = 'Guid';
@@ -62,6 +66,11 @@ export class TypeMapper {
       csharpType !== 'byte[]' &&
       !this.isReferenceType(type)
     ) {
+      return `${csharpType}?`;
+    }
+
+    // Predefined value objects are sealed classes — add ? when nullable
+    if (isNullable && isPredefinedValueObject(type)) {
       return `${csharpType}?`;
     }
 
@@ -92,6 +101,8 @@ export class TypeMapper {
         return 'DateTime.MinValue';
       case 'datetimeoffset':
         return 'DateTimeOffset.MinValue';
+      case 'datetimewithoffset':
+        return 'null';
       case 'byte[]':
         return 'Array.Empty<byte>()';
       default:

@@ -514,37 +514,37 @@
                             },
                             {
                                 "name": "TenderPeriodStart",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Start of the tender acceptance period"
                             },
                             {
                                 "name": "TenderPeriodEnd",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Deadline for bid submission"
                             },
                             {
                                 "name": "AwardPeriodStart",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Start of the award evaluation period"
                             },
                             {
                                 "name": "AwardPeriodEnd",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "End of the award evaluation period"
                             },
                             {
                                 "name": "NoticePublicationDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the tender notice was published in Prozorro"
                             },
                             {
                                 "name": "TenderDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Tender object creation timestamp from Prozorro"
                             },
@@ -670,7 +670,7 @@
                             },
                             {
                                 "name": "DeliveryEndDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Required delivery completion date"
                             },
@@ -766,13 +766,13 @@
                             },
                             {
                                 "name": "BidDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the bid record was created"
                             },
                             {
                                 "name": "SubmissionDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the bid was officially submitted"
                             },
@@ -960,7 +960,7 @@
                             },
                             {
                                 "name": "AwardDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the award was issued"
                             },
@@ -988,13 +988,13 @@
                             },
                             {
                                 "name": "PeriodStart",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Start of the award acceptance period"
                             },
                             {
                                 "name": "PeriodEnd",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "End of the award acceptance period"
                             },
@@ -1167,7 +1167,7 @@
                             },
                             {
                                 "name": "ContractDate",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the contract was signed"
                             },
@@ -1336,13 +1336,13 @@
                             },
                             {
                                 "name": "DatePublished",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the document was published"
                             },
                             {
                                 "name": "DateModified",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the document was last modified"
                             },
@@ -1680,7 +1680,7 @@
                             },
                             {
                                 "name": "DatePublished",
-                                "type": "DateTimeOffset",
+                                "type": "DateTimeWithOffset",
                                 "required": false,
                                 "description": "Date the requirement was published"
                             },

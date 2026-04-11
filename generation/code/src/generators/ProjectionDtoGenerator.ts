@@ -6,6 +6,7 @@ import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext, Entity, Property, Relationship } from '../models/DataModel';
 import { TypeMapper } from '../utils/TypeMapper';
 import { NamingConventions } from '../utils/NamingConventions';
+import { isPredefinedValueObject } from '../utils/PredefinedValueObjects';
 import * as path from 'path';
 
 export class ProjectionDtoGenerator extends BaseGenerator {
@@ -81,6 +82,7 @@ export class ProjectionDtoGenerator extends BaseGenerator {
 
     // Check if entity has enum properties
     const hasEnums = scalarProperties.some((p) => p.enumType !== undefined);
+    const hasValueObjects = scalarProperties.some((p) => isPredefinedValueObject(p.type));
 
     const context = {
       namespace,
@@ -91,6 +93,7 @@ export class ProjectionDtoGenerator extends BaseGenerator {
       relationships: this.buildRelationshipContext(relatedEntities),
       hasRelationships: relatedEntities.length > 0,
       hasEnums,
+      hasValueObjects,
     };
 
     const filePath = path.join(adtsDir, `${entity.name}Projection.cs`);

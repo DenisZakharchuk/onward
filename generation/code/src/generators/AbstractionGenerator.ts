@@ -6,6 +6,7 @@ import { BaseGenerator } from './BaseGenerator';
 import { BoundedContextGenerationContext, Entity } from '../models/DataModel';
 import { TypeMapper } from '../utils/TypeMapper';
 import { NamingConventions } from '../utils/NamingConventions';
+import { isPredefinedValueObject } from '../utils/PredefinedValueObjects';
 import * as path from 'path';
 
 export class AbstractionGenerator extends BaseGenerator {
@@ -39,6 +40,7 @@ export class AbstractionGenerator extends BaseGenerator {
     
     // Get constructor arguments from Create DTO
     const constructorArgs = this.getConstructorArgs(entity);
+    const hasValueObjects = constructorArgs.some((a) => a.isValueObject);
 
     const context = {
       baseNamespace,
@@ -48,6 +50,7 @@ export class AbstractionGenerator extends BaseGenerator {
       dependencies: [],
       transformations: [],
       constructorArgs,
+      hasValueObjects,
     };
 
     const filePath = path.join(creatorsDir, `${entity.name}Creator.cs`);
@@ -78,6 +81,8 @@ export class AbstractionGenerator extends BaseGenerator {
         !p.isForeignKey
     );
 
+    const hasValueObjects = modifiableProps.some((p) => isPredefinedValueObject(p.type));
+
     const context = {
       baseNamespace,
       namespace,
@@ -86,9 +91,12 @@ export class AbstractionGenerator extends BaseGenerator {
       dependencies: [],
       updateArgs: modifiableProps.map((p) => ({
         argName: NamingConventions.toCamelCase(p.name),
-        argValue: `dto.${p.name}`,
+        argValue: isPredefinedValueObject(p.type)
+          ? `dto.${p.name} != null ? DateTimeWithOffset.From(DateTimeOffset.Parse(dto.${p.name})) : null`
+          : `dto.${p.name}`,
       })),
       conditionalUpdates: [],
+      hasValueObjects,
     };
 
     const filePath = path.join(modifiersDir, `${entity.name}Modifier.cs`);
@@ -113,6 +121,8 @@ export class AbstractionGenerator extends BaseGenerator {
       (p) => !p.isCollection && !p.navigationProperty
     );
 
+    const hasValueObjects = mappableProps.some((p) => isPredefinedValueObject(p.type));
+
     const context = {
       baseNamespace,
       namespace,
@@ -120,9 +130,17 @@ export class AbstractionGenerator extends BaseGenerator {
       propertyMappings: mappableProps.map(
         (p) => ({
           dtoProperty: p.name,
-          entityProperty: `entity.${p.name}`,
+          entityProperty: isPredefinedValueObject(p.type)
+            ? `entity.${p.name}?.ToIso8601()`
+            : `entity.${p.name}`,
+          // Expression trees don't allow ?. or custom method calls.
+          // Value object properties are null in LINQ projections; use Map() for full data.
+          projectionExpression: isPredefinedValueObject(p.type)
+            ? 'null'
+            : `entity.${p.name}`,
         })
       ),
+      hasValueObjects,
     };
 
     const filePath = path.join(mappersDir, `${entity.name}Mapper.cs`);
@@ -188,6 +206,7 @@ export class AbstractionGenerator extends BaseGenerator {
   private getConstructorArgs(entity: Entity): Array<{
     argName: string;
     argValue: string;
+    isValueObject: boolean;
   }> {
     // Get properties that go into entity constructor
     // This filter must match EntityGenerator.getConstructorParams logic:
@@ -204,7 +223,10 @@ export class AbstractionGenerator extends BaseGenerator {
 
     return constructorProps.map((p) => ({
       argName: NamingConventions.toCamelCase(p.name),
-      argValue: `dto.${p.name}`,
+      argValue: isPredefinedValueObject(p.type)
+        ? `dto.${p.name} != null ? DateTimeWithOffset.From(DateTimeOffset.Parse(dto.${p.name})) : null`
+        : `dto.${p.name}`,
+      isValueObject: isPredefinedValueObject(p.type),
     }));
   }
 }

@@ -7,6 +7,9 @@
 using {{namespace}}.BL.Entities;
 using {{namespace}}.DTO.{{entityName}};
 using Onward.Base.Abstractions;
+{{#if hasValueObjects}}
+using Onward.Base.Models;
+{{/if}}
 
 namespace {{namespace}}.BL.Modifiers;
 
@@ -28,7 +31,7 @@ public class {{entityName}}Modifier : IEntityModifier<{{entityName}}, Update{{en
 
         entity.Update(
             {{#each updateArgs}}
-            {{argName}}: {{argValue}}{{#unless @last}},{{/unless}}
+            {{argName}}: {{{argValue}}}{{#unless @last}},{{/unless}}
             {{/each}}
         );
 
