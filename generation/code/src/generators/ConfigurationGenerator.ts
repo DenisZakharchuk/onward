@@ -170,10 +170,9 @@ export class ConfigurationGenerator extends BaseGenerator {
         lines.push(`    .HasConversion(new EnumerationConverter<${prop.enumType}>())`);
       }
 
-      // Note: columnName property not in DataModel interface yet
-      // if (prop.columnName && prop.columnName !== prop.name) {
-      //   lines.push(`    .HasColumnName("${prop.columnName}")`);
-      // }
+      if (prop.columnName && prop.columnName !== prop.name) {
+        lines.push(`    .HasColumnName("${prop.columnName}")`)
+      }
 
       lines.push(';');
       configs.push(lines.join('\n'));

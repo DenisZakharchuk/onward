@@ -40,6 +40,18 @@ export class AdoNetDiGenerator extends BaseGenerator {
       namespace,
       contextName,
       entities,
+      useSqlMode: true,
+      isAdoMode: true,
+      dialectClass: (() => {
+        const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+        const provider = (dataAccess && 'ado' in dataAccess) ? dataAccess.ado.provider : 'npgsql';
+        return provider === 'npgsql' ? 'PostgreSqlDialect' : 'PostgreSqlDialect';
+      })(),
+      dbConnectionClass: (() => {
+        const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+        const provider = (dataAccess && 'ado' in dataAccess) ? dataAccess.ado.provider : 'npgsql';
+        return provider === 'npgsql' ? 'Npgsql.NpgsqlConnection' : 'Npgsql.NpgsqlConnection';
+      })(),
     };
 
     const filePath = path.join(extensionsDir, `${contextName}ServiceCollectionExtensions.cs`);

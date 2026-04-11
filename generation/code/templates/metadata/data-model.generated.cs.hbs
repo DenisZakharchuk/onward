@@ -47,7 +47,8 @@ public static class DataModelMetadata
             new PropertyMetadata
             {
                 PropertyName = "{{name}}",
-                PropertyType = "{{type}}",{{#if displayName}}
+                PropertyType = "{{type}}",{{#if columnName}}
+                ColumnName = "{{columnName}}",{{/if}}{{#if displayName}}
                 DisplayName = "{{displayName}}",{{/if}}{{#if isPrimaryKey}}
                 IsPrimaryKey = true,{{/if}}
                 IsRequired = {{required}},

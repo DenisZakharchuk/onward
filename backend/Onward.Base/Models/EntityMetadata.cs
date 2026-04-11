@@ -34,6 +34,7 @@ public class PropertyMetadata
     public int? MinLength { get; set; }
     public int? Precision { get; set; }
     public int? Scale { get; set; }
+    public string? ColumnName { get; set; }
     public string? ColumnType { get; set; }
     public bool IsUnique { get; set; }
     public bool IsForeignKey { get; set; }

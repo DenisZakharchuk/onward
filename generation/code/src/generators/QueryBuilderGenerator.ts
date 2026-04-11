@@ -14,9 +14,22 @@ export class QueryBuilderGenerator extends BaseGenerator {
 
     const dataAccessDir = `${baseNamespace}.${contextName}.BL/DataAccess`;
 
+    // Resolve queryMode from blueprint (default: 'sql')
+    const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+    const queryMode = (dataAccess && 'orm' in dataAccess)
+      ? (dataAccess.orm.queryMode ?? 'sql')
+      : 'sql'; // ado always uses sql
+    const useSqlMode = queryMode !== 'linq';
+
     for (const entity of model.entities) {
       // Skip junction entities - they typically don't need query builders
       if (entity.isJunction) {
+        continue;
+      }
+
+      // In SQL mode, the entity-specific query builder is not needed —
+      // ISqlQueryBuilder is generic and handles all entities. Skip generation.
+      if (useSqlMode) {
         continue;
       }
 

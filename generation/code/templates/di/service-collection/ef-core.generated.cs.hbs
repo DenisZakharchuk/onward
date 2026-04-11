@@ -6,12 +6,14 @@
 // </auto-generated>
 
 using Onward.Base.Abstractions;
-using Onward.Base.Abstractions;
 {{#if idempotency.hasHttpTokenAccessor}}
 using Onward.Base.AspNetCore.Identity;
 {{/if}}
 using Onward.Base.DataAccess;
 using Onward.Base.Services;
+{{#if useSqlMode}}
+using Onward.Base.Sql;
+{{/if}}
 {{#if hasOwnership}}
 using Onward.Base.AspNetCore.Extensions;
 using Onward.Base.AspNetCore.Ownership;
@@ -73,7 +75,10 @@ public static class {{contextName}}ServiceCollectionExtensions
 {{/if}}
 
         services.AddScoped<ProjectionExpressionBuilder>();
-
+{{#if useSqlMode}}
+        services.AddSingleton<ISqlDialect>({{dialectClass}}.Instance);
+        services.AddSingleton<ISqlQueryBuilder, SqlQueryBuilder>();
+{{/if}}
 {{#if hasOwnership}}
         // Ownership identity services — reads UserId/TenantId from JWT claims
         services.AddOwnershipServices<{{ownershipValueObject}}, {{ownershipFactory}}>();
@@ -92,6 +97,8 @@ public static class {{contextName}}ServiceCollectionExtensions
             new {{queryBuilderName}}(sp.GetRequiredService<ICurrentIdentityContext<{{../ownershipValueObject}}>>()));
         services.AddScoped<IQueryBuilder<{{entityName}}>>(
             sp => sp.GetRequiredService<IQueryBuilder<{{entityName}}, {{../ownershipValueObject}}>>());
+        {{else if ../useSqlMode}}
+        services.AddScoped<ISearchDataExecutor<{{entityName}}>, EfCoreSqlDataExecutor<{{entityName}}>>();
         {{else}}
         services.AddScoped<IQueryBuilder<{{entityName}}>, {{queryBuilderName}}>();
         {{/if}}
@@ -110,6 +117,17 @@ public static class {{contextName}}ServiceCollectionExtensions
         ));
         services.AddScoped<ISearchService<{{entityName}}, {{projectionName}}, {{../ownershipValueObject}}>>(
             sp => sp.GetRequiredService<{{searchServiceName}}>());
+        services.AddScoped<ISearchService<{{entityName}}, {{projectionName}}>>(
+            sp => sp.GetRequiredService<{{searchServiceName}}>());
+        {{else if ../useSqlMode}}
+        services.AddScoped<{{searchServiceName}}>(sp => new {{searchServiceName}}(
+            sp.GetRequiredService<ISearchDataExecutor<{{entityName}}>>(),
+            sp.GetRequiredService<ISqlQueryBuilder>(),
+            sp.GetRequiredService<IProjectionMapper<{{entityName}}, {{projectionName}}>>(),
+            sp.GetRequiredService<ProjectionExpressionBuilder>(),
+            sp.GetRequiredService<{{searchQueryValidatorName}}>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{searchServiceName}}>>()
+        ));
         services.AddScoped<ISearchService<{{entityName}}, {{projectionName}}>>(
             sp => sp.GetRequiredService<{{searchServiceName}}>());
         {{else}}

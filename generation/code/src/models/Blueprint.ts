@@ -165,6 +165,9 @@ export type BlueprintDataAccess =
       orm: {
         kind: 'ef-core';
         provider: DataProviderKind;
+        /** SQL generation mode. 'sql' (default) generates parameterized SQL via ISqlQueryBuilder;
+         *  'linq' keeps the legacy LINQ expression-tree pipeline. */
+        queryMode?: 'sql' | 'linq';
       };
       entities?: 'immutable';
     }
@@ -174,6 +177,9 @@ export type BlueprintDataAccess =
       ado: {
         provider: DataProviderKind;
         dialect?: 'pgsql';
+        /** SQL generation mode. 'sql' (default) generates parameterized SQL via ISqlQueryBuilder;
+         *  'linq' is not supported for ado data layer — SQL is always used. */
+        queryMode?: 'sql';
       };
       entities?: 'immutable';
     };

@@ -62,6 +62,20 @@ export class DiGenerator extends BaseGenerator {
     };
     // ---------------------------------------------------------------------------
 
+    // Derive SQL query mode flags -----------------------------------------------
+    const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+    const isAdoMode = dataAccess ? 'ado' in dataAccess : false;
+    const queryMode = (dataAccess && 'orm' in dataAccess)
+      ? (dataAccess.orm.queryMode ?? 'sql')
+      : 'sql'; // ado always uses sql
+    const useSqlMode = queryMode !== 'linq';
+    const provider = (dataAccess && 'orm' in dataAccess)
+      ? dataAccess.orm.provider
+      : (dataAccess && 'ado' in dataAccess ? dataAccess.ado.provider : 'npgsql');
+    // Map provider to the dialect implementation class name
+    const dialectClass = provider === 'npgsql' ? 'PostgreSqlDialect' : 'PostgreSqlDialect'; // extend when more dialects added
+    // ---------------------------------------------------------------------------
+
     const context = {
       baseNamespace,
       namespace,
@@ -71,6 +85,9 @@ export class DiGenerator extends BaseGenerator {
       ownershipValueObject,
       ownershipFactory,
       idempotency,
+      useSqlMode,
+      isAdoMode,
+      dialectClass,
     };
 
     const filePath = path.join(extensionsDir, `${contextName}ServiceCollectionExtensions.cs`);

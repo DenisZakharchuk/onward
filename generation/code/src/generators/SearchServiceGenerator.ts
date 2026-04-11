@@ -14,6 +14,13 @@ export class SearchServiceGenerator extends BaseGenerator {
 
     const servicesDir = `${baseNamespace}.${contextName}.BL/Services`;
 
+    // Resolve queryMode from blueprint (default: 'sql')
+    const dataAccess = this.blueprint?.boundedContext.dataService.dataAccess;
+    const queryMode = (dataAccess && 'orm' in dataAccess)
+      ? (dataAccess.orm.queryMode ?? 'sql')
+      : 'sql'; // ado always uses sql
+    const useSqlMode = queryMode !== 'linq';
+
     for (const entity of model.entities) {
       // Skip junction entities
       if (entity.isJunction) {
@@ -32,6 +39,7 @@ export class SearchServiceGenerator extends BaseGenerator {
         description: entity.description || entity.name,
         isOwned,
         ownershipValueObject,
+        useSqlMode,
       };
 
       const filePath = path.join(servicesDir, `${entity.name}SearchService.cs`);

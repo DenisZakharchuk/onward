@@ -452,6 +452,10 @@
           "description": "Whether the property is required (non-nullable)",
           "default": true
         },
+        "columnName": {
+          "type": "string",
+          "description": "Explicit DB column name (overrides default property name mapping)"
+        },
         "maxLength": {
           "type": "integer",
           "description": "Maximum length for string properties",

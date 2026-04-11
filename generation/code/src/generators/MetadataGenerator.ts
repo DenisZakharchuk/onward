@@ -113,6 +113,7 @@ export class MetadataGenerator extends BaseGenerator {
       minLength: prop.minLength,
       precision: prop.precision,
       scale: prop.scale,
+      columnName: prop.columnName,
       columnType: this.getColumnType(prop),
       isUnique: this.isUniqueProperty(prop),
       isForeignKey: prop.isForeignKey || false,

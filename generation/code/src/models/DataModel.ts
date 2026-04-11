@@ -242,6 +242,7 @@ export interface Property {
   name: string;
   type: CSharpType | string; // string allows for custom enum types
   enumType?: string;
+  columnName?: string;
   required?: boolean;
   maxLength?: number;
   minLength?: number;

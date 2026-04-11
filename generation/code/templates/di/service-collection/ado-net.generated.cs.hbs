@@ -8,6 +8,7 @@
 using Onward.Base.Abstractions;
 using Onward.Base.DataAccess;
 using Onward.Base.Services;
+using Onward.Base.Sql;
 using {{namespace}}.BL.Entities;
 using {{namespace}}.BL.Creators;
 using {{namespace}}.BL.DataAccess;
@@ -39,6 +40,11 @@ public static class {{contextName}}ServiceCollectionExtensions
 
         services.AddScoped<ProjectionExpressionBuilder>();
 
+        services.AddScoped<System.Data.IDbConnection>(sp =>
+            new {{dbConnectionClass}}(sp.GetRequiredService<{{contextName}}AdoNetConnectionOptions>().ConnectionString));
+        services.AddSingleton<ISqlDialect>({{dialectClass}}.Instance);
+        services.AddSingleton<ISqlQueryBuilder, SqlQueryBuilder>();
+
         {{#each entities}}
         // {{entityName}}
         services.AddScoped<IMapper<{{entityName}}, {{detailsDtoName}}>, {{mapperName}}>();
@@ -47,18 +53,18 @@ public static class {{contextName}}ServiceCollectionExtensions
         services.AddScoped<ISearchQueryProvider<{{entityName}}, {{searchDtoName}}>, {{searchProviderName}}>();
         services.AddScoped<IValidator<{{createDtoName}}>, {{createValidatorName}}>();
         services.AddScoped<IValidator<{{updateDtoName}}>, {{updateValidatorName}}>();
-        services.AddScoped<IQueryBuilder<{{entityName}}>, {{queryBuilderName}}>();
+        services.AddScoped<ISearchDataExecutor<{{entityName}}>, AdoNetSqlDataExecutor<{{entityName}}>>();
         services.AddScoped<IProjectionMapper<{{entityName}}, {{projectionName}}>, {{projectionMapperName}}>();
         services.AddScoped<I{{entityName}}ProjectionMapper, {{projectionMapperName}}>();
         services.AddScoped<{{searchQueryValidatorName}}>();
         services.AddScoped<{{searchServiceName}}>(sp => new {{searchServiceName}}(
-            sp.GetRequiredService<IRepository<{{entityName}}>>(),
-            sp.GetRequiredService<IQueryBuilder<{{entityName}}>>(),
+            sp.GetRequiredService<ISearchDataExecutor<{{entityName}}>>(),
+            sp.GetRequiredService<ISqlQueryBuilder>(),
             sp.GetRequiredService<IProjectionMapper<{{entityName}}, {{projectionName}}>>(),
             sp.GetRequiredService<ProjectionExpressionBuilder>(),
             sp.GetRequiredService<{{searchQueryValidatorName}}>(),
-            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{searchServiceName}}>>()
-        ));
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{searchServiceName}}>>()));
+        
         services.AddScoped<ISearchService<{{entityName}}, {{projectionName}}>>(
             sp => sp.GetRequiredService<{{searchServiceName}}>());
         services.AddScoped<{{dataServiceInterfaceName}}, {{dataServiceName}}>();

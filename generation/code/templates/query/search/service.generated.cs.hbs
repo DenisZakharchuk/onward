@@ -11,20 +11,26 @@
 using Onward.Base.Abstractions;
 using Onward.Base.ADTs;
 using Onward.Base.DataAccess;
+using Onward.Base.Models;
 using Onward.Base.Services;
+using Onward.Base.Sql;
 {{#if isOwned}}
 using Onward.Base.Ownership;
 {{/if}}
 using {{namespace}}.BL.Entities;
 using {{namespace}}.BL.Validators;
 using {{namespace}}.DTO.ADTs;
+using {{namespace}}.Meta;
 using Microsoft.Extensions.Logging;
 
 namespace {{namespace}}.BL.Services;
 
 /// <summary>
 /// Service for executing ADT-based search queries on {{entityName}} entities.
-{{#if isOwned}}
+{{#if useSqlMode}}
+/// SQL mode: extends BaseSqlSearchService, builds parameterized SQL via ISqlQueryBuilder
+/// validated against DataModelMetadata.{{entityName}}.
+{{else if isOwned}}
 /// Ownership-aware: extends BaseSearchService&lt;{{entityName}}, {{projectionName}}, {{ownershipValueObject}}&gt;.
 /// Exposes ExecuteOwnedSearchAsync which scopes results to the caller's identity.
 {{else}}
@@ -32,7 +38,25 @@ namespace {{namespace}}.BL.Services;
 {{/if}}
 /// Supports both regular projections and field transformations.
 /// </summary>
-{{#if isOwned}}
+{{#if useSqlMode}}
+public class {{entityName}}SearchService : BaseSqlSearchService<{{entityName}}, {{projectionName}}>
+{
+    public {{entityName}}SearchService(
+        ISearchDataExecutor<{{entityName}}> dataExecutor,
+        ISqlQueryBuilder sqlQueryBuilder,
+        IProjectionMapper<{{entityName}}, {{projectionName}}> projectionMapper,
+        ProjectionExpressionBuilder expressionBuilder,
+        {{entityName}}SearchQueryValidator validator,
+        ILogger<{{entityName}}SearchService> logger)
+        : base(dataExecutor, sqlQueryBuilder, projectionMapper, expressionBuilder, validator, logger)
+    {
+    }
+
+    protected override EntityMetadata EntityMetadata => DataModelMetadata.{{entityName}};
+
+    // Override ExecuteSearchAsync or ExecuteTransformationSearchAsync if custom logic is needed.
+}
+{{else if isOwned}}
 public class {{entityName}}SearchService : BaseSearchService<{{entityName}}, {{projectionName}}, {{ownershipValueObject}}>
 {
     public {{entityName}}SearchService(
