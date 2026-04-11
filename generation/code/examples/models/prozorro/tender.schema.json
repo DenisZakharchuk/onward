@@ -1,0 +1,1175 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/TenderSchema",
+    "definitions": {
+        "TenderSchema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Data"
+                },
+                "config": {
+                    "$ref": "#/definitions/Config"
+                }
+            },
+            "required": [
+                "config",
+                "data"
+            ],
+            "title": "TenderSchema"
+        },
+        "Config": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "hasAuction": {
+                    "type": "boolean"
+                },
+                "minBidsNumber": {
+                    "type": "integer"
+                },
+                "hasAwardingOrder": {
+                    "type": "boolean"
+                },
+                "hasValueRestriction": {
+                    "type": "boolean"
+                },
+                "valueCurrencyEquality": {
+                    "type": "boolean"
+                },
+                "hasPrequalification": {
+                    "type": "boolean"
+                },
+                "hasPreSelectionAgreement": {
+                    "type": "boolean"
+                },
+                "hasTenderComplaints": {
+                    "type": "boolean"
+                },
+                "hasAwardComplaints": {
+                    "type": "boolean"
+                },
+                "hasCancellationComplaints": {
+                    "type": "boolean"
+                },
+                "restricted": {
+                    "type": "boolean"
+                },
+                "hasValueEstimation": {
+                    "type": "boolean"
+                },
+                "hasQualificationComplaints": {
+                    "type": "boolean"
+                },
+                "tenderComplainRegulation": {
+                    "type": "integer"
+                },
+                "qualificationComplainDuration": {
+                    "type": "integer"
+                },
+                "awardComplainDuration": {
+                    "type": "integer"
+                },
+                "cancellationComplainDuration": {
+                    "type": "integer"
+                },
+                "clarificationUntilDuration": {
+                    "type": "integer"
+                },
+                "qualificationDuration": {
+                    "type": "integer"
+                },
+                "minTenderingDuration": {
+                    "type": "integer"
+                },
+                "hasEnquiries": {
+                    "type": "boolean"
+                },
+                "minEnquiriesDuration": {
+                    "type": "integer"
+                },
+                "enquiryPeriodRegulation": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "awardComplainDuration",
+                "cancellationComplainDuration",
+                "clarificationUntilDuration",
+                "enquiryPeriodRegulation",
+                "hasAuction",
+                "hasAwardComplaints",
+                "hasAwardingOrder",
+                "hasCancellationComplaints",
+                "hasEnquiries",
+                "hasPreSelectionAgreement",
+                "hasPrequalification",
+                "hasQualificationComplaints",
+                "hasTenderComplaints",
+                "hasValueEstimation",
+                "hasValueRestriction",
+                "minBidsNumber",
+                "minEnquiriesDuration",
+                "minTenderingDuration",
+                "qualificationComplainDuration",
+                "qualificationDuration",
+                "restricted",
+                "tenderComplainRegulation",
+                "valueCurrencyEquality"
+            ],
+            "title": "Config"
+        },
+        "Data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "dateModified": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "dateCreated": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "tenderID": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Document"
+                    }
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "mainProcurementCategory": {
+                    "type": "string"
+                },
+                "procurementMethod": {
+                    "type": "string"
+                },
+                "plans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Agreement"
+                    }
+                },
+                "contractChangeRationaleTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ContractChangeRationaleType"
+                    }
+                },
+                "procurementMethodType": {
+                    "type": "string"
+                },
+                "awardCriteria": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "agreement": {
+                    "$ref": "#/definitions/Agreement"
+                },
+                "value": {
+                    "$ref": "#/definitions/Value"
+                },
+                "tenderPeriod": {
+                    "$ref": "#/definitions/Period"
+                },
+                "procuringEntity": {
+                    "$ref": "#/definitions/ProcuringEntity"
+                },
+                "milestones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Milestone"
+                    }
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DataItem"
+                    }
+                },
+                "criteria": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Criterion"
+                    }
+                },
+                "noticePublicationDate": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "bids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Bid"
+                    }
+                },
+                "awardPeriod": {
+                    "$ref": "#/definitions/Period"
+                },
+                "awards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Award"
+                    }
+                },
+                "contracts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Contract"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "agreement",
+                "awardCriteria",
+                "awardPeriod",
+                "awards",
+                "bids",
+                "contractChangeRationaleTypes",
+                "contracts",
+                "criteria",
+                "date",
+                "dateCreated",
+                "dateModified",
+                "description",
+                "documents",
+                "id",
+                "items",
+                "mainProcurementCategory",
+                "milestones",
+                "noticePublicationDate",
+                "owner",
+                "plans",
+                "procurementMethod",
+                "procurementMethodType",
+                "procuringEntity",
+                "status",
+                "tenderID",
+                "tenderPeriod",
+                "title",
+                "value"
+            ],
+            "title": "Data"
+        },
+        "Period": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "endDate": {
+                    "type": "string",
+                    "format": "date-time"
+                }
+            },
+            "required": [
+                "endDate",
+                "startDate"
+            ],
+            "title": "Period"
+        },
+        "Award": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "value": {
+                    "$ref": "#/definitions/Value"
+                },
+                "suppliers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Supplier"
+                    }
+                },
+                "bid_id": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Document"
+                    }
+                },
+                "period": {
+                    "$ref": "#/definitions/Period"
+                },
+                "qualified": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "bid_id",
+                "date",
+                "documents",
+                "id",
+                "period",
+                "qualified",
+                "status",
+                "suppliers",
+                "value"
+            ],
+            "title": "Award"
+        },
+        "Document": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "confidentiality": {
+                    "type": "string"
+                },
+                "documentType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "datePublished": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "hash": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "format": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "qt-uri-protocols": [
+                        "https"
+                    ]
+                },
+                "documentOf": {
+                    "type": "string"
+                },
+                "dateModified": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "author": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "relatedItem": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "confidentiality",
+                "dateModified",
+                "datePublished",
+                "documentOf",
+                "documentType",
+                "format",
+                "hash",
+                "id",
+                "language",
+                "title",
+                "url"
+            ],
+            "title": "Document"
+        },
+        "Supplier": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "name_en": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "$ref": "#/definitions/SupplierIdentifier"
+                },
+                "address": {
+                    "$ref": "#/definitions/Address"
+                },
+                "contactPoint": {
+                    "$ref": "#/definitions/ContactPoint"
+                },
+                "scale": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "address",
+                "contactPoint",
+                "identifier",
+                "name",
+                "scale"
+            ],
+            "title": "Supplier"
+        },
+        "Address": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "streetAddress": {
+                    "type": "string"
+                },
+                "locality": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "postalCode": {
+                    "type": "string"
+                },
+                "countryName": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "countryName"
+            ],
+            "title": "Address"
+        },
+        "ContactPoint": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "name_en": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "telephone": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "qt-uri-protocols": [
+                        "http",
+                        "https"
+                    ]
+                }
+            },
+            "required": [
+                "email",
+                "name",
+                "telephone"
+            ],
+            "title": "ContactPoint"
+        },
+        "SupplierIdentifier": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "scheme": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "legalName": {
+                    "type": "string"
+                },
+                "legalName_en": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "legalName",
+                "scheme"
+            ],
+            "title": "SupplierIdentifier"
+        },
+        "Value": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "currency": {
+                    "$ref": "#/definitions/Currency"
+                },
+                "valueAddedTaxIncluded": {
+                    "type": "boolean"
+                },
+                "amountNet": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "amount",
+                "currency",
+                "valueAddedTaxIncluded"
+            ],
+            "title": "Value"
+        },
+        "Bid": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Document"
+                    }
+                },
+                "tenderers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Supplier"
+                    }
+                },
+                "value": {
+                    "$ref": "#/definitions/Value"
+                },
+                "requirementResponses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RequirementResponse"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/BidItem"
+                    }
+                },
+                "submissionDate": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "initialValue": {
+                    "$ref": "#/definitions/Value"
+                }
+            },
+            "required": [
+                "date",
+                "documents",
+                "id",
+                "initialValue",
+                "items",
+                "requirementResponses",
+                "status",
+                "submissionDate",
+                "tenderers",
+                "value"
+            ],
+            "title": "Bid"
+        },
+        "BidItem": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "unit": {
+                    "$ref": "#/definitions/PurpleUnit"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "product": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "description",
+                "id",
+                "product",
+                "quantity",
+                "unit"
+            ],
+            "title": "BidItem"
+        },
+        "PurpleUnit": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "$ref": "#/definitions/Value"
+                },
+                "code": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "code",
+                "name",
+                "value"
+            ],
+            "title": "PurpleUnit"
+        },
+        "RequirementResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "requirement": {
+                    "$ref": "#/definitions/RequirementResponseRequirement"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "classification": {
+                    "$ref": "#/definitions/RequirementResponseClassification"
+                },
+                "value": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "classification",
+                "id",
+                "requirement"
+            ],
+            "title": "RequirementResponse"
+        },
+        "RequirementResponseClassification": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "scheme": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "scheme"
+            ],
+            "title": "RequirementResponseClassification"
+        },
+        "RequirementResponseRequirement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "title"
+            ],
+            "title": "RequirementResponseRequirement"
+        },
+        "ContractChangeRationaleType": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description_en": {
+                    "type": "string"
+                },
+                "title_en": {
+                    "type": "string"
+                },
+                "description_uk": {
+                    "type": "string"
+                },
+                "title_uk": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "description_en",
+                "description_uk",
+                "title_en",
+                "title_uk"
+            ],
+            "title": "ContractChangeRationaleType"
+        },
+        "Contract": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "awardID": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "contractID": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "title_en": {
+                    "type": "null"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "description_en": {
+                    "type": "null"
+                },
+                "value": {
+                    "$ref": "#/definitions/Value"
+                }
+            },
+            "required": [
+                "awardID",
+                "contractID",
+                "date",
+                "description",
+                "description_en",
+                "id",
+                "status",
+                "title",
+                "title_en",
+                "value"
+            ],
+            "title": "Contract"
+        },
+        "Criterion": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "relatesTo": {
+                    "type": "string"
+                },
+                "relatedItem": {
+                    "type": "string"
+                },
+                "classification": {
+                    "$ref": "#/definitions/RequirementResponseClassification"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "legislation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Legislation"
+                    }
+                },
+                "requirementGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RequirementGroup"
+                    }
+                }
+            },
+            "required": [
+                "classification",
+                "description",
+                "id",
+                "legislation",
+                "relatedItem",
+                "relatesTo",
+                "requirementGroups",
+                "source",
+                "title"
+            ],
+            "title": "Criterion"
+        },
+        "Legislation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "identifier": {
+                    "$ref": "#/definitions/LegislationIdentifier"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "identifier",
+                "type",
+                "version"
+            ],
+            "title": "Legislation"
+        },
+        "LegislationIdentifier": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "legalName": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string",
+                    "format": "uri",
+                    "qt-uri-protocols": [
+                        "https"
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "legalName",
+                "uri"
+            ],
+            "title": "LegislationIdentifier"
+        },
+        "RequirementGroup": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "requirements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RequirementElement"
+                    }
+                }
+            },
+            "required": [
+                "description",
+                "id",
+                "requirements"
+            ],
+            "title": "RequirementGroup"
+        },
+        "RequirementElement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "dataType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "expectedValues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "expectedMinItems": {
+                    "type": "integer"
+                },
+                "expectedMaxItems": {
+                    "type": "integer"
+                },
+                "datePublished": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "expectedValue": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "dataType",
+                "datePublished",
+                "id",
+                "status",
+                "title"
+            ],
+            "title": "RequirementElement"
+        },
+        "DataItem": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "profile": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "classification": {
+                    "$ref": "#/definitions/ItemClassification"
+                },
+                "deliveryDate": {
+                    "$ref": "#/definitions/DeliveryDate"
+                },
+                "deliveryAddress": {
+                    "$ref": "#/definitions/Address"
+                },
+                "unit": {
+                    "$ref": "#/definitions/FluffyUnit"
+                }
+            },
+            "required": [
+                "category",
+                "classification",
+                "deliveryAddress",
+                "deliveryDate",
+                "description",
+                "id",
+                "profile",
+                "quantity",
+                "unit"
+            ],
+            "title": "DataItem"
+        },
+        "ItemClassification": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "scheme": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "description",
+                "id",
+                "scheme"
+            ],
+            "title": "ItemClassification"
+        },
+        "DeliveryDate": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "endDate": {
+                    "type": "string",
+                    "format": "date-time"
+                }
+            },
+            "required": [
+                "endDate"
+            ],
+            "title": "DeliveryDate"
+        },
+        "FluffyUnit": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "code",
+                "name"
+            ],
+            "title": "FluffyUnit"
+        },
+        "Milestone": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "percentage": {
+                    "type": "number"
+                },
+                "duration": {
+                    "$ref": "#/definitions/Duration"
+                },
+                "sequenceNumber": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "code",
+                "description",
+                "duration",
+                "id",
+                "percentage",
+                "sequenceNumber",
+                "title",
+                "type"
+            ],
+            "title": "Milestone"
+        },
+        "Duration": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "days": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "days",
+                "type"
+            ],
+            "title": "Duration"
+        },
+        "Agreement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id"
+            ],
+            "title": "Agreement"
+        },
+        "ProcuringEntity": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "$ref": "#/definitions/SupplierIdentifier"
+                },
+                "address": {
+                    "$ref": "#/definitions/Address"
+                },
+                "contactPoint": {
+                    "$ref": "#/definitions/ContactPoint"
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "address",
+                "contactPoint",
+                "identifier",
+                "kind",
+                "name"
+            ],
+            "title": "ProcuringEntity"
+        },
+        "Currency": {
+            "type": "string",
+            "enum": [
+                "UAH"
+            ],
+            "title": "Currency"
+        }
+    }
+}

@@ -19,6 +19,9 @@
         "entities": "immutable"
       },
       "domain": "default"
+    },
+    "authorization": {
+      "mode": "none"
     }
   }
 }

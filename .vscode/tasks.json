@@ -236,7 +236,9 @@
         "--output-dir",
         "${workspaceFolder}/backend",
         "--blueprint",
-        "${input:blueprintPath}"
+        "${input:blueprintPath}",
+        "--base-namespace",
+        "EnergyBrockerage"
       ],
       "options": {
         "cwd": "${workspaceFolder}/generation/code"

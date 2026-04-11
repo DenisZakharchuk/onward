@@ -380,11 +380,11 @@
         },
         "properties": {
           "type": "array",
-          "description": "Entity properties",
+          "description": "Entity properties (may be empty for junction entities with no extra metadata columns)",
           "items": {
             "$ref": "#/definitions/Property"
           },
-          "minItems": 1
+          "minItems": 0
         },
         "versioned": {
           "type": "string",
@@ -417,7 +417,8 @@
     },
     "Property": {
       "type": "object",
-      "required": ["name", "type"],
+      "required": ["name"],
+      "description": "type is required for regular scalar/FK properties; omit or set to 'Guid' for collection navigation properties (isCollection: true)",
       "properties": {
         "name": {
           "type": "string",

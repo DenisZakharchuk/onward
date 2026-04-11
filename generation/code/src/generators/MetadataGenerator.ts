@@ -87,7 +87,7 @@ export class MetadataGenerator extends BaseGenerator {
       description: entity.description || `${entity.name} entity`,
       auditable: entity.auditable !== false,
       isJunction: entity.isJunction || false,
-      properties: entity.properties.map((p) => this.buildPropertyMetadataContext(p, entity.name)),
+      properties: entity.properties.filter((p) => !p.isCollection).map((p) => this.buildPropertyMetadataContext(p, entity.name)),
       indexes: this.getIndexedProperties(entity), // For old template usage
       indexMetadata: this.buildIndexMetadata(entity), // For new template
       uniqueConstraints: this.buildUniqueConstraintMetadata(entity), // For new template

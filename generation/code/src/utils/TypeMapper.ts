@@ -9,6 +9,7 @@ export class TypeMapper {
    * Convert JSON type to C# type
    */
   static toCSharpType(type: string, isNullable: boolean = false): string {
+    if (!type) return 'object';
     let csharpType: string;
 
     switch (type.toLowerCase()) {
@@ -71,6 +72,7 @@ export class TypeMapper {
    * Get default value for a C# type
    */
   static getDefaultValue(type: string): string {
+    if (!type) return 'default!';
     switch (type.toLowerCase()) {
       case 'string':
         return 'string.Empty';
@@ -101,6 +103,7 @@ export class TypeMapper {
    * Check if a type is a reference type (for nullability)
    */
   static isReferenceType(type: string): boolean {
+    if (!type) return true;
     const valueTypes = [
       'int',
       'long',
@@ -119,6 +122,7 @@ export class TypeMapper {
    * Check if a type is numeric
    */
   static isNumericType(type: string): boolean {
+    if (!type) return false;
     const numericTypes = ['int', 'long', 'decimal', 'double', 'float'];
     return numericTypes.includes(type.toLowerCase());
   }
@@ -127,6 +131,7 @@ export class TypeMapper {
    * Check if a type is a string
    */
   static isStringType(type: string): boolean {
+    if (!type) return false;
     return type.toLowerCase() === 'string';
   }
 
@@ -139,6 +144,9 @@ export class TypeMapper {
     }
     if (property.type === 'string' && property.maxLength) {
       return `nvarchar(${property.maxLength})`;
+    }
+    if (property.type === 'DateTimeOffset') {
+      return 'timestamptz';
     }
     return null; // Use default mapping
   }

@@ -1,3 +1,5 @@
+using Onward.Base.Abstractions;
+
 namespace Onward.Base.Models;
 
 /// <summary>
@@ -68,8 +70,9 @@ public class UniqueConstraintMetadata
 /// <summary>
 /// Metadata describing a relationship between two entities.
 /// String-based and self-contained - does not reference actual entity types.
+/// Implements <see cref="IRelationshipMetadata"/> to allow use with junction entity configurations.
 /// </summary>
-public class RelationshipMetadata
+public class RelationshipMetadata : IRelationshipMetadata
 {
     public string RelationshipName { get; set; } = string.Empty;
     public RelationshipType Type { get; set; }
@@ -82,4 +85,9 @@ public class RelationshipMetadata
     public string? InverseNavigationPropertyName { get; set; }
     public string? ForeignKeyPropertyName { get; set; }
     public string Description { get; set; } = string.Empty;
+
+    // Explicit interface implementations mapping to IRelationshipMetadata property names
+    string IRelationshipMetadata.EntityName => PrincipalEntity;
+    string IRelationshipMetadata.RelatedEntityName => DependentEntity;
+    string? IRelationshipMetadata.Description => Description;
 }

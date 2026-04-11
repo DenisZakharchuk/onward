@@ -1,0 +1,795 @@
+{
+    "data": {
+        "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+        "date": "2026-04-03T12:06:28.313282+03:00",
+        "dateModified": "2026-04-03T12:06:28.313282+03:00",
+        "dateCreated": "2026-03-30T17:04:11.993877+03:00",
+        "tenderID": "UA-2026-03-30-011308-a",
+        "documents": [
+            {
+                "confidentiality": "public",
+                "documentType": "contractProforma",
+                "description": "SHA1:72495793dab7756896197cf4a07cb257dda76913;SHA2-384:ed46b1c965460a65156f312ce321cddb1e501f089c8285126514f5652a434d29c1aa8496fcb051e3136a2494abc2372b;Antivirus: ESET Antivirus",
+                "relatedItem": "9301f7a4c50c4629a8fb19cd9f2134b8",
+                "id": "0207af02962e43ec8d1e3411e052958c",
+                "datePublished": "2026-03-30T17:04:13.026107+03:00",
+                "hash": "md5:3864fe0e941d8e215a979532f885c9fc",
+                "title": "\u041f\u0440\u043e\u0435\u043a\u0442 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043d\u0430 2026 \u0440_\u0435\u043b. \u0435\u043d._\u0437\u043f\u043f.docx",
+                "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "url": "https://public-docs.prozorro.gov.ua/get/f9446df0892b4a00981d2fb9bd5670b6?Signature=lScZBjhbE%2B6lATgME6iKea9MA3z%2BNy4vLPoPtUZnTvg854E2NcTnMia3%2BtvulhS9rwYuGQT4KOahHdmGP3mSDQ%3D%3D&KeyID=52462340",
+                "documentOf": "tender",
+                "dateModified": "2026-03-30T17:04:13.026107+03:00",
+                "author": "tender_owner",
+                "language": "uk"
+            },
+            {
+                "confidentiality": "public",
+                "documentType": "notice",
+                "description": "SHA1:5b5707beffc4eba10c41184bd128febed99d8ef0;SHA2-384:ad8137face9942c8b7b429927a14455b6dd27c996caa77938dcbfac95ccbad0939f63823ad0a2149d8987807a5cd91fa;Antivirus: ESET Antivirus",
+                "id": "19ac9b2945d94860971f03ef81515c52",
+                "datePublished": "2026-03-30T17:06:09.968618+03:00",
+                "hash": "md5:ac344d4418028c3bf7ee6c653f7f4e16",
+                "title": "sign.p7s",
+                "format": "application/pkcs7-signature",
+                "url": "https://public-docs.prozorro.gov.ua/get/a486154c6ef746edaee7cedcc346e667?Signature=5R4q6Td9vpOOqkkoO8NuTRoMtlgDx2K5uRnZWjEXnFsAPR2a8HMAbBe%2B6jg%2BgK7J4PEpmItlD7sJUCFjtSqXDg%3D%3D&KeyID=52462340",
+                "documentOf": "tender",
+                "dateModified": "2026-03-30T17:06:10.179337+03:00",
+                "author": "tender_owner",
+                "language": "uk"
+            }
+        ],
+        "owner": "prom.ua",
+        "title": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+        "mainProcurementCategory": "goods",
+        "procurementMethod": "selective",
+        "plans": [
+            {
+                "id": "5e81c5264e7c4c51af026a53568edf00"
+            }
+        ],
+        "contractChangeRationaleTypes": {
+            "durationExtension": {
+                "description_en": "\u0415xtension of the period of the procurement contract duration and the term of obligations fulfilment regarding the transfer of goods, implementation of works and provision of services in case of documented objective circumstances that led to such extension, including circumstances of force majeure, delays in funding of procuring entitys expenditures, provided that such changes will not increase the sum of money specified in the procurement contract",
+                "title_en": "Subparagraph 4 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u041f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u043d\u044f \u0441\u0442\u0440\u043e\u043a\u0443 \u0434\u0456\u0457 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0442\u0430/\u0430\u0431\u043e \u0441\u0442\u0440\u043e\u043a\u0443 \u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043d\u044f \u0437\u043e\u0431\u043e\u0432\u2019\u044f\u0437\u0430\u043d\u044c \u0449\u043e\u0434\u043e \u043f\u0435\u0440\u0435\u0434\u0430\u0447\u0456 \u0442\u043e\u0432\u0430\u0440\u0443, \u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043d\u044f \u0440\u043e\u0431\u0456\u0442, \u043d\u0430\u0434\u0430\u043d\u043d\u044f \u043f\u043e\u0441\u043b\u0443\u0433 \u0443 \u0440\u0430\u0437\u0456 \u0432\u0438\u043d\u0438\u043a\u043d\u0435\u043d\u043d\u044f \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u043b\u044c\u043d\u043e \u043f\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u0438\u0445 \u043e\u0431\u2019\u0454\u043a\u0442\u0438\u0432\u043d\u0438\u0445 \u043e\u0431\u0441\u0442\u0430\u0432\u0438\u043d, \u0449\u043e \u0441\u043f\u0440\u0438\u0447\u0438\u043d\u0438\u043b\u0438 \u0442\u0430\u043a\u0435 \u043f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u043d\u044f, \u0443 \u0442\u043e\u043c\u0443 \u0447\u0438\u0441\u043b\u0456 \u043e\u0431\u0441\u0442\u0430\u0432\u0438\u043d \u043d\u0435\u043f\u0435\u0440\u0435\u0431\u043e\u0440\u043d\u043e\u0457 \u0441\u0438\u043b\u0438, \u0437\u0430\u0442\u0440\u0438\u043c\u043a\u0438 \u0444\u0456\u043d\u0430\u043d\u0441\u0443\u0432\u0430\u043d\u043d\u044f \u0432\u0438\u0442\u0440\u0430\u0442 \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0430, \u0437\u0430 \u0443\u043c\u043e\u0432\u0438, \u0449\u043e \u0442\u0430\u043a\u0456 \u0437\u043c\u0456\u043d\u0438 \u043d\u0435 \u043f\u0440\u0438\u0437\u0432\u0435\u0434\u0443\u0442\u044c \u0434\u043e \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0441\u0443\u043c\u0438, \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043e\u0457 \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 4 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "fiscalYearExtension": {
+                "description_en": "The validity of the procurement contract may be extended for a period sufficient to conduct the procurement/simplified procurement procedure at the beginning of the following year in an amount not exceeding 20 percent of the amount specified in the initial procurement contract concluded in the previous year, if the expenditures to achieve this goal have been approved in accordance with the established procedure",
+                "title_en": "Subparagraph 8 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0414\u0456\u044f \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u043c\u043e\u0436\u0435 \u0431\u0443\u0442\u0438 \u043f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u0430 \u043d\u0430 \u0441\u0442\u0440\u043e\u043a, \u0434\u043e\u0441\u0442\u0430\u0442\u043d\u0456\u0439 \u0434\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0434\u0435\u043d\u043d\u044f \u043f\u0440\u043e\u0446\u0435\u0434\u0443\u0440\u0438 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456/\u0441\u043f\u0440\u043e\u0449\u0435\u043d\u043e\u0457 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456 \u043d\u0430 \u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u043d\u0430\u0441\u0442\u0443\u043f\u043d\u043e\u0433\u043e \u0440\u043e\u043a\u0443 \u0432 \u043e\u0431\u0441\u044f\u0437\u0456, \u0449\u043e \u043d\u0435 \u043f\u0435\u0440\u0435\u0432\u0438\u0449\u0443\u0454 20 \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0456\u0432 \u0441\u0443\u043c\u0438, \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043e\u0457 \u0432 \u043f\u043e\u0447\u0430\u0442\u043a\u043e\u0432\u043e\u043c\u0443 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e, \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043e\u043c\u0443 \u0432 \u043f\u043e\u043f\u0435\u0440\u0435\u0434\u043d\u044c\u043e\u043c\u0443 \u0440\u043e\u0446\u0456, \u044f\u043a\u0449\u043e \u0432\u0438\u0434\u0430\u0442\u043a\u0438 \u043d\u0430 \u0434\u043e\u0441\u044f\u0433\u043d\u0435\u043d\u043d\u044f \u0446\u0456\u0454\u0457 \u0446\u0456\u043b\u0456 \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043e \u0432 \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e\u043c\u0443 \u043f\u043e\u0440\u044f\u0434\u043a\u0443",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 8 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "itemPriceChange": {
+                "description_en": "An increase in the price per unit of goods agreed by the parties by no more than 10 percent in proportion to the fluctuation in the price of such goods on the market that occurred from the date of conclusion of the procurement contract (in the event of an increase in the price per unit of goods under this subparagraph for the first time) or from the date of the last amendment to the procurement contract in terms of price changes (in the event of an increase in the price per unit of goods under this subparagraph for the second and subsequent times), subject to documentary confirmation of such fluctuations. Such amendments to the procurement contract may be made no earlier than 90 days from the date of signing the procurement contract or making amendments to it regarding an increase in the unit price of the goods, provided that such amendments do not lead to an increase in the amount specified in the procurement contract. The restriction on the timing of amendments to the procurement contract regarding an increase in the unit price of goods shall not apply in the event of a change in the terms of the procurement contract for gasoline and diesel fuel, natural gas, and electricity. The restriction on increasing the unit price by no more than 10 percent applies to each individual case of increasing the unit price (without limiting the number of changes). The changed unit price shall not exceed 50 percent of the unit price specified in the initial procurement contract",
+                "title_en": "Subparagraph 2 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0423\u0437\u0433\u043e\u0434\u0436\u0435\u043d\u043e\u0433\u043e \u0441\u0442\u043e\u0440\u043e\u043d\u0430\u043c\u0438 \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u043d\u0435 \u0431\u0456\u043b\u044c\u0448\u0435 \u043d\u0456\u0436 \u043d\u0430 10 \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0456\u0432 \u043f\u0440\u043e\u043f\u043e\u0440\u0446\u0456\u0439\u043d\u043e \u043a\u043e\u043b\u0438\u0432\u0430\u043d\u043d\u044e \u0446\u0456\u043d\u0438 \u0442\u0430\u043a\u043e\u0433\u043e \u0442\u043e\u0432\u0430\u0440\u0443 \u043d\u0430 \u0440\u0438\u043d\u043a\u0443, \u0449\u043e \u0432\u0456\u0434\u0431\u0443\u043b\u043e\u0441\u044f \u0437 \u0434\u043d\u044f \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e (\u0443 \u0440\u0430\u0437\u0456 \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u0437\u0430 \u0446\u0438\u043c \u043f\u0456\u0434\u043f\u0443\u043d\u043a\u0442\u043e\u043c \u0432\u043f\u0435\u0440\u0448\u0435) \u0430\u0431\u043e \u0437 \u0434\u043d\u044f \u043e\u0441\u0442\u0430\u043d\u043d\u044c\u043e\u0433\u043e \u0432\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u0437\u043c\u0456\u043d \u0434\u043e \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0432 \u0447\u0430\u0441\u0442\u0438\u043d\u0456 \u0437\u043c\u0456\u043d\u0438 \u0446\u0456\u043d\u0438 (\u0443 \u0440\u0430\u0437\u0456 \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u0437\u0430 \u0446\u0438\u043c \u043f\u0456\u0434\u043f\u0443\u043d\u043a\u0442\u043e\u043c \u0432\u0434\u0440\u0443\u0433\u0435 \u0456 \u0434\u0430\u043b\u0456), \u0437\u0430 \u0443\u043c\u043e\u0432\u0438 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u0442\u0430\u043a\u043e\u0433\u043e \u043a\u043e\u043b\u0438\u0432\u0430\u043d\u043d\u044f. \u0422\u0430\u043a\u0456 \u0437\u043c\u0456\u043d\u0438 \u0434\u043e \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u043c\u043e\u0436\u0443\u0442\u044c \u0431\u0443\u0442\u0438 \u0432\u043d\u0435\u0441\u0435\u043d\u0456 \u043d\u0435 \u0440\u0430\u043d\u0456\u0448\u0435 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0430\u0431\u043e \u0432\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u0434\u043e \u043d\u044c\u043e\u0433\u043e \u0437\u043c\u0456\u043d \u0449\u043e\u0434\u043e \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u0437\u0430 \u0443\u043c\u043e\u0432\u0438, \u0449\u043e \u0442\u0430\u043a\u0456 \u0437\u043c\u0456\u043d\u0438 \u043d\u0435 \u043f\u0440\u0438\u0437\u0432\u0435\u0434\u0443\u0442\u044c \u0434\u043e \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0441\u0443\u043c\u0438, \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043e\u0457 \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e. \u041e\u0431\u043c\u0435\u0436\u0435\u043d\u043d\u044f \u0441\u0442\u043e\u0441\u043e\u0432\u043d\u043e \u0441\u0442\u0440\u043e\u043a\u0456\u0432 \u0432\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u0437\u043c\u0456\u043d \u0434\u043e \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0449\u043e\u0434\u043e \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u043d\u0435 \u0437\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u0443\u0454\u0442\u044c\u0441\u044f \u0443 \u0440\u0430\u0437\u0456 \u0437\u043c\u0456\u043d\u0438 \u0443\u043c\u043e\u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0431\u0435\u043d\u0437\u0438\u043d\u0443 \u0442\u0430 \u0434\u0438\u0437\u0435\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0430\u043b\u044c\u043d\u043e\u0433\u043e, \u043f\u0440\u0438\u0440\u043e\u0434\u043d\u043e\u0433\u043e \u0433\u0430\u0437\u0443 \u0442\u0430 \u0435\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u043e\u0457 \u0435\u043d\u0435\u0440\u0433\u0456\u0457. \u041e\u0431\u043c\u0435\u0436\u0435\u043d\u043d\u044f \u0449\u043e\u0434\u043e \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u043d\u0435 \u0431\u0456\u043b\u044c\u0448\u0435 \u043d\u0456\u0436 \u043d\u0430 10 \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0456\u0432 \u0437\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u0443\u0454\u0442\u044c\u0441\u044f \u0449\u043e\u0434\u043e \u043a\u043e\u0436\u043d\u043e\u0433\u043e \u043e\u043a\u0440\u0435\u043c\u043e\u0433\u043e \u0432\u0438\u043f\u0430\u0434\u043a\u0443 \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 (\u0431\u0435\u0437 \u043e\u0431\u043c\u0435\u0436\u0435\u043d\u043d\u044f \u043a\u0456\u043b\u044c\u043a\u043e\u0441\u0442\u0456 \u0437\u043c\u0456\u043d). \u0417\u043c\u0456\u043d\u0435\u043d\u0430 \u0446\u0456\u043d\u0430 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443 \u043d\u0435 \u043f\u043e\u0432\u0438\u043d\u043d\u0430 \u043f\u0435\u0440\u0435\u0432\u0438\u0449\u0443\u0432\u0430\u0442\u0438 50 \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0456\u0432 \u0446\u0456\u043d\u0438 \u0437\u0430 \u043e\u0434\u0438\u043d\u0438\u0446\u044e \u0442\u043e\u0432\u0430\u0440\u0443, \u0449\u043e \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0430 \u0432 \u043f\u043e\u0447\u0430\u0442\u043a\u043e\u0432\u043e\u043c\u0443 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 2 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "priceReductionWithoutQuantity": {
+                "description_en": "Approval of a price change in a procurement contract in a downward direction (without changing the quantity (volume) and quality of goods, works and services), including in the event of fluctuations in the price of goods on the market",
+                "title_en": "Subparagraph 5 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u041f\u043e\u0433\u043e\u0434\u0436\u0435\u043d\u043d\u044f \u0437\u043c\u0456\u043d\u0438 \u0446\u0456\u043d\u0438 \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0432 \u0431\u0456\u043a \u0437\u043c\u0435\u043d\u0448\u0435\u043d\u043d\u044f (\u0431\u0435\u0437 \u0437\u043c\u0456\u043d\u0438 \u043a\u0456\u043b\u044c\u043a\u043e\u0441\u0442\u0456 (\u043e\u0431\u0441\u044f\u0433\u0443) \u0442\u0430 \u044f\u043a\u043e\u0441\u0442\u0456 \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433), \u0443 \u0442\u043e\u043c\u0443 \u0447\u0438\u0441\u043b\u0456 \u0443 \u0440\u0430\u0437\u0456 \u043a\u043e\u043b\u0438\u0432\u0430\u043d\u043d\u044f \u0446\u0456\u043d\u0438 \u0442\u043e\u0432\u0430\u0440\u0443 \u043d\u0430 \u0440\u0438\u043d\u043a\u0443",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 5 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "qualityImprovement": {
+                "description_en": "\u0406mprovement of the item's quality, provided that such improvement will not increase the sum of money specified in the procurement contract",
+                "title_en": "Subparagraph 3 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u041f\u043e\u043a\u0440\u0430\u0449\u0435\u043d\u043d\u044f \u044f\u043a\u043e\u0441\u0442\u0456 \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u0430 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456 \u0437\u0430 \u0443\u043c\u043e\u0432\u0438, \u0449\u043e \u0442\u0430\u043a\u0435 \u043f\u043e\u043a\u0440\u0430\u0449\u0435\u043d\u043d\u044f \u043d\u0435 \u043f\u0440\u0438\u0437\u0432\u0435\u0434\u0435 \u0434\u043e \u0437\u0431\u0456\u043b\u044c\u0448\u0435\u043d\u043d\u044f \u0441\u0443\u043c\u0438, \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043e\u0457 \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 3 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "taxationSystem": {
+                "description_en": "Changes in the price in the purchase contract due to changes in tax and duty rates and/or changes in the conditions for granting tax benefits - in proportion to the change in such rates and/or tax benefits, as well as in connection with changes in the taxation system in proportion to the change in the tax burden as a result of changes in the taxation system",
+                "title_en": "Subparagraph 6 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u043c\u0456\u043d\u0438 \u0446\u0456\u043d\u0438 \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0443 \u0437\u0432\u2019\u044f\u0437\u043a\u0443 \u0437 \u0437\u043c\u0456\u043d\u043e\u044e \u0441\u0442\u0430\u0432\u043e\u043a \u043f\u043e\u0434\u0430\u0442\u043a\u0456\u0432 \u0456 \u0437\u0431\u043e\u0440\u0456\u0432 \u0442\u0430/\u0430\u0431\u043e \u0437\u043c\u0456\u043d\u043e\u044e \u0443\u043c\u043e\u0432 \u0449\u043e\u0434\u043e \u043d\u0430\u0434\u0430\u043d\u043d\u044f \u043f\u0456\u043b\u044c\u0433 \u0437 \u043e\u043f\u043e\u0434\u0430\u0442\u043a\u0443\u0432\u0430\u043d\u043d\u044f - \u043f\u0440\u043e\u043f\u043e\u0440\u0446\u0456\u0439\u043d\u043e \u0434\u043e \u0437\u043c\u0456\u043d\u0438 \u0442\u0430\u043a\u0438\u0445 \u0441\u0442\u0430\u0432\u043e\u043a \u0442\u0430/\u0430\u0431\u043e \u043f\u0456\u043b\u044c\u0433 \u0437 \u043e\u043f\u043e\u0434\u0430\u0442\u043a\u0443\u0432\u0430\u043d\u043d\u044f, \u0430 \u0442\u0430\u043a\u043e\u0436 \u0443 \u0437\u0432\u2019\u044f\u0437\u043a\u0443 \u0456\u0437 \u0437\u043c\u0456\u043d\u043e\u044e \u0441\u0438\u0441\u0442\u0435\u043c\u0438 \u043e\u043f\u043e\u0434\u0430\u0442\u043a\u0443\u0432\u0430\u043d\u043d\u044f \u043f\u0440\u043e\u043f\u043e\u0440\u0446\u0456\u0439\u043d\u043e \u0434\u043e \u0437\u043c\u0456\u043d\u0438 \u043f\u043e\u0434\u0430\u0442\u043a\u043e\u0432\u043e\u0433\u043e \u043d\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f \u0432\u043d\u0430\u0441\u043b\u0456\u0434\u043e\u043a \u0437\u043c\u0456\u043d\u0438 \u0441\u0438\u0441\u0442\u0435\u043c\u0438 \u043e\u043f\u043e\u0434\u0430\u0442\u043a\u0443\u0432\u0430\u043d\u043d\u044f",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 6 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "externalIndicators": {
+                "description_en": "Changes in the consumer price index established by state statistics authorities in accordance with the law, changes in foreign currency exchange rates, changes in stock market quotations or Platts, ARGUS indicators, regulated prices (tariffs), standards, weighted average prices for electricity on the \"day ahead\" market applied in the purchase agreement, if the procurement contract establishes a procedure for changing the price",
+                "title_en": "Subparagraph 7 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u043c\u0456\u043d\u0438 \u0432\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e\u0433\u043e \u0437\u0433\u0456\u0434\u043d\u043e \u0456\u0437 \u0437\u0430\u043a\u043e\u043d\u043e\u0434\u0430\u0432\u0441\u0442\u0432\u043e\u043c \u043e\u0440\u0433\u0430\u043d\u0430\u043c\u0438 \u0434\u0435\u0440\u0436\u0430\u0432\u043d\u043e\u0457 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0438 \u0456\u043d\u0434\u0435\u043a\u0441\u0443 \u0441\u043f\u043e\u0436\u0438\u0432\u0447\u0438\u0445 \u0446\u0456\u043d, \u0437\u043c\u0456\u043d\u0438 \u043a\u0443\u0440\u0441\u0443 \u0456\u043d\u043e\u0437\u0435\u043c\u043d\u043e\u0457 \u0432\u0430\u043b\u044e\u0442\u0438, \u0437\u043c\u0456\u043d\u0438 \u0431\u0456\u0440\u0436\u043e\u0432\u0438\u0445 \u043a\u043e\u0442\u0438\u0440\u0443\u0432\u0430\u043d\u044c \u0430\u0431\u043e \u043f\u043e\u043a\u0430\u0437\u043d\u0438\u043a\u0456\u0432 Platts, ARGUS, \u0440\u0435\u0433\u0443\u043b\u044c\u043e\u0432\u0430\u043d\u0438\u0445 \u0446\u0456\u043d (\u0442\u0430\u0440\u0438\u0444\u0456\u0432), \u043d\u043e\u0440\u043c\u0430\u0442\u0438\u0432\u0456\u0432, \u0441\u0435\u0440\u0435\u0434\u043d\u044c\u043e\u0437\u0432\u0430\u0436\u0435\u043d\u0438\u0445 \u0446\u0456\u043d \u043d\u0430 \u0435\u043b\u0435\u043a\u0442\u0440\u043e\u0435\u043d\u0435\u0440\u0433\u0456\u044e \u043d\u0430 \u0440\u0438\u043d\u043a\u0443 \"\u043d\u0430 \u0434\u043e\u0431\u0443 \u043d\u0430\u043f\u0435\u0440\u0435\u0434\", \u0449\u043e \u0437\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u0443\u044e\u0442\u044c\u0441\u044f \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e, \u0443 \u0440\u0430\u0437\u0456 \u0432\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043d\u044f \u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u043f\u043e\u0440\u044f\u0434\u043a\u0443 \u0437\u043c\u0456\u043d\u0438 \u0446\u0456\u043d\u0438",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 7 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "volumeCuts": {
+                "description_en": "Reduction of the procurement's volume, particularly taking into account the actual expenditures of the procuring entity",
+                "title_en": "Subparagraph 1 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u043c\u0435\u043d\u0448\u0435\u043d\u043d\u044f \u043e\u0431\u0441\u044f\u0433\u0456\u0432 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456, \u0437\u043e\u043a\u0440\u0435\u043c\u0430 \u0437 \u0443\u0440\u0430\u0445\u0443\u0432\u0430\u043d\u043d\u044f\u043c \u0444\u0430\u043a\u0442\u0438\u0447\u043d\u043e\u0433\u043e \u043e\u0431\u0441\u044f\u0433\u0443 \u0432\u0438\u0434\u0430\u0442\u043a\u0456\u0432 \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0430",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 1 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "restoration": {
+                "description_en": "Reduction in the volume of procurement and/or price under contracts for construction works of real estate objects in accordance with the Resolution of the Cabinet of Ministers of Ukraine dated April 25, 2023, No. 382 \"On the implementation of an experimental project for the restoration of settlements affected by the armed aggression of the Russian Federation\" (Official Bulletin of Ukraine, 2023, No. 46, Article 2466), if the development of project documentation is entrusted to the contractor, after the expert review and approval of the project documentation in accordance with the procedure established by law",
+                "title_en": "Subparagraph 9 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u043c\u0435\u043d\u0448\u0435\u043d\u043d\u044f \u043e\u0431\u0441\u044f\u0433\u0456\u0432 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456 \u0442\u0430/\u0430\u0431\u043e \u0446\u0456\u043d\u0438 \u0437\u0433\u0456\u0434\u043d\u043e \u0437 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0430\u043c\u0438 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u0440\u043e\u0431\u0456\u0442 \u0437 \u0431\u0443\u0434\u0456\u0432\u043d\u0438\u0446\u0442\u0432\u0430 \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432 \u043d\u0435\u0440\u0443\u0445\u043e\u043c\u043e\u0433\u043e \u043c\u0430\u0439\u043d\u0430 \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u043e \u0434\u043e \u043f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u0456\u043d\u0435\u0442\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 25 \u043a\u0432\u0456\u0442\u043d\u044f 2023 \u0440. \u2116 382 \"\u041f\u0440\u043e \u0440\u0435\u0430\u043b\u0456\u0437\u0430\u0446\u0456\u044e \u0435\u043a\u0441\u043f\u0435\u0440\u0438\u043c\u0435\u043d\u0442\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0435\u043a\u0442\u0443 \u0449\u043e\u0434\u043e \u0432\u0456\u0434\u043d\u043e\u0432\u043b\u0435\u043d\u043d\u044f \u043d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0445 \u043f\u0443\u043d\u043a\u0442\u0456\u0432, \u044f\u043a\u0456 \u043f\u043e\u0441\u0442\u0440\u0430\u0436\u0434\u0430\u043b\u0438 \u0432\u043d\u0430\u0441\u043b\u0456\u0434\u043e\u043a \u0437\u0431\u0440\u043e\u0439\u043d\u043e\u0457 \u0430\u0433\u0440\u0435\u0441\u0456\u0457 \u0420\u043e\u0441\u0456\u0439\u0441\u044c\u043a\u043e\u0457 \u0424\u0435\u0434\u0435\u0440\u0430\u0446\u0456\u0457\" (\u041e\u0444\u0456\u0446\u0456\u0439\u043d\u0438\u0439 \u0432\u0456\u0441\u043d\u0438\u043a \u0423\u043a\u0440\u0430\u0457\u043d\u0438, 2023 \u0440., \u2116 46, \u0441\u0442. 2466), \u044f\u043a\u0449\u043e \u0440\u043e\u0437\u0440\u043e\u0431\u043b\u0435\u043d\u043d\u044f \u043f\u0440\u043e\u0435\u043a\u0442\u043d\u043e\u0457 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0456\u0457 \u043f\u043e\u043a\u043b\u0430\u0434\u0435\u043d\u043e \u043d\u0430 \u043f\u0456\u0434\u0440\u044f\u0434\u043d\u0438\u043a\u0430, \u043f\u0456\u0441\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0434\u0435\u043d\u043d\u044f \u0435\u043a\u0441\u043f\u0435\u0440\u0442\u0438\u0437\u0438 \u0442\u0430 \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043f\u0440\u043e\u0435\u043a\u0442\u043d\u043e\u0457 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0456\u0457 \u0432 \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e\u043c\u0443 \u0437\u0430\u043a\u043e\u043d\u043e\u0434\u0430\u0432\u0441\u0442\u0432\u043e\u043c \u043f\u043e\u0440\u044f\u0434\u043a\u0443",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 9 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "projectDocumentation": {
+                "description_en": "Calculation of the contract price, specified (agreed) in accordance with the approved project documentation to the procurement contract specified in the third paragraph of part one of Article 41 of the Law. Such notification shall be accompanied by the specified contract price (including documents containing information on prices for material resources) in machine-readable format",
+                "title_en": "Paragraph 16 of Clause 20 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0421\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f \u0434\u043e\u0433\u043e\u0432\u0456\u0440\u043d\u043e\u0457 \u0446\u0456\u043d\u0438, \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e\u0457 (\u0443\u0437\u0433\u043e\u0434\u0436\u0435\u043d\u043e\u0457) \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u043e \u0434\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043e\u0457 \u043f\u0440\u043e\u0435\u043a\u0442\u043d\u043e\u0457 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0456\u0457 \u0434\u043e \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e, \u0437\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u043e\u0433\u043e \u0432 \u0430\u0431\u0437\u0430\u0446\u0456 \u0442\u0440\u0435\u0442\u044c\u043e\u043c\u0443 \u0447\u0430\u0441\u0442\u0438\u043d\u0438 \u043f\u0435\u0440\u0448\u043e\u0457 \u0441\u0442\u0430\u0442\u0442\u0456 41 \u0417\u0430\u043a\u043e\u043d\u0443. \u0414\u043e \u0442\u0430\u043a\u043e\u0433\u043e \u043f\u043e\u0432\u0456\u0434\u043e\u043c\u043b\u0435\u043d\u043d\u044f \u0434\u043e\u0434\u0430\u0454\u0442\u044c\u0441\u044f \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u0430 \u0434\u043e\u0433\u043e\u0432\u0456\u0440\u043d\u0430 \u0446\u0456\u043d\u0430 (\u0443 \u0442\u043e\u043c\u0443 \u0447\u0438\u0441\u043b\u0456 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0438, \u0449\u043e \u043c\u0456\u0441\u0442\u044f\u0442\u044c \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e \u043f\u0440\u043e \u0446\u0456\u043d\u0438 \u043d\u0430 \u043c\u0430\u0442\u0435\u0440\u0456\u0430\u043b\u044c\u043d\u0456 \u0440\u0435\u0441\u0443\u0440\u0441\u0438) \u0443 \u043c\u0430\u0448\u0438\u043d\u043e\u0437\u0447\u0438\u0442\u0443\u0432\u0430\u043b\u044c\u043d\u043e\u043c\u0443 \u0444\u043e\u0440\u043c\u0430\u0442\u0456",
+                "title_uk": "\u0410\u0431\u0437\u0430\u0446 16 \u043f\u0443\u043d\u043a\u0442\u0443 20 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "emergencyReconstruction": {
+                "description_en": "The procurement of goods, works, and services for/from construction, repair, and other engineering and technical measures to protect facilities is carried out: critical infrastructure of the fuel and energy sector critical infrastructure; the life support systems sector of critical infrastructure as part of the implementation of a pilot project in accordance with Resolution No. 142 of the Cabinet of Ministers of Ukraine dated February 7, 2025, \"On the implementation of a pilot project for new construction, reconstruction, major repairs, repair, and other engineering and technical measures to protect critical infrastructure facilities in the fuel and energy sector of critical infrastructure\" (Official Gazette of Ukraine, 2025, No. 20, p. 1335) under procurement contracts concluded before March 1, 2026",
+                "title_en": "Subparagraph 13 of paragraph 13 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u0434\u0456\u0439\u0441\u043d\u044e\u0454\u0442\u044c\u0441\u044f \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044f \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0442\u0430 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f/\u0437 \u0431\u0443\u0434\u0456\u0432\u043d\u0438\u0446\u0442\u0432\u0430, \u0440\u0435\u043c\u043e\u043d\u0442\u0443 \u0442\u0430 \u0456\u043d\u0448\u0438\u0445 \u0456\u043d\u0436\u0435\u043d\u0435\u0440\u043d\u043e-\u0442\u0435\u0445\u043d\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u0445\u043e\u0434\u0456\u0432 \u0456\u0437 \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432: \u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438 \u043f\u0430\u043b\u0438\u0432\u043d\u043e-\u0435\u043d\u0435\u0440\u0433\u0435\u0442\u0438\u0447\u043d\u043e\u0433\u043e \u0441\u0435\u043a\u0442\u043e\u0440\u0443 \u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438; \u0441\u0435\u043a\u0442\u043e\u0440\u0443 \u0441\u0438\u0441\u0442\u0435\u043c \u0436\u0438\u0442\u0442\u0454\u0437\u0430\u0431\u0435\u0437\u043f\u0435\u0447\u0435\u043d\u043d\u044f \u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438 \u0432 \u0440\u0430\u043c\u043a\u0430\u0445 \u0440\u0435\u0430\u043b\u0456\u0437\u0430\u0446\u0456\u0457 \u0435\u043a\u0441\u043f\u0435\u0440\u0438\u043c\u0435\u043d\u0442\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0435\u043a\u0442\u0443 \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u043e \u0434\u043e \u043f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u0456\u043d\u0435\u0442\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 7 \u043b\u044e\u0442\u043e\u0433\u043e 2025 \u0440. \u2116 142 \"\u041f\u0440\u043e \u0440\u0435\u0430\u043b\u0456\u0437\u0430\u0446\u0456\u044e \u0435\u043a\u0441\u043f\u0435\u0440\u0438\u043c\u0435\u043d\u0442\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0435\u043a\u0442\u0443 \u0449\u043e\u0434\u043e \u043d\u043e\u0432\u043e\u0433\u043e \u0431\u0443\u0434\u0456\u0432\u043d\u0438\u0446\u0442\u0432\u0430, \u0440\u0435\u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0456\u0457, \u043a\u0430\u043f\u0456\u0442\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u0440\u0435\u043c\u043e\u043d\u0442\u0443, \u0440\u0435\u043c\u043e\u043d\u0442\u0443 \u0442\u0430 \u0456\u043d\u0448\u0438\u0445 \u0456\u043d\u0436\u0435\u043d\u0435\u0440\u043d\u043e-\u0442\u0435\u0445\u043d\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u0445\u043e\u0434\u0456\u0432 \u0456\u0437 \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432 \u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438 \u043f\u0430\u043b\u0438\u0432\u043d\u043e-\u0435\u043d\u0435\u0440\u0433\u0435\u0442\u0438\u0447\u043d\u043e\u0433\u043e \u0441\u0435\u043a\u0442\u043e\u0440\u0443 \u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438\" (\u041e\u0444\u0456\u0446\u0456\u0439\u043d\u0438\u0439 \u0432\u0456\u0441\u043d\u0438\u043a \u0423\u043a\u0440\u0430\u0457\u043d\u0438, 2025 \u0440., \u2116 20, \u0441\u0442. 1335) \u0437\u0430 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0430\u043c\u0438 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e, \u044f\u043a\u0456 \u0443\u043a\u043b\u0430\u0434\u0430\u044e\u0442\u044c\u0441\u044f \u0434\u043e 1 \u0431\u0435\u0440\u0435\u0437\u043d\u044f 2026 \u0440\u043e\u043a\u0443",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 13 \u043f\u0443\u043d\u043a\u0442\u0443 13 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "infrastructureProtection": {
+                "description_en": "The procurement of goods, works, and services for measures aimed at ensuring the protection of facilities belonging to enterprises, institutions, and organizations in the electric power, nuclear, coal, oil and gas industries, as well as critical infrastructure facilities in the railway transport subsector of the transport and postal sector, including for the organization of protection of their employees in terms of construction, creation, and arrangement of civil defense structures, for the restoration of such facilities destroyed or damaged as a result of the armed aggression of the Russian Federation, as well as for the implementation of priority emergency repair work on railway infrastructure facilities and the repair of traction and rolling stock",
+                "title_en": "Subparagraph 15 of paragraph 13 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u0434\u0456\u0439\u0441\u043d\u044e\u0454\u0442\u044c\u0441\u044f \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044f \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0434\u0435\u043d\u043d\u044f \u0437\u0430\u0445\u043e\u0434\u0456\u0432, \u0441\u043f\u0440\u044f\u043c\u043e\u0432\u0430\u043d\u0438\u0445 \u043d\u0430 \u0437\u0430\u0431\u0435\u0437\u043f\u0435\u0447\u0435\u043d\u043d\u044f \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432 \u043f\u0456\u0434\u043f\u0440\u0438\u0454\u043c\u0441\u0442\u0432, \u0443\u0441\u0442\u0430\u043d\u043e\u0432 \u0442\u0430 \u043e\u0440\u0433\u0430\u043d\u0456\u0437\u0430\u0446\u0456\u0439 \u0435\u043b\u0435\u043a\u0442\u0440\u043e\u0435\u043d\u0435\u0440\u0433\u0435\u0442\u0438\u0447\u043d\u043e\u0433\u043e, \u044f\u0434\u0435\u0440\u043d\u043e-\u043f\u0440\u043e\u043c\u0438\u0441\u043b\u043e\u0432\u043e\u0433\u043e, \u0432\u0443\u0433\u0456\u043b\u044c\u043d\u043e-\u043f\u0440\u043e\u043c\u0438\u0441\u043b\u043e\u0432\u043e\u0433\u043e, \u043d\u0430\u0444\u0442\u043e\u0433\u0430\u0437\u043e\u0432\u043e\u0433\u043e \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0441\u0456\u0432 \u0442\u0430 \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432 \u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438 \u043f\u0456\u0434\u0441\u0435\u043a\u0442\u043e\u0440\u0443 \u0437\u0430\u043b\u0456\u0437\u043d\u0438\u0447\u043d\u043e\u0433\u043e \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u0443 \u0441\u0435\u043a\u0442\u043e\u0440\u0443 \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u0443 \u0456 \u043f\u043e\u0448\u0442\u0438, \u0443 \u0442\u043e\u043c\u0443 \u0447\u0438\u0441\u043b\u0456 \u0434\u043b\u044f \u043e\u0440\u0433\u0430\u043d\u0456\u0437\u0430\u0446\u0456\u0457 \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u0457\u0445 \u043f\u0440\u0430\u0446\u0456\u0432\u043d\u0438\u043a\u0456\u0432 \u0443 \u0447\u0430\u0441\u0442\u0438\u043d\u0456 \u0431\u0443\u0434\u0456\u0432\u043d\u0438\u0446\u0442\u0432\u0430, \u0441\u0442\u0432\u043e\u0440\u0435\u043d\u043d\u044f \u0442\u0430 \u043e\u0431\u043b\u0430\u0448\u0442\u0443\u0432\u0430\u043d\u043d\u044f \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432 \u0444\u043e\u043d\u0434\u0443 \u0437\u0430\u0445\u0438\u0441\u043d\u0438\u0445 \u0441\u043f\u043e\u0440\u0443\u0434 \u0446\u0438\u0432\u0456\u043b\u044c\u043d\u043e\u0433\u043e \u0437\u0430\u0445\u0438\u0441\u0442\u0443, \u0434\u043b\u044f \u0432\u0456\u0434\u043d\u043e\u0432\u043b\u0435\u043d\u043d\u044f \u0437\u0440\u0443\u0439\u043d\u043e\u0432\u0430\u043d\u0438\u0445 \u0430\u0431\u043e \u043f\u043e\u0448\u043a\u043e\u0434\u0436\u0435\u043d\u0438\u0445 \u0432\u043d\u0430\u0441\u043b\u0456\u0434\u043e\u043a \u0437\u0431\u0440\u043e\u0439\u043d\u043e\u0457 \u0430\u0433\u0440\u0435\u0441\u0456\u0457 \u0420\u043e\u0441\u0456\u0439\u0441\u044c\u043a\u043e\u0457 \u0424\u0435\u0434\u0435\u0440\u0430\u0446\u0456\u0457 \u0442\u0430\u043a\u0438\u0445 \u043e\u0431\u2019\u0454\u043a\u0442\u0456\u0432, \u0430 \u0442\u0430\u043a\u043e\u0436 \u0434\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0434\u0435\u043d\u043d\u044f \u043f\u0435\u0440\u0448\u043e\u0447\u0435\u0440\u0433\u043e\u0432\u0438\u0445 \u0430\u0432\u0430\u0440\u0456\u0439\u043d\u043e-\u0432\u0456\u0434\u0431\u0443\u0434\u043e\u0432\u043d\u0438\u0445 \u0440\u043e\u0431\u0456\u0442 \u043d\u0430 \u043e\u0431\u2019\u0454\u043a\u0442\u0430\u0445 \u0437\u0430\u043b\u0456\u0437\u043d\u0438\u0447\u043d\u043e\u0457 \u0456\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438 \u0442\u0430 \u0440\u0435\u043c\u043e\u043d\u0442\u0443 \u0442\u044f\u0433\u043e\u0432\u043e\u0433\u043e \u0456 \u0440\u0443\u0445\u043e\u043c\u043e\u0433\u043e \u0441\u043a\u043b\u0430\u0434\u0443",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 15 \u043f\u0443\u043d\u043a\u0442\u0443 13 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "externalCofinancing": {
+                "description_en": "Co-financing in the amount of not less than 75 percent of the price of the procurement contract concluded by the electricity transmission system operator, using funds from loans, credits, and grants provided in accordance with Ukraine's international agreements by the organizations specified in the second part of Article 6 of the Law, with the subsequent application of the rules and procedures established by the organization providing such co-financing",
+                "title_en": "Subparagraph 10 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0421\u043f\u0456\u0432\u0444\u0456\u043d\u0430\u043d\u0441\u0443\u0432\u0430\u043d\u043d\u044f \u0432 \u043e\u0431\u0441\u044f\u0437\u0456 \u043d\u0435 \u043c\u0435\u043d\u0448 \u044f\u043a 75 \u0432\u0456\u0434\u0441\u043e\u0442\u043a\u0456\u0432 \u0446\u0456\u043d\u0438 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e, \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043e\u0433\u043e \u043e\u043f\u0435\u0440\u0430\u0442\u043e\u0440\u043e\u043c \u0441\u0438\u0441\u0442\u0435\u043c\u0438 \u043f\u0435\u0440\u0435\u0434\u0430\u0447\u0456 \u0435\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u043e\u0457 \u0435\u043d\u0435\u0440\u0433\u0456\u0457, \u0437\u0430 \u043a\u043e\u0448\u0442\u0438 \u043a\u0440\u0435\u0434\u0438\u0442\u0456\u0432, \u043f\u043e\u0437\u0438\u043a, \u0433\u0440\u0430\u043d\u0442\u0456\u0432, \u0449\u043e \u043d\u0430\u0434\u0430\u044e\u0442\u044c\u0441\u044f \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u043e \u0434\u043e \u043c\u0456\u0436\u043d\u0430\u0440\u043e\u0434\u043d\u0438\u0445 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u043e\u0440\u0433\u0430\u043d\u0456\u0437\u0430\u0446\u0456\u044f\u043c\u0438, \u0437\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u043c\u0438 \u0443 \u0434\u0440\u0443\u0433\u0456\u0439 \u0447\u0430\u0441\u0442\u0438\u043d\u0456 \u0441\u0442\u0430\u0442\u0442\u0456 6 \u0417\u0430\u043a\u043e\u043d\u0443, \u0456\u0437 \u043f\u043e\u0434\u0430\u043b\u044c\u0448\u0438\u043c \u0437\u0430\u0441\u0442\u043e\u0441\u0443\u0432\u0430\u043d\u043d\u044f\u043c \u043f\u0440\u0430\u0432\u0438\u043b \u0456 \u043f\u0440\u043e\u0446\u0435\u0434\u0443\u0440, \u0432\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0445 \u043e\u0440\u0433\u0430\u043d\u0456\u0437\u0430\u0446\u0456\u0454\u044e, \u0449\u043e \u0437\u0434\u0456\u0439\u0441\u043d\u044e\u0454 \u0442\u0430\u043a\u0435 \u0441\u043f\u0456\u0432\u0444\u0456\u043d\u0430\u043d\u0441\u0443\u0432\u0430\u043d\u043d\u044f",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 10 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            },
+            "emergencyElectricitySupply": {
+                "description_en": "Changes in purchase volumes, prices, and other terms of the contract for the supply of electricity, effective as of the date of entry into force of Resolution of the Cabinet of Ministers of Ukraine No. 44 dated January 17, 2026, \"On Amendments to Clause 19 of the Specifics of Public Procurement of Goods, Works, and Services for Customers Provided for by the Law of Ukraine \"On Public Procurement,\" for the period of the legal regime of martial law in Ukraine and for 90 days from the date of its termination or cancellation,\" in order to comply with the requirements set forth in paragraph 6 of Resolution of the Cabinet of Ministers of Ukraine No. 39 dated January 15, 2026, \"Certain Issues of Overcoming the Consequences of a State-Level Emergency in Electric Power Systems,\" as amended by Resolution of the Cabinet of Ministers of Ukraine No. 43 dated January 17, 2026",
+                "title_en": "Subparagraph 11 of paragraph 19 of the Resolution of the Cabinet of Ministers of Ukraine dated 12.10.2022 No. 1178 \"On approval of the features of public procurement of goods, works and services for customers provided for by the Law of Ukraine \"On Public Procurement\", for the period of the legal regime of martial law in Ukraine and within 90 days from the date of its termination or cancellation\"",
+                "description_uk": "\u0417\u043c\u0456\u043d\u0438 \u043e\u0431\u0441\u044f\u0433\u0456\u0432 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456, \u0446\u0456\u043d\u0438 \u0442\u0430 \u0456\u043d\u0448\u0438\u0445 \u0443\u043c\u043e\u0432 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443 \u043f\u0440\u043e \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u044e \u043d\u0430 \u043f\u043e\u0441\u0442\u0430\u0447\u0430\u043d\u043d\u044f \u0435\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u043e\u0457 \u0435\u043d\u0435\u0440\u0433\u0456\u0457, \u0447\u0438\u043d\u043d\u043e\u0433\u043e \u043d\u0430 \u0434\u0430\u0442\u0443 \u043d\u0430\u0431\u0440\u0430\u043d\u043d\u044f \u0447\u0438\u043d\u043d\u043e\u0441\u0442\u0456 \u043f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u043e\u044e \u041a\u0430\u0431\u0456\u043d\u0435\u0442\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 17 \u0441\u0456\u0447\u043d\u044f 2026 \u0440. \u2116 44 \"\u041f\u0440\u043e \u0432\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u0437\u043c\u0456\u043d\u0438 \u0434\u043e \u043f\u0443\u043d\u043a\u0442\u0443 19 \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\", \u0434\u043b\u044f \u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043d\u044f \u0432\u0438\u043c\u043e\u0433, \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0445 \u043f\u0443\u043d\u043a\u0442\u043e\u043c 6 \u043f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u0456\u043d\u0435\u0442\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 15 \u0441\u0456\u0447\u043d\u044f 2026 \u0440. \u2116 39 \"\u0414\u0435\u044f\u043a\u0456 \u043f\u0438\u0442\u0430\u043d\u043d\u044f \u043f\u043e\u0434\u043e\u043b\u0430\u043d\u043d\u044f \u043d\u0430\u0441\u043b\u0456\u0434\u043a\u0456\u0432 \u043d\u0430\u0434\u0437\u0432\u0438\u0447\u0430\u0439\u043d\u043e\u0457 \u0441\u0438\u0442\u0443\u0430\u0446\u0456\u0457 \u0434\u0435\u0440\u0436\u0430\u0432\u043d\u043e\u0433\u043e \u0440\u0456\u0432\u043d\u044f \u0432 \u0435\u043b\u0435\u043a\u0442\u0440\u043e\u0435\u043d\u0435\u0440\u0433\u0435\u0442\u0438\u0447\u043d\u0438\u0445 \u0441\u0438\u0441\u0442\u0435\u043c\u0430\u0445\", - \u0456\u0437 \u0437\u043c\u0456\u043d\u0430\u043c\u0438, \u0432\u043d\u0435\u0441\u0435\u043d\u0438\u043c\u0438 \u043f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u043e\u044e \u041a\u0430\u0431\u0456\u043d\u0435\u0442\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 17 \u0441\u0456\u0447\u043d\u044f 2026 \u0440. \u2116 43",
+                "title_uk": "\u041f\u0456\u0434\u043f\u0443\u043d\u043a\u0442 11 \u043f\u0443\u043d\u043a\u0442\u0443 19 \u041f\u043e\u0441\u0442\u0430\u043d\u043e\u0432\u0438 \u041a\u0430\u0431\u043c\u0456\u043d\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 12.10.2022 \u2116 1178 \"\u041f\u0440\u043e \u0437\u0430\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043d\u043d\u044f \u043e\u0441\u043e\u0431\u043b\u0438\u0432\u043e\u0441\u0442\u0435\u0439 \u0437\u0434\u0456\u0439\u0441\u043d\u0435\u043d\u043d\u044f \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0438\u0445 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u0435\u043b\u044c \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0456 \u043f\u043e\u0441\u043b\u0443\u0433 \u0434\u043b\u044f \u0437\u0430\u043c\u043e\u0432\u043d\u0438\u043a\u0456\u0432, \u043f\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043d\u0438\u0445 \u0417\u0430\u043a\u043e\u043d\u043e\u043c \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\", \u043d\u0430 \u043f\u0435\u0440\u0456\u043e\u0434 \u0434\u0456\u0457 \u043f\u0440\u0430\u0432\u043e\u0432\u043e\u0433\u043e \u0440\u0435\u0436\u0438\u043c\u0443 \u0432\u043e\u0454\u043d\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043d\u0443 \u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0442\u0430 \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 90 \u0434\u043d\u0456\u0432 \u0437 \u0434\u043d\u044f \u0439\u043e\u0433\u043e \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0430\u0431\u043e \u0441\u043a\u0430\u0441\u0443\u0432\u0430\u043d\u043d\u044f\""
+            }
+        },
+        "procurementMethodType": "priceQuotation",
+        "awardCriteria": "lowestCost",
+        "status": "complete",
+        "agreement": {
+            "id": "607e6686b85f4f92a2166ff44481a185"
+        },
+        "value": {
+            "amount": 50000000.0,
+            "currency": "UAH",
+            "valueAddedTaxIncluded": true
+        },
+        "tenderPeriod": {
+            "startDate": "2026-03-30T17:06:10.398899+03:00",
+            "endDate": "2026-04-02T16:00:00+03:00"
+        },
+        "procuringEntity": {
+            "name": "\u0406\u0437\u043c\u0430\u0457\u043b\u044c\u0441\u044c\u043a\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0456\u043d\u043d\u044f \u0432\u043e\u0434\u043d\u043e\u0433\u043e \u0433\u043e\u0441\u043f\u043e\u0434\u0430\u0440\u0441\u0442\u0432\u0430",
+            "identifier": {
+                "scheme": "UA-EDR",
+                "id": "01034202",
+                "legalName": "\u0406\u0437\u043c\u0430\u0457\u043b\u044c\u0441\u044c\u043a\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0456\u043d\u043d\u044f \u0432\u043e\u0434\u043d\u043e\u0433\u043e \u0433\u043e\u0441\u043f\u043e\u0434\u0430\u0440\u0441\u0442\u0432\u0430"
+            },
+            "address": {
+                "streetAddress": "\u0432\u0443\u043b. \u0404\u0434\u043d\u043e\u0441\u0442\u0456, 87\u0410",
+                "locality": "\u043c. \u0406\u0437\u043c\u0430\u0457\u043b",
+                "region": "\u041e\u0434\u0435\u0441\u044c\u043a\u0430 \u043e\u0431\u043b\u0430\u0441\u0442\u044c",
+                "postalCode": "68600",
+                "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+            },
+            "contactPoint": {
+                "name": "\u041a\u0441\u0435\u043d\u0456\u044f \u0413\u043e\u043d\u0447\u0430\u0440\u043e\u0432\u0430",
+                "email": "honcharova.ksenia@gmail.com",
+                "telephone": "+380980391730"
+            },
+            "kind": "general"
+        },
+        "milestones": [
+            {
+                "id": "a5c2c7991c0441f28010333332fc0c88",
+                "title": "executionOfWorks",
+                "description": "",
+                "type": "financing",
+                "code": "postpayment",
+                "percentage": 100.0,
+                "duration": {
+                    "days": 10,
+                    "type": "working"
+                },
+                "sequenceNumber": 1
+            }
+        ],
+        "items": [
+            {
+                "profile": "031b9e931b834b72b784ff4f997f4848",
+                "category": "96b2a4075214427db5d020be37b4f4ae",
+                "id": "22e787eea8614dcca68f8abfa2ab3537",
+                "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                "quantity": 3759398.0,
+                "classification": {
+                    "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f",
+                    "scheme": "\u0414\u041a021",
+                    "id": "09310000-5"
+                },
+                "deliveryDate": {
+                    "endDate": "2026-12-31T00:00:00+02:00"
+                },
+                "deliveryAddress": {
+                    "locality": "\u043c. \u0406\u0437\u043c\u0430\u0457\u043b, \u0406\u0437\u043c\u0430\u0457\u043b\u044c\u0441\u044c\u043a\u0438\u0439 \u0440\u0430\u0439\u043e\u043d",
+                    "region": "\u041e\u0434\u0435\u0441\u044c\u043a\u0430 \u043e\u0431\u043b\u0430\u0441\u0442\u044c",
+                    "postalCode": "68600",
+                    "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+                },
+                "unit": {
+                    "name": "\u043a\u0456\u043b\u043e\u0432\u0430\u0442-\u0433\u043e\u0434\u0438\u043d\u0430",
+                    "code": "KWH"
+                }
+            }
+        ],
+        "criteria": [
+            {
+                "id": "78db1f4461264c71afc1867078e85fb2",
+                "description": "\u0422\u0435\u0445\u043d\u0456\u0447\u043d\u0430 \u0441\u043f\u0435\u0446\u0438\u0444\u0456\u043a\u0430\u0446\u0456\u044f \u043f\u043e\u0432\u0438\u043d\u043d\u0430 \u043c\u0456\u0441\u0442\u0438\u0442\u0438 \u043e\u043f\u0438\u0441 \u0443\u0441\u0456\u0445 \u043d\u0435\u043e\u0431\u0445\u0456\u0434\u043d\u0438\u0445 \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0430\u0431\u043e \u043f\u043e\u0441\u043b\u0443\u0433, \u0449\u043e \u0437\u0430\u043a\u0443\u043f\u043e\u0432\u0443\u044e\u0442\u044c\u0441\u044f, \u0443 \u0442\u043e\u043c\u0443 \u0447\u0438\u0441\u043b\u0456 \u0457\u0445 \u0442\u0435\u0445\u043d\u0456\u0447\u043d\u0456, \u0444\u0443\u043d\u043a\u0446\u0456\u043e\u043d\u0430\u043b\u044c\u043d\u0456 \u0442\u0430 \u044f\u043a\u0456\u0441\u043d\u0456 \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a\u0438. \u0425\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a\u0438 \u0442\u043e\u0432\u0430\u0440\u0456\u0432, \u0440\u043e\u0431\u0456\u0442 \u0430\u0431\u043e \u043f\u043e\u0441\u043b\u0443\u0433 \u043c\u043e\u0436\u0443\u0442\u044c \u043c\u0456\u0441\u0442\u0438\u0442\u0438 \u043e\u043f\u0438\u0441 \u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u043e\u0433\u043e \u0442\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0456\u0447\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0446\u0435\u0441\u0443 \u0430\u0431\u043e \u0442\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0456\u0457 \u0432\u0438\u0440\u043e\u0431\u043d\u0438\u0446\u0442\u0432\u0430 \u0447\u0438 \u043f\u043e\u0440\u044f\u0434\u043a\u0443 \u043f\u043e\u0441\u0442\u0430\u0447\u0430\u043d\u043d\u044f \u0442\u043e\u0432\u0430\u0440\u0443 (\u0442\u043e\u0432\u0430\u0440\u0456\u0432), \u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043d\u044f \u043d\u0435\u043e\u0431\u0445\u0456\u0434\u043d\u0438\u0445 \u0440\u043e\u0431\u0456\u0442, \u043d\u0430\u0434\u0430\u043d\u043d\u044f \u043f\u043e\u0441\u043b\u0443\u0433\u0438 (\u043f\u043e\u0441\u043b\u0443\u0433)",
+                "source": "tenderer",
+                "relatesTo": "item",
+                "relatedItem": "22e787eea8614dcca68f8abfa2ab3537",
+                "classification": {
+                    "scheme": "ESPD211",
+                    "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                },
+                "title": "\u0422\u0435\u0445\u043d\u0456\u0447\u043d\u0456, \u044f\u043a\u0456\u0441\u043d\u0456 \u0442\u0430 \u043a\u0456\u043b\u044c\u043a\u0456\u0441\u043d\u0456 \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a\u0438 \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u0430 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456",
+                "legislation": [
+                    {
+                        "version": "2024-04-19",
+                        "identifier": {
+                            "id": "922-VIII",
+                            "legalName": "\u0417\u0430\u043a\u043e\u043d \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\"",
+                            "uri": "https://zakon.rada.gov.ua/laws/show/922-19#n1398"
+                        },
+                        "type": "NATIONAL_LEGISLATION"
+                    },
+                    {
+                        "version": "2024-04-19",
+                        "identifier": {
+                            "id": "922-VIII",
+                            "legalName": "\u0417\u0430\u043a\u043e\u043d \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \"\u041f\u0440\u043e \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u0456 \u0437\u0430\u043a\u0443\u043f\u0456\u0432\u043b\u0456\"",
+                            "uri": "https://zakon.rada.gov.ua/laws/show/922-19#n1426"
+                        },
+                        "type": "NATIONAL_LEGISLATION"
+                    },
+                    {
+                        "version": "2023-10-31",
+                        "identifier": {
+                            "id": "1135-2023-\u043f",
+                            "legalName": "\u041f\u0440\u043e \u0432\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u0437\u043c\u0456\u043d \u0434\u043e \u043f\u043e\u0441\u0442\u0430\u043d\u043e\u0432 \u041a\u0430\u0431\u0456\u043d\u0435\u0442\u0443 \u041c\u0456\u043d\u0456\u0441\u0442\u0440\u0456\u0432 \u0423\u043a\u0440\u0430\u0457\u043d\u0438 \u0432\u0456\u0434 14 \u0432\u0435\u0440\u0435\u0441\u043d\u044f 2020 \u0440. \u2116 822 \u0456 \u0432\u0456\u0434 12 \u0436\u043e\u0432\u0442\u043d\u044f 2022 \u0440. \u2116 1178",
+                            "uri": "https://zakon.rada.gov.ua/laws/show/1135-2023-%D0%BF#n24"
+                        },
+                        "type": "NATIONAL_LEGISLATION"
+                    }
+                ],
+                "requirementGroups": [
+                    {
+                        "id": "dbe587f339774158a5c6d8105da13760",
+                        "description": "\u041f\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0443\u0454\u0442\u044c\u0441\u044f, \u0449\u043e",
+                        "requirements": [
+                            {
+                                "id": "0f1fcd6922d541babebef31424ab1fc1",
+                                "title": "\u0412\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u0456\u0441\u0442\u044c \u0414\u0421\u0422\u0423 EN 50160:2023, \u0442\u0430 \u0456\u043d\u0448\u0438\u043c \u0432\u0438\u043c\u043e\u0433\u0430\u043c \u0437\u0433\u0456\u0434\u043d\u043e \u0434\u0435\u0440\u0436\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u0443",
+                                "dataType": "string",
+                                "status": "active",
+                                "expectedValues": [
+                                    "\u0442\u0430\u043a"
+                                ],
+                                "expectedMinItems": 1,
+                                "expectedMaxItems": 1,
+                                "datePublished": "2026-03-30T17:04:13.396514+03:00"
+                            },
+                            {
+                                "id": "d5981962d1f04975accd1a8a2a9c2b75",
+                                "title": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443 \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e",
+                                "dataType": "boolean",
+                                "status": "active",
+                                "expectedValue": false,
+                                "datePublished": "2026-03-30T17:04:13.396514+03:00"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "noticePublicationDate": "2026-03-30T17:06:10.398899+03:00",
+        "bids": [
+            {
+                "id": "e7a112725d834f8e9d26bc6993f93d53",
+                "date": "2026-03-31T09:02:41.542943+03:00",
+                "documents": [
+                    {
+                        "confidentiality": "public",
+                        "documentType": "proposal",
+                        "id": "039dcb08790e4674bbc4e9f61f874663",
+                        "datePublished": "2026-03-31T09:02:41.249561+03:00",
+                        "hash": "md5:be7b4478b1526a81ff1f0597668cbedc",
+                        "title": "sign.p7s",
+                        "format": "application/pkcs7-signature",
+                        "url": "https://public-docs.prozorro.gov.ua/get/4be21c157be744d7841cec3220d41f42?Signature=1Rw%2FSCt9LM3gIalT53myGuJDsifHvtDItOE4tIs9ZOHJODBOQq8ATHopF2aJ6ZjWplAOQXT%2FDiIAsXQRxxsaDg%3D%3D&KeyID=52462340",
+                        "documentOf": "tender",
+                        "dateModified": "2026-03-31T09:02:41.249561+03:00",
+                        "language": "uk"
+                    }
+                ],
+                "tenderers": [
+                    {
+                        "name": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e  \u041c\u0418\u041a\u041e\u041b\u0410\u0407\u0412\u0421\u042c\u041a\u0410 \u0415\u041b\u0415\u041a\u0422\u0420\u041e\u041f\u041e\u0421\u0422\u0410\u0427\u0410\u041b\u042c\u041d\u0410 \u041a\u041e\u041c\u041f\u0410\u041d\u0406\u042f",
+                        "name_en": "LLC \"MYKOLAIV ELECTRICAL SUPPLY COMPANY\"",
+                        "identifier": {
+                            "scheme": "UA-EDR",
+                            "id": "42129888",
+                            "legalName": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e  \u041c\u0418\u041a\u041e\u041b\u0410\u0407\u0412\u0421\u042c\u041a\u0410 \u0415\u041b\u0415\u041a\u0422\u0420\u041e\u041f\u041e\u0421\u0422\u0410\u0427\u0410\u041b\u042c\u041d\u0410 \u041a\u041e\u041c\u041f\u0410\u041d\u0406\u042f",
+                            "legalName_en": "LLC \"MYKOLAIV ELECTRICAL SUPPLY COMPANY\""
+                        },
+                        "address": {
+                            "streetAddress": "\u0432\u0443\u043b. \u041f\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u043d\u0430, \u0431\u0443\u0434. 39/1",
+                            "locality": "\u041c\u0438\u043a\u043e\u043b\u0430\u0457\u0432",
+                            "region": "\u041c\u0438\u043a\u043e\u043b\u0430\u0457\u0432\u0441\u044c\u043a\u0430 \u043e\u0431\u043b\u0430\u0441\u0442\u044c",
+                            "postalCode": "54055",
+                            "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+                        },
+                        "contactPoint": {
+                            "name": "\u041e\u0442\u0440\u0454\u043f'\u0454\u0432\u0430 \u041b\u0435\u0441\u044f",
+                            "name_en": "Otriepieva Lesia",
+                            "email": "lesa311274@gmail.com",
+                            "telephone": "380997432608"
+                        },
+                        "scale": "mid"
+                    }
+                ],
+                "value": {
+                    "amount": 49133181.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                },
+                "requirementResponses": [
+                    {
+                        "requirement": {
+                            "id": "0f1fcd6922d541babebef31424ab1fc1",
+                            "title": "\u0412\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u0456\u0441\u0442\u044c \u0414\u0421\u0422\u0423 EN 50160:2023, \u0442\u0430 \u0456\u043d\u0448\u0438\u043c \u0432\u0438\u043c\u043e\u0433\u0430\u043c \u0437\u0433\u0456\u0434\u043d\u043e \u0434\u0435\u0440\u0436\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u0443"
+                        },
+                        "values": [
+                            "\u0442\u0430\u043a"
+                        ],
+                        "id": "063a284b3a1f438096e43fe85ee1e989",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    },
+                    {
+                        "requirement": {
+                            "id": "d5981962d1f04975accd1a8a2a9c2b75",
+                            "title": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443 \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e"
+                        },
+                        "value": false,
+                        "id": "4c1f0c5a036f4709950ed25eb4d47df7",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    }
+                ],
+                "status": "active",
+                "items": [
+                    {
+                        "id": "22e787eea8614dcca68f8abfa2ab3537",
+                        "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                        "unit": {
+                            "name": "\u043a\u0456\u043b\u043e\u0432\u0430\u0442-\u0433\u043e\u0434\u0438\u043d\u0430",
+                            "value": {
+                                "amount": 10.89119,
+                                "currency": "UAH",
+                                "valueAddedTaxIncluded": false
+                            },
+                            "code": "KWH"
+                        },
+                        "quantity": 3759398.0,
+                        "product": "8d33a204dfb44e289f2b2ff966d93767"
+                    }
+                ],
+                "submissionDate": "2026-03-31T09:02:41.542943+03:00",
+                "initialValue": {
+                    "amount": 49133181.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                }
+            },
+            {
+                "id": "f584822ca9844cdeb3090ea09a7785c0",
+                "date": "2026-03-31T10:28:47.163808+03:00",
+                "documents": [
+                    {
+                        "confidentiality": "public",
+                        "documentType": "proposal",
+                        "id": "4c309815d91e4b8d96755c5fdaf7896e",
+                        "datePublished": "2026-03-31T10:28:46.991542+03:00",
+                        "hash": "md5:e837dafd1f82b2f75d76ea99055b1689",
+                        "title": "sign.p7s",
+                        "format": "application/pkcs7-signature",
+                        "url": "https://public-docs.prozorro.gov.ua/get/4cad2149747f4088b7e7901baf0f167c?Signature=BO%2FSNW1DaWd04j4FYLbmg4iBtVgwTOI1guYlwHgoxdHeTWI64q2nQK6HdYwm7vsDDfjlrvgYYIFWCw6PQIu%2FAQ%3D%3D&KeyID=52462340",
+                        "documentOf": "tender",
+                        "dateModified": "2026-03-31T10:28:46.991542+03:00",
+                        "language": "uk"
+                    }
+                ],
+                "tenderers": [
+                    {
+                        "name": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e \"\u0404\u0413\u0415\u041a \u0422\u0440\u0435\u0439\u0434\u0456\u043d\u0433\"",
+                        "identifier": {
+                            "scheme": "UA-EDR",
+                            "id": "44454157",
+                            "legalName": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e \"\u0404\u0413\u0415\u041a \u0422\u0440\u0435\u0439\u0434\u0456\u043d\u0433\""
+                        },
+                        "address": {
+                            "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+                        },
+                        "contactPoint": {
+                            "name": "\u0404\u0432\u0433\u0435\u043d\u0456\u0439 \u041c\u0430\u0442\u0432\u0454\u0454\u0432",
+                            "email": "egektrading@gmail.com",
+                            "telephone": "380936104397"
+                        },
+                        "scale": "not specified"
+                    }
+                ],
+                "value": {
+                    "amount": 49999978.36,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                },
+                "requirementResponses": [
+                    {
+                        "requirement": {
+                            "id": "0f1fcd6922d541babebef31424ab1fc1",
+                            "title": "\u0412\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u0456\u0441\u0442\u044c \u0414\u0421\u0422\u0423 EN 50160:2023, \u0442\u0430 \u0456\u043d\u0448\u0438\u043c \u0432\u0438\u043c\u043e\u0433\u0430\u043c \u0437\u0433\u0456\u0434\u043d\u043e \u0434\u0435\u0440\u0436\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u0443"
+                        },
+                        "values": [
+                            "\u0442\u0430\u043a"
+                        ],
+                        "id": "6108af87fbe7467e99cbe628a2e6cb73",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    },
+                    {
+                        "requirement": {
+                            "id": "d5981962d1f04975accd1a8a2a9c2b75",
+                            "title": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443 \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e"
+                        },
+                        "value": false,
+                        "id": "1bbad8f5e7f2411494acc069b9ecd68a",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    }
+                ],
+                "status": "active",
+                "items": [
+                    {
+                        "id": "22e787eea8614dcca68f8abfa2ab3537",
+                        "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                        "unit": {
+                            "name": "\u043a\u0456\u043b\u043e\u0432\u0430\u0442-\u0433\u043e\u0434\u0438\u043d\u0430",
+                            "value": {
+                                "amount": 11.08333,
+                                "currency": "UAH",
+                                "valueAddedTaxIncluded": false
+                            },
+                            "code": "KWH"
+                        },
+                        "quantity": 3759398.0,
+                        "product": "8d33a204dfb44e289f2b2ff966d93767"
+                    }
+                ],
+                "submissionDate": "2026-03-31T10:28:47.163808+03:00",
+                "initialValue": {
+                    "amount": 49999978.36,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                }
+            },
+            {
+                "id": "3403c617dbc641a08b2e775005458fc8",
+                "date": "2026-04-01T08:21:38.303616+03:00",
+                "documents": [
+                    {
+                        "confidentiality": "public",
+                        "documentType": "proposal",
+                        "id": "45301a4adcd64884a525ad2040159619",
+                        "datePublished": "2026-04-01T08:21:38.169737+03:00",
+                        "hash": "md5:0aa2c469793344bb3341c592c14fcc3e",
+                        "title": "sign.p7s",
+                        "format": "application/pkcs7-signature",
+                        "url": "https://public-docs.prozorro.gov.ua/get/d14e38d06eff49ba9fac82839c3fbf67?Signature=DUWVpzFGBLgeC3bCw2DEnESw196acFZJXnB%2B%2FszVSYKyW5rREtNjhTbMta%2FNuf%2Fv3aoWQ3E6jBbFRtY3ccMsCA%3D%3D&KeyID=52462340",
+                        "documentOf": "tender",
+                        "dateModified": "2026-04-01T08:21:38.169737+03:00",
+                        "language": "uk"
+                    }
+                ],
+                "tenderers": [
+                    {
+                        "name": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e \"\u042f\u0421\u041d\u041e+\"",
+                        "identifier": {
+                            "scheme": "UA-EDR",
+                            "id": "45179093",
+                            "legalName": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e \"\u042f\u0421\u041d\u041e+\""
+                        },
+                        "address": {
+                            "streetAddress": "\u0432\u0443\u043b. \u0414\u0436\u043e\u043d\u0441\u0430 \u0490\u0430\u0440\u0435\u0442\u0430, \u0431\u0443\u0434\u0438\u043d\u043e\u043a 8, \u043b\u0456\u0442\u0435\u0440\u0430 20 \u0414",
+                            "locality": "\u041a\u0438\u0457\u0432",
+                            "region": "\u041a\u0438\u0457\u0432\u0441\u044c\u043a\u0430 \u043e\u0431\u043b\u0430\u0441\u0442\u044c",
+                            "postalCode": "04119",
+                            "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+                        },
+                        "contactPoint": {
+                            "name": "\u0416\u0438\u0434\u043a\u043e\u0432 \u0410.",
+                            "email": "ZhydkovAM@yasno.com.ua",
+                            "telephone": "380948390646",
+                            "url": "https://plus.yasno.ua/"
+                        },
+                        "scale": "large"
+                    }
+                ],
+                "value": {
+                    "amount": 49133181.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                },
+                "requirementResponses": [
+                    {
+                        "requirement": {
+                            "id": "0f1fcd6922d541babebef31424ab1fc1",
+                            "title": "\u0412\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u0456\u0441\u0442\u044c \u0414\u0421\u0422\u0423 EN 50160:2023, \u0442\u0430 \u0456\u043d\u0448\u0438\u043c \u0432\u0438\u043c\u043e\u0433\u0430\u043c \u0437\u0433\u0456\u0434\u043d\u043e \u0434\u0435\u0440\u0436\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u0443"
+                        },
+                        "values": [
+                            "\u0442\u0430\u043a"
+                        ],
+                        "id": "173d408a85d04c82a468838ff8ce4aad",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    },
+                    {
+                        "requirement": {
+                            "id": "d5981962d1f04975accd1a8a2a9c2b75",
+                            "title": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443 \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e"
+                        },
+                        "value": false,
+                        "id": "3cf0b40d801a4bc9a3e084186614c104",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    }
+                ],
+                "status": "active",
+                "items": [
+                    {
+                        "id": "22e787eea8614dcca68f8abfa2ab3537",
+                        "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                        "unit": {
+                            "name": "\u043a\u0456\u043b\u043e\u0432\u0430\u0442-\u0433\u043e\u0434\u0438\u043d\u0430",
+                            "value": {
+                                "amount": 10.89119,
+                                "currency": "UAH",
+                                "valueAddedTaxIncluded": false
+                            },
+                            "code": "KWH"
+                        },
+                        "quantity": 3759398.0,
+                        "product": "8d33a204dfb44e289f2b2ff966d93767"
+                    }
+                ],
+                "submissionDate": "2026-04-01T08:21:38.303616+03:00",
+                "initialValue": {
+                    "amount": 49133181.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                }
+            },
+            {
+                "id": "abe973714aa448da92653fe25859ea98",
+                "date": "2026-04-02T15:53:36.492037+03:00",
+                "documents": [
+                    {
+                        "confidentiality": "public",
+                        "documentType": "proposal",
+                        "id": "759ca442e5154ac88d95ab2e6a0d7cf9",
+                        "datePublished": "2026-04-02T15:53:36.268358+03:00",
+                        "hash": "md5:d031681d1a09a1f47c515580ef217cf8",
+                        "title": "sign.p7s",
+                        "format": "application/pkcs7-signature",
+                        "url": "https://public-docs.prozorro.gov.ua/get/cb234367ec0749a99d0c444fbcf22eb9?Signature=4Pu0ot4OpKwCsjxjs2pOMUN8B6XD422DvHsf14UKAQb2idGsbj%2BqY%2FUTVnOSYfw0bjGqbeIBUYRm191XEYgwBg%3D%3D&KeyID=52462340",
+                        "documentOf": "tender",
+                        "dateModified": "2026-04-02T15:53:36.268358+03:00",
+                        "language": "uk"
+                    }
+                ],
+                "tenderers": [
+                    {
+                        "name": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e \"\u041e\u0414\u0415\u0421\u042c\u041a\u0410 \u041e\u0411\u041b\u0410\u0421\u041d\u0410 \u0415\u041d\u0415\u0420\u0413\u041e\u041f\u041e\u0421\u0422\u0410\u0427\u0410\u041b\u042c\u041d\u0410 \u041a\u041e\u041c\u041f\u0410\u041d\u0406\u042f\"",
+                        "identifier": {
+                            "scheme": "UA-EDR",
+                            "id": "42114410",
+                            "legalName": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e \"\u041e\u0414\u0415\u0421\u042c\u041a\u0410 \u041e\u0411\u041b\u0410\u0421\u041d\u0410 \u0415\u041d\u0415\u0420\u0413\u041e\u041f\u041e\u0421\u0422\u0410\u0427\u0410\u041b\u042c\u041d\u0410 \u041a\u041e\u041c\u041f\u0410\u041d\u0406\u042f\""
+                        },
+                        "address": {
+                            "streetAddress": "\u0432\u0443\u043b. \u041c\u0430\u043b\u0430 \u0410\u0440\u043d\u0430\u0443\u0442\u0441\u044c\u043a\u0430, \u0431\u0443\u0434. 88",
+                            "locality": "\u041e\u0434\u0435\u0441\u0430",
+                            "region": "\u041e\u0434\u0435\u0441\u044c\u043a\u0430 \u043e\u0431\u043b\u0430\u0441\u0442\u044c",
+                            "postalCode": "65007",
+                            "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+                        },
+                        "contactPoint": {
+                            "name": "\u041e\u041e\u0415\u041a",
+                            "email": "TENDER@OOEK.OD.UA",
+                            "telephone": "380487933085, 380633362605, 380948633085",
+                            "url": "http://www.ooek.od.ua"
+                        },
+                        "scale": "large"
+                    }
+                ],
+                "value": {
+                    "amount": 49849617.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                },
+                "requirementResponses": [
+                    {
+                        "requirement": {
+                            "id": "0f1fcd6922d541babebef31424ab1fc1",
+                            "title": "\u0412\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u043d\u0456\u0441\u0442\u044c \u0414\u0421\u0422\u0423 EN 50160:2023, \u0442\u0430 \u0456\u043d\u0448\u0438\u043c \u0432\u0438\u043c\u043e\u0433\u0430\u043c \u0437\u0433\u0456\u0434\u043d\u043e \u0434\u0435\u0440\u0436\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u0443"
+                        },
+                        "values": [
+                            "\u0442\u0430\u043a"
+                        ],
+                        "id": "a4c71d99c89e4841b8b26eb98dec79e8",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    },
+                    {
+                        "requirement": {
+                            "id": "d5981962d1f04975accd1a8a2a9c2b75",
+                            "title": "\u041f\u043e\u0441\u043b\u0443\u0433\u0438 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443 \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e"
+                        },
+                        "value": false,
+                        "id": "39aaec0fd45b41e88a8d02e6b34404d8",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                        }
+                    }
+                ],
+                "status": "active",
+                "items": [
+                    {
+                        "id": "22e787eea8614dcca68f8abfa2ab3537",
+                        "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                        "unit": {
+                            "name": "\u043a\u0456\u043b\u043e\u0432\u0430\u0442-\u0433\u043e\u0434\u0438\u043d\u0430",
+                            "value": {
+                                "amount": 11.05,
+                                "currency": "UAH",
+                                "valueAddedTaxIncluded": false
+                            },
+                            "code": "KWH"
+                        },
+                        "quantity": 3759398.0,
+                        "product": "8d33a204dfb44e289f2b2ff966d93767"
+                    }
+                ],
+                "submissionDate": "2026-04-02T15:53:36.492037+03:00",
+                "initialValue": {
+                    "amount": 49849617.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                }
+            }
+        ],
+        "awardPeriod": {
+            "startDate": "2026-04-02T16:00:01.441700+03:00",
+            "endDate": "2026-04-02T16:12:04.643492+03:00"
+        },
+        "awards": [
+            {
+                "id": "f20bf5d03a3a43d5ba0ad5f9c8ed96e8",
+                "status": "active",
+                "date": "2026-04-02T16:12:04.643492+03:00",
+                "value": {
+                    "amount": 49133181.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true
+                },
+                "suppliers": [
+                    {
+                        "name": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e  \u041c\u0418\u041a\u041e\u041b\u0410\u0407\u0412\u0421\u042c\u041a\u0410 \u0415\u041b\u0415\u041a\u0422\u0420\u041e\u041f\u041e\u0421\u0422\u0410\u0427\u0410\u041b\u042c\u041d\u0410 \u041a\u041e\u041c\u041f\u0410\u041d\u0406\u042f",
+                        "name_en": "LLC \"MYKOLAIV ELECTRICAL SUPPLY COMPANY\"",
+                        "identifier": {
+                            "scheme": "UA-EDR",
+                            "id": "42129888",
+                            "legalName": "\u0422\u041e\u0412\u0410\u0420\u0418\u0421\u0422\u0412\u041e \u0417 \u041e\u0411\u041c\u0415\u0416\u0415\u041d\u041e\u042e \u0412\u0406\u0414\u041f\u041e\u0412\u0406\u0414\u0410\u041b\u042c\u041d\u0406\u0421\u0422\u042e  \u041c\u0418\u041a\u041e\u041b\u0410\u0407\u0412\u0421\u042c\u041a\u0410 \u0415\u041b\u0415\u041a\u0422\u0420\u041e\u041f\u041e\u0421\u0422\u0410\u0427\u0410\u041b\u042c\u041d\u0410 \u041a\u041e\u041c\u041f\u0410\u041d\u0406\u042f",
+                            "legalName_en": "LLC \"MYKOLAIV ELECTRICAL SUPPLY COMPANY\""
+                        },
+                        "address": {
+                            "streetAddress": "\u0432\u0443\u043b. \u041f\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u043d\u0430, \u0431\u0443\u0434. 39/1",
+                            "locality": "\u041c\u0438\u043a\u043e\u043b\u0430\u0457\u0432",
+                            "region": "\u041c\u0438\u043a\u043e\u043b\u0430\u0457\u0432\u0441\u044c\u043a\u0430 \u043e\u0431\u043b\u0430\u0441\u0442\u044c",
+                            "postalCode": "54055",
+                            "countryName": "\u0423\u043a\u0440\u0430\u0457\u043d\u0430"
+                        },
+                        "contactPoint": {
+                            "name": "\u041e\u0442\u0440\u0454\u043f'\u0454\u0432\u0430 \u041b\u0435\u0441\u044f",
+                            "name_en": "Otriepieva Lesia",
+                            "email": "lesa311274@gmail.com",
+                            "telephone": "380997432608"
+                        },
+                        "scale": "mid"
+                    }
+                ],
+                "bid_id": "e7a112725d834f8e9d26bc6993f93d53",
+                "documents": [
+                    {
+                        "confidentiality": "public",
+                        "documentType": "notice",
+                        "id": "b42b0c98991f4d97a83d53aa0e1d51f1",
+                        "datePublished": "2026-04-02T16:12:04.393992+03:00",
+                        "hash": "md5:7e3fb1a5ee59fa53199c4984aeabeeb1",
+                        "title": "sign.p7s",
+                        "format": "application/pkcs7-signature",
+                        "url": "https://public-docs.prozorro.gov.ua/get/3b4b8aa10aa1405884ce50ed8813440e?Signature=0AYM8h2ZIAJd0Ikgxs26OMCHMt4L2R%2B6fMjPcY6AFpHDJSHXN3NrJd2RGQyi8mQNvq5J7qpc72GAYRbOlAxfCQ%3D%3D&KeyID=52462340",
+                        "documentOf": "tender",
+                        "dateModified": "2026-04-02T16:12:04.393992+03:00",
+                        "author": "tender_owner",
+                        "language": "uk"
+                    }
+                ],
+                "period": {
+                    "startDate": "2026-04-02T16:00:01.441700+03:00",
+                    "endDate": "2026-04-07T00:00:00+03:00"
+                },
+                "qualified": true
+            }
+        ],
+        "contracts": [
+            {
+                "id": "677b7a972c024c14b8df102f72861dcb",
+                "status": "active",
+                "awardID": "f20bf5d03a3a43d5ba0ad5f9c8ed96e8",
+                "date": "2026-04-03T12:06:28.313282+03:00",
+                "contractID": "UA-2026-03-30-011308-a-b1",
+                "title": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                "title_en": null,
+                "description": "\u0415\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u043d\u0430 \u0435\u043d\u0435\u0440\u0433\u0456\u044f, \u0431\u0435\u0437 \u0440\u043e\u0437\u043f\u043e\u0434\u0456\u043b\u0443",
+                "description_en": null,
+                "value": {
+                    "amount": 49133181.48,
+                    "currency": "UAH",
+                    "valueAddedTaxIncluded": true,
+                    "amountNet": 40944317.9
+                }
+            }
+        ],
+        "id": "9301f7a4c50c4629a8fb19cd9f2134b8"
+    },
+    "config": {
+        "hasAuction": false,
+        "minBidsNumber": 1,
+        "hasAwardingOrder": true,
+        "hasValueRestriction": true,
+        "valueCurrencyEquality": true,
+        "hasPrequalification": false,
+        "hasPreSelectionAgreement": true,
+        "hasTenderComplaints": false,
+        "hasAwardComplaints": false,
+        "hasCancellationComplaints": false,
+        "restricted": false,
+        "hasValueEstimation": true,
+        "hasQualificationComplaints": false,
+        "tenderComplainRegulation": 0,
+        "qualificationComplainDuration": 0,
+        "awardComplainDuration": 0,
+        "cancellationComplainDuration": 0,
+        "clarificationUntilDuration": 0,
+        "qualificationDuration": 0,
+        "minTenderingDuration": 2,
+        "hasEnquiries": false,
+        "minEnquiriesDuration": 0,
+        "enquiryPeriodRegulation": 0
+    }
+}

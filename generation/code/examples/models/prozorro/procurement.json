@@ -1,0 +1,1852 @@
+{
+    "$comment": "Bounded context model derived from Prozorro public procurement tender JSON (tender.schema.json). Tracks tenders, bids, awards, and contracts from the Ukrainian Prozorro e-procurement platform.",
+    "enums": [
+        {
+            "name": "TenderStatus",
+            "description": "Tender lifecycle status",
+            "values": [
+                {
+                    "name": "Draft",
+                    "value": 0,
+                    "description": "Tender is being composed"
+                },
+                {
+                    "name": "Active",
+                    "value": 1,
+                    "description": "Tender is open for bids"
+                },
+                {
+                    "name": "Complete",
+                    "value": 2,
+                    "description": "Tender process completed successfully"
+                },
+                {
+                    "name": "Unsuccessful",
+                    "value": 3,
+                    "description": "Tender resulted in no award"
+                },
+                {
+                    "name": "Cancelled",
+                    "value": 4,
+                    "description": "Tender was cancelled"
+                }
+            ]
+        },
+        {
+            "name": "ProcurementMethodType",
+            "description": "Prozorro procurement method type",
+            "values": [
+                {
+                    "name": "PriceQuotation",
+                    "value": 0,
+                    "description": "Simplified price quotation procedure"
+                },
+                {
+                    "name": "BelowThreshold",
+                    "value": 1,
+                    "description": "Below threshold open procedure"
+                },
+                {
+                    "name": "AboveThreshold",
+                    "value": 2,
+                    "description": "Above threshold open tender"
+                },
+                {
+                    "name": "AboveThresholdUA",
+                    "value": 3,
+                    "description": "Above threshold — Ukrainian procedure"
+                },
+                {
+                    "name": "AboveThresholdEU",
+                    "value": 4,
+                    "description": "Above threshold — European procedure"
+                },
+                {
+                    "name": "Reporting",
+                    "value": 5,
+                    "description": "Direct purchase reporting"
+                },
+                {
+                    "name": "Negotiation",
+                    "value": 6,
+                    "description": "Negotiation procedure"
+                },
+                {
+                    "name": "NegotiationQuick",
+                    "value": 7,
+                    "description": "Quick negotiation procedure"
+                }
+            ]
+        },
+        {
+            "name": "AwardCriteria",
+            "description": "Criteria used to select the winning bid",
+            "values": [
+                {
+                    "name": "LowestCost",
+                    "value": 0,
+                    "description": "Lowest price wins"
+                },
+                {
+                    "name": "RatedCriteria",
+                    "value": 1,
+                    "description": "Best rated proposal wins"
+                },
+                {
+                    "name": "BestProposal",
+                    "value": 2,
+                    "description": "Best overall proposal wins"
+                }
+            ]
+        },
+        {
+            "name": "BidStatus",
+            "description": "Status of a submitted bid",
+            "values": [
+                {
+                    "name": "Draft",
+                    "value": 0,
+                    "description": "Bid is being composed"
+                },
+                {
+                    "name": "Active",
+                    "value": 1,
+                    "description": "Bid is valid and submitted"
+                },
+                {
+                    "name": "Invalid",
+                    "value": 2,
+                    "description": "Bid was disqualified"
+                },
+                {
+                    "name": "Deleted",
+                    "value": 3,
+                    "description": "Bid was withdrawn"
+                }
+            ]
+        },
+        {
+            "name": "AwardStatus",
+            "description": "Status of a tender award decision",
+            "values": [
+                {
+                    "name": "Pending",
+                    "value": 0,
+                    "description": "Award is under review"
+                },
+                {
+                    "name": "Active",
+                    "value": 1,
+                    "description": "Award is confirmed active"
+                },
+                {
+                    "name": "Unsuccessful",
+                    "value": 2,
+                    "description": "Award was unsuccessful"
+                },
+                {
+                    "name": "Cancelled",
+                    "value": 3,
+                    "description": "Award was cancelled"
+                }
+            ]
+        },
+        {
+            "name": "ContractStatus",
+            "description": "Status of a procurement contract",
+            "values": [
+                {
+                    "name": "Pending",
+                    "value": 0,
+                    "description": "Contract awaiting signature"
+                },
+                {
+                    "name": "Active",
+                    "value": 1,
+                    "description": "Contract is live and operative"
+                },
+                {
+                    "name": "Terminated",
+                    "value": 2,
+                    "description": "Contract was terminated early"
+                },
+                {
+                    "name": "Cancelled",
+                    "value": 3,
+                    "description": "Contract was cancelled"
+                }
+            ]
+        },
+        {
+            "name": "OrganizationKind",
+            "description": "Classification of a procuring entity kind",
+            "values": [
+                {
+                    "name": "General",
+                    "value": 0,
+                    "description": "General public body"
+                },
+                {
+                    "name": "Central",
+                    "value": 1,
+                    "description": "Central purchasing body"
+                },
+                {
+                    "name": "Defense",
+                    "value": 2,
+                    "description": "Defense or security entity"
+                },
+                {
+                    "name": "Special",
+                    "value": 3,
+                    "description": "Special purpose entity"
+                },
+                {
+                    "name": "Other",
+                    "value": 4,
+                    "description": "Other kind"
+                }
+            ]
+        },
+        {
+            "name": "OrganizationScale",
+            "description": "Size classification of a tenderer organization",
+            "values": [
+                {
+                    "name": "Micro",
+                    "value": 0,
+                    "description": "Micro enterprise (< 10 employees)"
+                },
+                {
+                    "name": "Sme",
+                    "value": 1,
+                    "description": "Small or medium enterprise"
+                },
+                {
+                    "name": "Mid",
+                    "value": 2,
+                    "description": "Mid-size company"
+                },
+                {
+                    "name": "Large",
+                    "value": 3,
+                    "description": "Large enterprise"
+                },
+                {
+                    "name": "NotSpecified",
+                    "value": 4,
+                    "description": "Scale not declared"
+                }
+            ]
+        }
+    ],
+    "boundedContexts": [
+        {
+            "name": "Prozorro",
+            "namespace": "EnergyBrokerage.Prozorro",
+            "description": "Prozorro public procurement tracking bounded context — stores and queries tenders, bids, awards, and contracts sourced from the Ukrainian e-procurement platform",
+            "database": {
+                "name": "prozorro_db",
+                "port": 5436
+            },
+            "apiPort": 5062,
+            "jwt": {
+                "issuer": "Onward.Auth",
+                "audience": "Onward.Client",
+                "expirationMinutes": 60,
+                "devExpirationMinutes": 480,
+                "secretKey": "EnergyBrokerageSuperSecretKey12345678901234567890",
+                "devSecretKey": "DevOnlySecretKey123456789012345678901234567890",
+                "devIssuer": "Onward.Auth.Dev",
+                "devAudience": "EnergyBrokerage.Client.Dev"
+            },
+            "ownership": {
+                "enabled": false
+            },
+            "dataModel": {
+                "entities": [
+                    {
+                        "name": "Organization",
+                        "tableName": "Organizations",
+                        "description": "Procuring entity or tenderer organization imported from Prozorro",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro organization identifier value (e.g. EDRPOU code)",
+                                "displayName": "External ID"
+                            },
+                            {
+                                "name": "IdentifierScheme",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 50,
+                                "description": "Identifier scheme (e.g. UA-EDR)",
+                                "displayName": "Identifier Scheme"
+                            },
+                            {
+                                "name": "Name",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 500,
+                                "description": "Organization name in Ukrainian"
+                            },
+                            {
+                                "name": "NameEn",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Organization name in English"
+                            },
+                            {
+                                "name": "LegalName",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 500,
+                                "description": "Legal registered name"
+                            },
+                            {
+                                "name": "LegalNameEn",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Legal name in English"
+                            },
+                            {
+                                "name": "Kind",
+                                "type": "int",
+                                "enumType": "OrganizationKind",
+                                "required": false,
+                                "description": "Procuring entity kind classification",
+                                "defaultValue": "OrganizationKind.General"
+                            },
+                            {
+                                "name": "Scale",
+                                "type": "int",
+                                "enumType": "OrganizationScale",
+                                "required": false,
+                                "description": "Business size classification",
+                                "defaultValue": "OrganizationScale.NotSpecified"
+                            },
+                            {
+                                "name": "StreetAddress",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Street address"
+                            },
+                            {
+                                "name": "Locality",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 200,
+                                "description": "City or locality"
+                            },
+                            {
+                                "name": "Region",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 200,
+                                "description": "Region or oblast"
+                            },
+                            {
+                                "name": "PostalCode",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 20,
+                                "description": "Postal code"
+                            },
+                            {
+                                "name": "CountryName",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Country name"
+                            },
+                            {
+                                "name": "ContactName",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 300,
+                                "description": "Contact person full name"
+                            },
+                            {
+                                "name": "ContactEmail",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 255,
+                                "description": "Contact email address"
+                            },
+                            {
+                                "name": "ContactPhone",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Contact telephone number"
+                            },
+                            {
+                                "name": "ContactUrl",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Contact or official website URL"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "ExternalId",
+                                    "IdentifierScheme"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_Organizations_ExternalId_Scheme"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Tender",
+                        "tableName": "Tenders",
+                        "description": "Prozorro public procurement tender",
+                        "auditable": true,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 50,
+                                "description": "Prozorro unique tender identifier",
+                                "displayName": "Prozorro ID"
+                            },
+                            {
+                                "name": "TenderNumber",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Human-readable tender number (UA-YYYY-MM-DD-XXXXXX-X)",
+                                "displayName": "Tender Number"
+                            },
+                            {
+                                "name": "Title",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 1000,
+                                "description": "Tender title"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 4000,
+                                "description": "Detailed tender description"
+                            },
+                            {
+                                "name": "Owner",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 200,
+                                "description": "Platform owner or source system slug"
+                            },
+                            {
+                                "name": "Status",
+                                "type": "int",
+                                "enumType": "TenderStatus",
+                                "required": true,
+                                "description": "Current tender lifecycle status",
+                                "defaultValue": "TenderStatus.Draft",
+                                "displayName": "Status"
+                            },
+                            {
+                                "name": "ProcurementMethodType",
+                                "type": "int",
+                                "enumType": "ProcurementMethodType",
+                                "required": true,
+                                "description": "Prozorro procurement method type",
+                                "defaultValue": "ProcurementMethodType.BelowThreshold",
+                                "displayName": "Procurement Method Type"
+                            },
+                            {
+                                "name": "AwardCriteria",
+                                "type": "int",
+                                "enumType": "AwardCriteria",
+                                "required": true,
+                                "description": "Criteria for selecting the winning bid",
+                                "defaultValue": "AwardCriteria.LowestCost",
+                                "displayName": "Award Criteria"
+                            },
+                            {
+                                "name": "ProcurementMethod",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Procurement method string (open, limited, selective)"
+                            },
+                            {
+                                "name": "MainProcurementCategory",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Main procurement category (goods, services, works)"
+                            },
+                            {
+                                "name": "TotalAmount",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 2,
+                                "description": "Expected total procurement value"
+                            },
+                            {
+                                "name": "Currency",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 10,
+                                "description": "Currency code (UAH, EUR, USD)"
+                            },
+                            {
+                                "name": "ValueAddedTaxIncluded",
+                                "type": "bool",
+                                "required": false,
+                                "description": "Whether the total amount includes VAT",
+                                "defaultValue": "true"
+                            },
+                            {
+                                "name": "TenderPeriodStart",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Start of the tender acceptance period"
+                            },
+                            {
+                                "name": "TenderPeriodEnd",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Deadline for bid submission"
+                            },
+                            {
+                                "name": "AwardPeriodStart",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Start of the award evaluation period"
+                            },
+                            {
+                                "name": "AwardPeriodEnd",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "End of the award evaluation period"
+                            },
+                            {
+                                "name": "NoticePublicationDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the tender notice was published in Prozorro"
+                            },
+                            {
+                                "name": "TenderDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Tender object creation timestamp from Prozorro"
+                            },
+                            {
+                                "name": "AgreementId",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Related framework agreement ID from Prozorro"
+                            },
+                            {
+                                "name": "ProcuringEntityId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Organization",
+                                "navigationProperty": "ProcuringEntity",
+                                "description": "Organization acting as the procuring entity"
+                            },
+                            {
+                                "name": "TenderChangeRationales",
+                                "isCollection": true,
+                                "collectionType": "TenderChangeRationale",
+                                "description": "Junction collection: contract change rationale types applicable to this tender"
+                            },
+                            {
+                                "name": "TenderDocuments",
+                                "isCollection": true,
+                                "collectionType": "TenderDocument",
+                                "description": "Junction collection: documents attached to this tender"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "ExternalId"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_Tenders_ExternalId"
+                            },
+                            {
+                                "columns": [
+                                    "Status"
+                                ],
+                                "isUnique": false
+                            },
+                            {
+                                "columns": [
+                                    "ProcuringEntityId"
+                                ],
+                                "isUnique": false
+                            },
+                            {
+                                "columns": [
+                                    "TenderPeriodEnd"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "TenderItem",
+                        "tableName": "TenderItems",
+                        "description": "Item or lot listed in a tender for procurement",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro item ID"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 2000,
+                                "description": "Item or service description"
+                            },
+                            {
+                                "name": "Quantity",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 4,
+                                "description": "Required quantity"
+                            },
+                            {
+                                "name": "UnitName",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Unit of measurement name"
+                            },
+                            {
+                                "name": "UnitCode",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 20,
+                                "description": "UN/CEFACT unit code (e.g. KWH, KGM)"
+                            },
+                            {
+                                "name": "ClassificationId",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Classification code (CPV, UA-road, ДК021, etc.)"
+                            },
+                            {
+                                "name": "ClassificationScheme",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Classification scheme name"
+                            },
+                            {
+                                "name": "ClassificationDescription",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Human-readable classification description"
+                            },
+                            {
+                                "name": "DeliveryEndDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Required delivery completion date"
+                            },
+                            {
+                                "name": "DeliveryStreetAddress",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Delivery street address"
+                            },
+                            {
+                                "name": "DeliveryLocality",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 200,
+                                "description": "Delivery city or locality"
+                            },
+                            {
+                                "name": "DeliveryRegion",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 200,
+                                "description": "Delivery region or oblast"
+                            },
+                            {
+                                "name": "DeliveryCountry",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Delivery country name"
+                            },
+                            {
+                                "name": "Profile",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Market profile reference (e.g. energy tariff profile ID)"
+                            },
+                            {
+                                "name": "Category",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 200,
+                                "description": "Item category code or slug"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            },
+                            {
+                                "columns": [
+                                    "ExternalId",
+                                    "TenderId"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_TenderItems_ExternalId_TenderId"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Bid",
+                        "tableName": "Bids",
+                        "description": "Bid submitted by a tenderer in response to a tender",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro bid ID"
+                            },
+                            {
+                                "name": "Status",
+                                "type": "int",
+                                "enumType": "BidStatus",
+                                "required": true,
+                                "description": "Bid status",
+                                "defaultValue": "BidStatus.Draft"
+                            },
+                            {
+                                "name": "BidDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the bid record was created"
+                            },
+                            {
+                                "name": "SubmissionDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the bid was officially submitted"
+                            },
+                            {
+                                "name": "Amount",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 2,
+                                "description": "Bid price amount"
+                            },
+                            {
+                                "name": "Currency",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 10,
+                                "description": "Bid currency code"
+                            },
+                            {
+                                "name": "ValueAddedTaxIncluded",
+                                "type": "bool",
+                                "required": false,
+                                "description": "Whether the bid amount includes VAT",
+                                "defaultValue": "true"
+                            },
+                            {
+                                "name": "InitialAmount",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 2,
+                                "description": "Initial bid amount before any auction changes"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            },
+                            {
+                                "name": "TendererId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Organization",
+                                "navigationProperty": "Tenderer",
+                                "description": "Organization that submitted this bid"
+                            },
+                            {
+                                "name": "BidDocuments",
+                                "isCollection": true,
+                                "collectionType": "BidDocument",
+                                "description": "Junction collection: documents attached to this bid"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "ExternalId"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_Bids_ExternalId"
+                            },
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            },
+                            {
+                                "columns": [
+                                    "TendererId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "BidItem",
+                        "tableName": "BidItems",
+                        "description": "Item offered within a bid, with unit pricing",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "References the corresponding TenderItem external ID"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Item description as stated in the bid"
+                            },
+                            {
+                                "name": "Quantity",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 4,
+                                "description": "Quantity offered"
+                            },
+                            {
+                                "name": "UnitName",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Unit of measurement name"
+                            },
+                            {
+                                "name": "UnitCode",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 20,
+                                "description": "UN/CEFACT unit code"
+                            },
+                            {
+                                "name": "UnitPrice",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 6,
+                                "description": "Price per unit (net)"
+                            },
+                            {
+                                "name": "UnitPriceCurrency",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 10,
+                                "description": "Currency for the unit price"
+                            },
+                            {
+                                "name": "BidId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Bid",
+                                "navigationProperty": "Bid",
+                                "description": "Parent bid"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "BidId"
+                                ],
+                                "isUnique": false
+                            },
+                            {
+                                "columns": [
+                                    "ExternalId",
+                                    "BidId"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_BidItems_ExternalId_BidId"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Award",
+                        "tableName": "Awards",
+                        "description": "Award decision issued to a supplier after bid evaluation",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro award ID"
+                            },
+                            {
+                                "name": "Status",
+                                "type": "int",
+                                "enumType": "AwardStatus",
+                                "required": true,
+                                "description": "Award status",
+                                "defaultValue": "AwardStatus.Pending"
+                            },
+                            {
+                                "name": "AwardDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the award was issued"
+                            },
+                            {
+                                "name": "Amount",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 2,
+                                "description": "Awarded contract value"
+                            },
+                            {
+                                "name": "Currency",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 10,
+                                "description": "Award currency code"
+                            },
+                            {
+                                "name": "Qualified",
+                                "type": "bool",
+                                "required": false,
+                                "description": "Whether the award passed qualification check",
+                                "defaultValue": "false"
+                            },
+                            {
+                                "name": "PeriodStart",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Start of the award acceptance period"
+                            },
+                            {
+                                "name": "PeriodEnd",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "End of the award acceptance period"
+                            },
+                            {
+                                "name": "BidExternalId",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "External ID of the winning bid (from Prozorro)"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            },
+                            {
+                                "name": "SupplierId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Organization",
+                                "navigationProperty": "Supplier",
+                                "description": "Organization that received this award"
+                            },
+                            {
+                                "name": "AwardDocuments",
+                                "isCollection": true,
+                                "collectionType": "AwardDocument",
+                                "description": "Junction collection: documents attached to this award"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "ExternalId"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_Awards_ExternalId"
+                            },
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            },
+                            {
+                                "columns": [
+                                    "SupplierId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ContractChangeRationaleType",
+                        "tableName": "ContractChangeRationaleTypes",
+                        "description": "Reference lookup for allowed contract change rationale codes on a tender",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "Code",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Machine-readable rationale code (e.g. emergencyElectricitySupply)",
+                                "displayName": "Code"
+                            },
+                            {
+                                "name": "TitleEn",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Rationale title in English"
+                            },
+                            {
+                                "name": "TitleUk",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Rationale title in Ukrainian"
+                            },
+                            {
+                                "name": "DescriptionEn",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Rationale description in English"
+                            },
+                            {
+                                "name": "DescriptionUk",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Rationale description in Ukrainian"
+                            },
+                            {
+                                "name": "TenderChangeRationales",
+                                "isCollection": true,
+                                "collectionType": "TenderChangeRationale",
+                                "description": "Junction collection: tenders that allow this rationale type"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "Code"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_ContractChangeRationaleTypes_Code"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "TenderChangeRationale",
+                        "tableName": "TenderChangeRationales",
+                        "description": "Junction table linking tenders to their allowed contract change rationale types",
+                        "isJunction": true,
+                        "junctionMetadata": {
+                            "leftEntity": "Tender",
+                            "rightEntity": "ContractChangeRationaleType"
+                        },
+                        "auditable": false,
+                        "properties": []
+                    },
+                    {
+                        "name": "Contract",
+                        "tableName": "Contracts",
+                        "description": "Procurement contract signed as a result of a tender award",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro contract ID"
+                            },
+                            {
+                                "name": "ContractNumber",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Human-readable contract number (contractID from Prozorro)"
+                            },
+                            {
+                                "name": "Title",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 1000,
+                                "description": "Contract title"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 4000,
+                                "description": "Contract description"
+                            },
+                            {
+                                "name": "Status",
+                                "type": "int",
+                                "enumType": "ContractStatus",
+                                "required": true,
+                                "description": "Contract status",
+                                "defaultValue": "ContractStatus.Pending"
+                            },
+                            {
+                                "name": "ContractDate",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the contract was signed"
+                            },
+                            {
+                                "name": "Amount",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 18,
+                                "scale": 2,
+                                "description": "Contract monetary value"
+                            },
+                            {
+                                "name": "Currency",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 10,
+                                "description": "Contract currency code"
+                            },
+                            {
+                                "name": "AwardExternalId",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "External ID of the related award (awardID from Prozorro)"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "ExternalId"
+                                ],
+                                "isUnique": true,
+                                "name": "IX_Contracts_ExternalId"
+                            },
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "TenderPlan",
+                        "tableName": "TenderPlans",
+                        "description": "Reference to a procurement plan linked to a tender",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "PlanExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro plan ID"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Document",
+                        "tableName": "Documents",
+                        "description": "Document attached to a tender, award, or bid",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro document ID"
+                            },
+                            {
+                                "name": "Title",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Document title or filename"
+                            },
+                            {
+                                "name": "Format",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "MIME type (e.g. application/pdf)"
+                            },
+                            {
+                                "name": "Url",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Direct download URL"
+                            },
+                            {
+                                "name": "Hash",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Content hash (e.g. md5:...)"
+                            },
+                            {
+                                "name": "DocumentType",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Prozorro document type code (e.g. notice, tenderNotice)"
+                            },
+                            {
+                                "name": "Confidentiality",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Confidentiality level (public, buyerOnly)"
+                            },
+                            {
+                                "name": "DocumentOf",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Entity this document belongs to (tender, award, bid)"
+                            },
+                            {
+                                "name": "RelatedItem",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "External ID of the related item or lot"
+                            },
+                            {
+                                "name": "Author",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Document author slug"
+                            },
+                            {
+                                "name": "Language",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 10,
+                                "description": "ISO 639-1 language code"
+                            },
+                            {
+                                "name": "DatePublished",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the document was published"
+                            },
+                            {
+                                "name": "DateModified",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the document was last modified"
+                            },
+                            {
+                                "name": "TenderDocuments",
+                                "isCollection": true,
+                                "collectionType": "TenderDocument",
+                                "description": "Junction collection: tenders this document is attached to"
+                            },
+                            {
+                                "name": "AwardDocuments",
+                                "isCollection": true,
+                                "collectionType": "AwardDocument",
+                                "description": "Junction collection: awards this document is attached to"
+                            },
+                            {
+                                "name": "BidDocuments",
+                                "isCollection": true,
+                                "collectionType": "BidDocument",
+                                "description": "Junction collection: bids this document is attached to"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "ExternalId"
+                                ],
+                                "isUnique": false,
+                                "name": "IX_Documents_ExternalId"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "TenderDocument",
+                        "tableName": "TenderDocuments",
+                        "description": "Junction linking a tender to an attached document",
+                        "isJunction": true,
+                        "junctionMetadata": {
+                            "leftEntity": "Tender",
+                            "rightEntity": "Document"
+                        },
+                        "auditable": false,
+                        "properties": []
+                    },
+                    {
+                        "name": "AwardDocument",
+                        "tableName": "AwardDocuments",
+                        "description": "Junction linking an award to an attached document",
+                        "isJunction": true,
+                        "junctionMetadata": {
+                            "leftEntity": "Award",
+                            "rightEntity": "Document"
+                        },
+                        "auditable": false,
+                        "properties": []
+                    },
+                    {
+                        "name": "BidDocument",
+                        "tableName": "BidDocuments",
+                        "description": "Junction linking a bid to an attached document",
+                        "isJunction": true,
+                        "junctionMetadata": {
+                            "leftEntity": "Bid",
+                            "rightEntity": "Document"
+                        },
+                        "auditable": false,
+                        "properties": []
+                    },
+                    {
+                        "name": "Milestone",
+                        "tableName": "Milestones",
+                        "description": "Payment or delivery milestone associated with a tender",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro milestone ID"
+                            },
+                            {
+                                "name": "Title",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Milestone title"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Milestone description"
+                            },
+                            {
+                                "name": "Type",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Milestone type (e.g. prepayment, postpayment)"
+                            },
+                            {
+                                "name": "Code",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Milestone code"
+                            },
+                            {
+                                "name": "Percentage",
+                                "type": "decimal",
+                                "required": false,
+                                "precision": 5,
+                                "scale": 2,
+                                "description": "Percentage of contract value for this milestone"
+                            },
+                            {
+                                "name": "DurationDays",
+                                "type": "int",
+                                "required": false,
+                                "description": "Duration in days"
+                            },
+                            {
+                                "name": "DurationType",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Duration type (working, banking, calendar)"
+                            },
+                            {
+                                "name": "SequenceNumber",
+                                "type": "int",
+                                "required": false,
+                                "description": "Ordering sequence number"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Criterion",
+                        "tableName": "Criteria",
+                        "description": "Qualification or technical criterion defined on a tender",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro criterion ID"
+                            },
+                            {
+                                "name": "Title",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Criterion title"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Criterion description"
+                            },
+                            {
+                                "name": "Source",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Criterion source (e.g. tenderer, procuringEntity)"
+                            },
+                            {
+                                "name": "RelatesTo",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Entity this criterion relates to (lot, item, tender)"
+                            },
+                            {
+                                "name": "RelatedItem",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "External ID of the related item"
+                            },
+                            {
+                                "name": "ClassificationScheme",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Classification scheme of the criterion"
+                            },
+                            {
+                                "name": "ClassificationId",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 100,
+                                "description": "Classification code of the criterion"
+                            },
+                            {
+                                "name": "TenderId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Tender",
+                                "navigationProperty": "Tender",
+                                "description": "Parent tender"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "TenderId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "RequirementGroup",
+                        "tableName": "RequirementGroups",
+                        "description": "Group of requirements within a criterion",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro requirement group ID"
+                            },
+                            {
+                                "name": "Description",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 2000,
+                                "description": "Group description"
+                            },
+                            {
+                                "name": "CriterionId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "Criterion",
+                                "navigationProperty": "Criterion",
+                                "description": "Parent criterion"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "CriterionId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Requirement",
+                        "tableName": "Requirements",
+                        "description": "Individual requirement within a requirement group, defining expected values for bidder responses",
+                        "auditable": false,
+                        "properties": [
+                            {
+                                "name": "ExternalId",
+                                "type": "string",
+                                "required": true,
+                                "maxLength": 100,
+                                "description": "Prozorro requirement ID"
+                            },
+                            {
+                                "name": "Title",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Requirement title"
+                            },
+                            {
+                                "name": "DataType",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Value data type (string, number, boolean, integer)"
+                            },
+                            {
+                                "name": "Status",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 50,
+                                "description": "Requirement status (active, cancelled)"
+                            },
+                            {
+                                "name": "ExpectedValue",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 500,
+                                "description": "Single expected scalar value"
+                            },
+                            {
+                                "name": "ExpectedValuesJson",
+                                "type": "string",
+                                "required": false,
+                                "maxLength": 4000,
+                                "description": "JSON array of allowable expected values for multi-select requirements"
+                            },
+                            {
+                                "name": "ExpectedMinItems",
+                                "type": "int",
+                                "required": false,
+                                "description": "Minimum number of matching expected values required"
+                            },
+                            {
+                                "name": "ExpectedMaxItems",
+                                "type": "int",
+                                "required": false,
+                                "description": "Maximum number of matching expected values allowed"
+                            },
+                            {
+                                "name": "DatePublished",
+                                "type": "DateTimeOffset",
+                                "required": false,
+                                "description": "Date the requirement was published"
+                            },
+                            {
+                                "name": "RequirementGroupId",
+                                "type": "Guid",
+                                "required": true,
+                                "isForeignKey": true,
+                                "referencedEntity": "RequirementGroup",
+                                "navigationProperty": "RequirementGroup",
+                                "description": "Parent requirement group"
+                            }
+                        ],
+                        "indexes": [
+                            {
+                                "columns": [
+                                    "RequirementGroupId"
+                                ],
+                                "isUnique": false
+                            }
+                        ]
+                    }
+                ],
+                "relationships": [
+                    {
+                        "$comment": "An organization can be the procuring entity for many tenders",
+                        "type": "OneToMany",
+                        "leftEntity": "Organization",
+                        "rightEntity": "Tender",
+                        "leftNavigationProperty": "ProcuredTenders",
+                        "rightNavigationProperty": "ProcuringEntity"
+                    },
+                    {
+                        "$comment": "A tender contains many items to be procured",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "TenderItem",
+                        "leftNavigationProperty": "Items",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "A tender receives many bids",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "Bid",
+                        "leftNavigationProperty": "Bids",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "An organization can submit bids as tenderer",
+                        "type": "OneToMany",
+                        "leftEntity": "Organization",
+                        "rightEntity": "Bid",
+                        "leftNavigationProperty": "SubmittedBids",
+                        "rightNavigationProperty": "Tenderer"
+                    },
+                    {
+                        "$comment": "A bid contains many offered items with unit pricing",
+                        "type": "OneToMany",
+                        "leftEntity": "Bid",
+                        "rightEntity": "BidItem",
+                        "leftNavigationProperty": "Items",
+                        "rightNavigationProperty": "Bid"
+                    },
+                    {
+                        "$comment": "A tender has many award decisions",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "Award",
+                        "leftNavigationProperty": "Awards",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "An organization can receive multiple awards as supplier",
+                        "type": "OneToMany",
+                        "leftEntity": "Organization",
+                        "rightEntity": "Award",
+                        "leftNavigationProperty": "ReceivedAwards",
+                        "rightNavigationProperty": "Supplier"
+                    },
+                    {
+                        "$comment": "A tender results in one or more contracts",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "Contract",
+                        "leftNavigationProperty": "Contracts",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "A tender declares which contract change rationale types are applicable (M2M via junction)",
+                        "type": "ManyToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "ContractChangeRationaleType",
+                        "junctionEntity": "TenderChangeRationale",
+                        "leftNavigationProperty": "ChangeRationaleTypes",
+                        "rightNavigationProperty": "Tenders"
+                    },
+                    {
+                        "$comment": "A tender references one or more procurement plans",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "TenderPlan",
+                        "leftNavigationProperty": "Plans",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "A tender has many attached documents (M2M via junction)",
+                        "type": "ManyToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "Document",
+                        "junctionEntity": "TenderDocument",
+                        "leftNavigationProperty": "TenderDocuments",
+                        "rightNavigationProperty": "TenderDocuments"
+                    },
+                    {
+                        "$comment": "An award has many attached documents (M2M via junction)",
+                        "type": "ManyToMany",
+                        "leftEntity": "Award",
+                        "rightEntity": "Document",
+                        "junctionEntity": "AwardDocument",
+                        "leftNavigationProperty": "AwardDocuments",
+                        "rightNavigationProperty": "AwardDocuments"
+                    },
+                    {
+                        "$comment": "A bid has many attached documents (M2M via junction)",
+                        "type": "ManyToMany",
+                        "leftEntity": "Bid",
+                        "rightEntity": "Document",
+                        "junctionEntity": "BidDocument",
+                        "leftNavigationProperty": "BidDocuments",
+                        "rightNavigationProperty": "BidDocuments"
+                    },
+                    {
+                        "$comment": "A tender has many payment or delivery milestones",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "Milestone",
+                        "leftNavigationProperty": "Milestones",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "A tender defines many qualification or technical criteria",
+                        "type": "OneToMany",
+                        "leftEntity": "Tender",
+                        "rightEntity": "Criterion",
+                        "leftNavigationProperty": "Criteria",
+                        "rightNavigationProperty": "Tender"
+                    },
+                    {
+                        "$comment": "A criterion contains many requirement groups",
+                        "type": "OneToMany",
+                        "leftEntity": "Criterion",
+                        "rightEntity": "RequirementGroup",
+                        "leftNavigationProperty": "RequirementGroups",
+                        "rightNavigationProperty": "Criterion"
+                    },
+                    {
+                        "$comment": "A requirement group contains many individual requirements",
+                        "type": "OneToMany",
+                        "leftEntity": "RequirementGroup",
+                        "rightEntity": "Requirement",
+                        "leftNavigationProperty": "Requirements",
+                        "rightNavigationProperty": "RequirementGroup"
+                    }
+                ]
+            }
+        }
+    ]
+}

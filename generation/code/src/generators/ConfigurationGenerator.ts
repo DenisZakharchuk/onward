@@ -143,6 +143,11 @@ export class ConfigurationGenerator extends BaseGenerator {
         lines.push(`    .HasPrecision(${prop.precision}, ${scale})`);
       }
 
+      // DateTimeOffset → timestamptz (explicit for Npgsql 6+ clarity)
+      if (prop.type === 'DateTimeOffset') {
+        lines.push(`    .HasColumnType("timestamptz")`);
+      }
+
       // Default value
       if (prop.defaultValue !== undefined && prop.defaultValue !== null) {
         const defaultVal = TypeMapper.isStringType(prop.type)

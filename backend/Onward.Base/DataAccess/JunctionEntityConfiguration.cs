@@ -14,7 +14,7 @@ namespace Onward.Base.DataAccess;
 /// <typeparam name="TRelatedEntity">Related entity type in the relationship</typeparam>
 public abstract class JunctionEntityConfiguration<TJunction, TEntity, TRelatedEntity> 
     : BaseEntityConfiguration<TJunction>
-    where TJunction : JunctionEntityBase
+    where TJunction : JunctionEntityBase<Guid, Guid>
     where TEntity : BaseEntity<Guid>
     where TRelatedEntity : BaseEntity<Guid>
 {
@@ -22,13 +22,15 @@ public abstract class JunctionEntityConfiguration<TJunction, TEntity, TRelatedEn
     /// Relationship metadata describing the many-to-many relationship.
     /// Available to derived classes for configuration.
     /// </summary>
-    protected readonly IRelationshipMetadata<TEntity, TRelatedEntity> Metadata;
+    protected readonly IRelationshipMetadata Metadata;
     
     /// <summary>
-    /// Creates a junction entity configuration with the specified relationship metadata
+    /// Creates a junction entity configuration with the specified relationship metadata.
+    /// Accepts both non-generic <see cref="IRelationshipMetadata"/> and generic
+    /// <see cref="IRelationshipMetadata{TEntity,TRelatedEntity}"/> instances.
     /// </summary>
     /// <param name="metadata">Relationship metadata from DataModelRelationships static class</param>
-    protected JunctionEntityConfiguration(IRelationshipMetadata<TEntity, TRelatedEntity> metadata)
+    protected JunctionEntityConfiguration(IRelationshipMetadata metadata)
     {
         Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         
